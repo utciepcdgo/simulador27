@@ -1,10 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      El emblema institucional y los de los partidos viven en el mismo host.
+      Sin `crossorigin`, a propósito: las etiquetas <img> no piden CORS y la
+      conexión debe caer en el mismo pool que ellas.
+    -->
+    <link rel="preconnect" href="https://s3.us-east-1.amazonaws.com" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>simulador27</title>
+    <title>Simulador de Postulaciones Electorales · PEL 2026-2027</title>
+    <script>
+      // Evita el parpadeo claro-oscuro: la clase se aplica antes de que React
+      // monte nada. La clave debe coincidir con CLAVE_TEMA en src/lib/tema.ts.
+      ;(function () {
+        try {
+          var tema = localStorage.getItem('simulador27:tema') || 'sistema'
+          var oscuro =
+            tema === 'oscuro' ||
+            (tema === 'sistema' && matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', oscuro)
+          document.documentElement.style.colorScheme = oscuro ? 'dark' : 'light'
+        } catch (e) {
+          /* almacenamiento bloqueado: se queda en claro */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // src/components/ui lo genera shadcn: se actualiza con el CLI, no se linta.
+  globalIgnores(['dist', 'src/components/ui', 'src/domain/catalogo/{partidos,distritos,votacion}.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

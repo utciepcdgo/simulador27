@@ -1,0 +1,501 @@
+<title>El tablero de once</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+
+<style>
+  :root {
+    --papel:      #FBFBF9;
+    --superficie: #F3F3F0;
+    --tinta:      #16181D;
+    --gris:       #666C7A;
+    --regla:      #DEDFE2;
+    --regla-viva: #BFC2C8;
+    --mujer:      #A8156B;
+    --mujer-piso: #F7E6F0;
+    --hombre:     #17557F;
+    --hombre-piso:#E2ECF4;
+    --veto:       #A32B21;
+    --veto-piso:  #F6E7E5;
+    --resuelto:   #1F6B4A;
+
+    --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --texto:   'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --dato:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --papel:      #14161A;
+      --superficie: #1C1F25;
+      --tinta:      #E9EAEC;
+      --gris:       #9AA0AC;
+      --regla:      #2C3038;
+      --regla-viva: #454B56;
+      --mujer:      #F07AB8;
+      --mujer-piso: #3A1830;
+      --hombre:     #6FB6E8;
+      --hombre-piso:#152B3C;
+      --veto:       #EE8478;
+      --veto-piso:  #3A1D1A;
+      --resuelto:   #6FCB9F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papel:      #14161A;
+    --superficie: #1C1F25;
+    --tinta:      #E9EAEC;
+    --gris:       #9AA0AC;
+    --regla:      #2C3038;
+    --regla-viva: #454B56;
+    --mujer:      #F07AB8;
+    --mujer-piso: #3A1830;
+    --hombre:     #6FB6E8;
+    --hombre-piso:#152B3C;
+    --veto:       #EE8478;
+    --veto-piso:  #3A1D1A;
+    --resuelto:   #6FCB9F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--texto);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 74ch;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  /* ── Tipografía ─────────────────────────────────────────────── */
+  .rotulo {
+    font-family: var(--display);
+    font-size: .69rem;
+    font-weight: 600;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--gris);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.1rem, 6vw, 3.1rem);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: .7rem 0 0;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: 1.32rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-size: .96rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  p { margin: 0; }
+  strong { font-weight: 600; }
+
+  .entrada {
+    font-size: 1.16rem;
+    line-height: 1.55;
+    color: var(--gris);
+    margin-top: 1.1rem;
+    text-wrap: pretty;
+  }
+
+  .hoja > header { border-bottom: 2px solid var(--tinta); padding-bottom: 2rem; }
+
+  /* ── Ritmo vertical por flujo, no por márgenes sueltos ──────── */
+  .hoja { display: flex; flex-direction: column; gap: 3.25rem; }
+  section { display: flex; flex-direction: column; gap: 1.15rem; }
+
+  /* ── Pasos: la secuencia es real, por eso van numerados ─────── */
+  .paso { display: flex; flex-direction: column; gap: 1.15rem; }
+  .paso-cabeza { display: flex; align-items: baseline; gap: .85rem; }
+  .paso-num {
+    font-family: var(--dato);
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--gris);
+    border: 1px solid var(--regla-viva);
+    border-radius: 2px;
+    padding: .1rem .42rem;
+    flex-shrink: 0;
+  }
+
+  blockquote {
+    margin: 0;
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--regla-viva);
+    font-size: .95rem;
+    font-style: italic;
+    color: var(--gris);
+  }
+  blockquote cite { font-style: normal; font-weight: 600; color: var(--tinta); }
+
+  /* ── El tablero: once posiciones ordenadas por votación ─────── */
+  .tablero-caja { overflow-x: auto; padding-bottom: .25rem; }
+  .tablero { display: inline-flex; gap: 1.15rem; min-width: min-content; }
+  .bloque { display: flex; flex-direction: column; gap: .38rem; }
+  .bloque-nombre {
+    font-family: var(--display);
+    font-size: .66rem;
+    font-weight: 600;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--gris);
+    white-space: nowrap;
+  }
+  .celdas { display: flex; gap: .28rem; }
+  .celda {
+    width: 42px; height: 50px;
+    border: 1px solid var(--regla-viva);
+    border-radius: 3px;
+    background: var(--superficie);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: var(--gris);
+    position: relative;
+  }
+  .celda.mujer  { background: var(--mujer-piso);  border-color: var(--mujer);  color: var(--mujer); }
+  .celda.hombre { background: var(--hombre-piso); border-color: var(--hombre); color: var(--hombre); }
+  .celda.libre  { border-style: dashed; color: transparent; }
+  .celda.cerrada {
+    background: var(--veto-piso);
+    border-color: var(--veto);
+    color: var(--veto);
+    font-size: .72rem;
+    font-family: var(--dato);
+  }
+  .celda.cerrada::after {
+    content: "";
+    position: absolute; inset: -1px;
+    background: linear-gradient(to top right, transparent calc(50% - .6px), var(--veto) calc(50% - .6px), var(--veto) calc(50% + .6px), transparent calc(50% + .6px));
+    opacity: .45;
+    border-radius: 3px;
+  }
+  .posiciones { display: flex; gap: .28rem; }
+  .posiciones span {
+    width: 42px;
+    text-align: center;
+    font-family: var(--dato);
+    font-size: .68rem;
+    color: var(--gris);
+    font-variant-numeric: tabular-nums;
+  }
+  .eje {
+    font-family: var(--dato);
+    font-size: .68rem;
+    color: var(--gris);
+    letter-spacing: .04em;
+  }
+
+  .lectura {
+    font-family: var(--dato);
+    font-size: .82rem;
+    line-height: 1.7;
+    color: var(--tinta);
+    background: var(--superficie);
+    border-left: 3px solid var(--regla-viva);
+    padding: .7rem .95rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .lectura.alto  { border-left-color: var(--veto); }
+  .lectura.bueno { border-left-color: var(--resuelto); }
+
+  /* ── Cifras del recuento ────────────────────────────────────── */
+  table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+  caption {
+    text-align: left;
+    font-family: var(--display);
+    font-size: .69rem;
+    font-weight: 600;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--gris);
+    padding-bottom: .55rem;
+  }
+  th, td { padding: .5rem .6rem; border-bottom: 1px solid var(--regla); text-align: left; }
+  thead th {
+    font-family: var(--display);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--gris);
+  }
+  td.cifra, th.cifra { text-align: right; font-family: var(--dato); font-variant-numeric: tabular-nums; }
+  tr.cero td { color: var(--veto); font-weight: 600; }
+  tr.cero td.cifra { font-size: 1.05rem; }
+
+  .nota { font-size: .88rem; color: var(--gris); }
+
+  footer {
+    border-top: 1px solid var(--regla);
+    padding-top: 1.5rem;
+    font-size: .84rem;
+    color: var(--gris);
+    display: flex; flex-direction: column; gap: .7rem;
+  }
+  code {
+    font-family: var(--dato);
+    font-size: .88em;
+    background: var(--superficie);
+    padding: .08em .34em;
+    border-radius: 2px;
+  }
+
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--mujer); outline-offset: 2px; }
+</style>
+
+<div class="hoja">
+
+  <header>
+    <div class="rotulo">Simulador de postulaciones · PEL 2026-2027 · Durango</div>
+    <h1>El tablero de once</h1>
+    <p class="entrada">Un partido que postula en once distritos no puede cumplir el artículo&nbsp;28 y el piso de paridad al mismo tiempo. No es que sea difícil: de los 2&nbsp;048 repartos posibles de género, <strong>ninguno</strong> lo consigue. Este documento arma el escenario regla por regla.</p>
+  </header>
+
+  <section>
+    <h2>Por qué once y no otro número</h2>
+    <p>Once es el mínimo que el <strong>artículo 74.1</strong> exige registrar en mayoría relativa para tener derecho a la asignación de diputaciones de representación proporcional. Es, por tanto, el número que elegiría un partido que quiera acceder a esa asignación sin postular de más.</p>
+    <p>Y es también el tamaño del tablero individual de cada integrante de una <strong>coalición flexible en el mínimo</strong>: si el convenio abarca cuatro distritos —el veinticinco por ciento del artículo 9.1, redondeado al entero siguiente conforme al 9.3—, los once restantes quedan fuera y cada socio los postula por su cuenta.</p>
+    <p>Los dos caminos más probables desembocan en el mismo tablero.</p>
+  </section>
+
+  <section>
+    <h2>El objeto</h2>
+    <p>Once distritos ordenados de mayor a menor porcentaje de votación del PEL 2023-2024, repartidos en tres bloques de competitividad. Cada casilla es una fórmula por asignar.</p>
+
+    <div class="tablero-caja">
+      <div class="tablero">
+        <div class="bloque">
+          <div class="bloque-nombre">Bloque alto · 4</div>
+          <div class="celdas">
+            <div class="celda libre">·</div><div class="celda libre">·</div><div class="celda libre">·</div><div class="celda libre">·</div>
+          </div>
+          <div class="posiciones"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+        </div>
+        <div class="bloque">
+          <div class="bloque-nombre">Bloque medio · 4</div>
+          <div class="celdas">
+            <div class="celda libre">·</div><div class="celda libre">·</div><div class="celda libre">·</div><div class="celda libre">·</div>
+          </div>
+          <div class="posiciones"><span>5</span><span>6</span><span>7</span><span>8</span></div>
+        </div>
+        <div class="bloque">
+          <div class="bloque-nombre">Bloque bajo · 3</div>
+          <div class="celdas">
+            <div class="celda libre">·</div><div class="celda libre">·</div><div class="celda libre">·</div>
+          </div>
+          <div class="posiciones"><span>9</span><span>10</span><span>11</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="eje">← mayor porcentaje de votación · menor porcentaje →</p>
+  </section>
+
+  <section>
+    <h2>Las reglas, una por una</h2>
+    <p class="nota">Cada paso añade una exigencia sobre el mismo tablero. El orden es el del propio articulado: primero se arma la estructura, luego se le imponen los límites de género.</p>
+
+    <div class="paso">
+      <div class="paso-cabeza"><span class="paso-num">1</span><h3>El reparto en bloques</h3></div>
+      <blockquote>Se deberán integrar tres bloques conformados por un número igual de distritos… cuando no se logren integrar por números iguales, serán los primeros bloques los que se integren con un número mayor, de manera que la diferencia entre los bloques nunca podrá ser de más de un distrito. <cite>Artículo 27.1</cite></blockquote>
+      <p>Once entre tres da <strong>4&nbsp;–&nbsp;4&nbsp;–&nbsp;3</strong>. El bloque bajo es el único con un número impar de distritos, y eso resultará decisivo.</p>
+    </div>
+
+    <div class="paso">
+      <div class="paso-cabeza"><span class="paso-num">2</span><h3>El piso de paridad</h3></div>
+      <blockquote>…deberán postular candidaturas considerando por lo menos 50% de fórmulas del género femenino y 50% del género masculino. <cite>Artículo 23.1</cite></blockquote>
+      <p>Once es impar, así que el reparto exacto no existe y la mitad no cae en un entero. El excedente corresponde al género femenino: <strong>seis fórmulas encabezadas por mujeres</strong> sobre once.</p>
+      <p class="nota">Es la misma operación que en el tablero completo, donde quince producen ocho.</p>
+    </div>
+
+    <div class="paso">
+      <div class="paso-cabeza"><span class="paso-num">3</span><h3>El límite dentro de cada bloque</h3></div>
+      <blockquote>En cada bloque se deberán postular 3 fórmulas de candidaturas de un mismo género y 2 del otro. <cite>Artículo 26.3</cite></blockquote>
+      <p>Escrito para bloques de cinco, se traduce a un tope de la mitad hacia arriba. En un bloque de cuatro, ningún género pasa de dos: el reparto es forzosamente <strong>2 y 2</strong>. En el de tres, 2 y 1.</p>
+
+      <div class="tablero-caja">
+        <div class="tablero">
+          <div class="bloque">
+            <div class="bloque-nombre">Bloque alto</div>
+            <div class="celdas">
+              <div class="celda mujer">M</div><div class="celda mujer">M</div><div class="celda hombre">H</div><div class="celda hombre">H</div>
+            </div>
+            <div class="posiciones"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-nombre">Bloque medio</div>
+            <div class="celdas">
+              <div class="celda mujer">M</div><div class="celda mujer">M</div><div class="celda hombre">H</div><div class="celda hombre">H</div>
+            </div>
+            <div class="posiciones"><span>5</span><span>6</span><span>7</span><span>8</span></div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-nombre">Bloque bajo</div>
+            <div class="celdas">
+              <div class="celda libre">·</div><div class="celda libre">·</div><div class="celda libre">·</div>
+            </div>
+            <div class="posiciones"><span>9</span><span>10</span><span>11</span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lectura">Cuatro de las seis mujeres quedan fijadas aquí: dos arriba y dos en medio.<br>Todo lo que falta depende del bloque bajo, que debe aportar <strong>dos</strong>.</p>
+      <p class="nota">El orden dentro de cada bloque es libre —artículo 28.6—; lo que está fijado es la cuenta.</p>
+    </div>
+
+    <div class="paso">
+      <div class="paso-cabeza"><span class="paso-num">4</span><h3>La prohibición en los distritos de menor votación</h3></div>
+      <blockquote>En el tercer bloque de competitividad, en ningún caso se podrán postular candidaturas del género femenino en los dos últimos distritos de menor porcentaje de votación. <cite>Artículo 28.2</cite></blockquote>
+      <p>El bloque bajo tiene tres distritos y la prohibición alcanza a dos. Queda <strong>uno solo</strong> disponible para una fórmula encabezada por mujer.</p>
+
+      <div class="tablero-caja">
+        <div class="tablero">
+          <div class="bloque">
+            <div class="bloque-nombre">Bloque alto</div>
+            <div class="celdas">
+              <div class="celda mujer">M</div><div class="celda mujer">M</div><div class="celda hombre">H</div><div class="celda hombre">H</div>
+            </div>
+            <div class="posiciones"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-nombre">Bloque medio</div>
+            <div class="celdas">
+              <div class="celda mujer">M</div><div class="celda mujer">M</div><div class="celda hombre">H</div><div class="celda hombre">H</div>
+            </div>
+            <div class="posiciones"><span>5</span><span>6</span><span>7</span><span>8</span></div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-nombre">Bloque bajo</div>
+            <div class="celdas">
+              <div class="celda libre">·</div>
+              <div class="celda cerrada" title="Cerrado por el artículo 28.2">28.2</div>
+              <div class="celda cerrada" title="Cerrado por el artículo 28.2">28.2</div>
+            </div>
+            <div class="posiciones"><span>9</span><span>10</span><span>11</span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="lectura alto">Máximo de mujeres en el bloque bajo: <strong>1</strong>.<br>Total alcanzable: 2 + 2 + 1 = <strong>5</strong>, contra un piso de <strong>6</strong>.</p>
+    </div>
+
+    <div class="paso">
+      <div class="paso-cabeza"><span class="paso-num">5</span><h3>La mayoría en el bloque impar</h3></div>
+      <blockquote>De los tres bloques que se conformen, en caso de que dos bloques o solo uno de ellos sean integrados por un número impar de distritos, al menos uno de dichos bloques deberá integrarse por mayoría de fórmulas encabezadas por mujeres. <cite>Artículo 28.5</cite></blockquote>
+      <p>El bloque bajo, con tres distritos, es el único impar. La regla no ofrece alternativa: <strong>ese</strong> bloque debe integrarse por mayoría de fórmulas encabezadas por mujeres, y la mayoría de tres es <strong>dos</strong>.</p>
+      <p class="lectura alto">El paso 4 permite como máximo <strong>una</strong>.<br>El paso 5 exige como mínimo <strong>dos</strong>.<br>Los dos artículos hablan del mismo bloque y piden cosas incompatibles.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>La comprobación exhaustiva</h2>
+    <p>Once distritos admiten 2<sup>11</sup> = 2&nbsp;048 asignaciones posibles de género. Se evaluaron todas contra cada regla por separado y contra las tres a la vez.</p>
+
+    <table>
+      <caption>Repartos que satisfacen cada exigencia</caption>
+      <thead>
+        <tr><th scope="col">Exigencia</th><th scope="col" class="cifra">Repartos</th><th scope="col" class="cifra">De 2 048</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Tope por bloque · art. 26.3</th><td class="cifra">216</td><td class="cifra">10.5 %</td></tr>
+        <tr><th scope="row">Prohibición en menor votación · art. 28.2</th><td class="cifra">512</td><td class="cifra">25.0 %</td></tr>
+        <tr><th scope="row">Mayoría en el bloque impar · art. 28.5</th><td class="cifra">1 024</td><td class="cifra">50.0 %</td></tr>
+        <tr class="cero"><td>Las tres a la vez</td><td class="cifra">0</td><td class="cifra">0 %</td></tr>
+      </tbody>
+    </table>
+
+    <p>El cero aparece <strong>antes</strong> de aplicar el piso del cincuenta por ciento. No es que los repartos válidos no alcancen la paridad: es que no hay repartos válidos.</p>
+  </section>
+
+  <section>
+    <h2>Qué lo resolvería</h2>
+    <p>Se probaron dos concesiones, cada una por separado y las dos juntas.</p>
+
+    <table>
+      <caption>Repartos válidos bajo cada concesión</caption>
+      <thead>
+        <tr><th scope="col">Concesión</th><th scope="col" class="cifra">Válidos</th><th scope="col" class="cifra">Máx. mujeres</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Un bloque de cuatro admite 3 del mismo género</th><td class="cifra">0</td><td class="cifra">—</td></tr>
+        <tr><th scope="row">El 28.2 cierra solo el último distrito</th><td class="cifra">36</td><td class="cifra">6</td></tr>
+        <tr><th scope="row">Las dos juntas</th><td class="cifra">132</td><td class="cifra">8</td></tr>
+      </tbody>
+    </table>
+
+    <p>Aflojar el tope por bloque no sirve de nada: el nudo está entero dentro del bloque bajo, y esa concesión no lo toca. <strong>Basta la segunda</strong>, y no hace falta la primera.</p>
+
+    <p>Si la prohibición del 28.2 cerrara un solo distrito cuando el bloque bajo tiene tres —igual que el <strong>artículo 28.7</strong> hace para los bloques de dos, donde cierra el último y no los dos—, la posición 10 se abriría:</p>
+
+    <div class="tablero-caja">
+      <div class="tablero">
+        <div class="bloque">
+          <div class="bloque-nombre">Bloque alto</div>
+          <div class="celdas">
+            <div class="celda mujer">M</div><div class="celda mujer">M</div><div class="celda hombre">H</div><div class="celda hombre">H</div>
+          </div>
+          <div class="posiciones"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+        </div>
+        <div class="bloque">
+          <div class="bloque-nombre">Bloque medio</div>
+          <div class="celdas">
+            <div class="celda mujer">M</div><div class="celda mujer">M</div><div class="celda hombre">H</div><div class="celda hombre">H</div>
+          </div>
+          <div class="posiciones"><span>5</span><span>6</span><span>7</span><span>8</span></div>
+        </div>
+        <div class="bloque">
+          <div class="bloque-nombre">Bloque bajo</div>
+          <div class="celdas">
+            <div class="celda mujer">M</div><div class="celda mujer">M</div>
+            <div class="celda cerrada" title="Cerrado por el artículo 28.2">28.2</div>
+          </div>
+          <div class="posiciones"><span>9</span><span>10</span><span>11</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="lectura bueno">2 + 2 + 2 = <strong>6</strong> fórmulas encabezadas por mujeres, exactamente el piso.<br>El bloque bajo alcanza su mayoría de dos sobre tres.<br><strong>36 repartos válidos</strong>: seis acomodos en el bloque alto por seis en el medio, con el bajo determinado.</p>
+
+    <p class="nota">Los treinta y seis llevan exactamente seis mujeres. No hay holgura: cualquier tablero de once que cumpla, cumple con el mínimo justo.</p>
+  </section>
+
+  <section>
+    <h2>La decisión</h2>
+    <p>Toda la diferencia entre <strong>cero</strong> repartos válidos y <strong>treinta y seis</strong> está en cuántos distritos cierra el artículo 28.2 cuando el bloque bajo tiene tres.</p>
+    <p>El 28.2 dice «los dos últimos» pensando en un bloque de cinco. El 28.7 muestra que, cuando el bloque se encoge, la prohibición se encoge con él: en bloques de dos distritos cierra uno solo. Lo que no dice ninguno de los dos es qué ocurre en un bloque de tres.</p>
+    <p><strong>La pregunta a resolver:</strong> en un bloque bajo de tres distritos, ¿la prohibición del artículo 28.2 alcanza a dos distritos o a uno?</p>
+    <p class="nota">La misma pregunta, planteada para un bloque bajo de dos distritos fuera del reparto 2-2-2, resuelve por su cuenta el tablero de siete distritos —el que le queda a cada socio de una coalición parcial en el mínimo—.</p>
+  </section>
+
+  <footer>
+    <p>Las cifras se obtuvieron ejecutando el motor de reglas del simulador sobre las 2&nbsp;048 asignaciones posibles: <code>tamanosDeBloque(11)</code> para el reparto del artículo 27, <code>posicionesBlindadas(11)</code> para el 28.2, el tope de <code>paridadBloques</code> para el 26.3 y <code>minimoMujeres(11)</code> para el piso del 23.1. Ningún número de esta página se calculó a mano.</p>
+    <p>Las fórmulas se representan por el género de la persona propietaria, que es quien la encabeza. Las candidaturas de personas no binarias ocupan los lugares del género masculino, conforme al artículo 52.4.</p>
+  </footer>
+
+</div>
