@@ -1,12 +1,73 @@
+import { useState } from 'react'
 import { AnimatePresence, m } from 'motion/react'
 import { useDroppable } from '@dnd-kit/core'
-import { ficha } from '../lib/animacion'
+import { IconTrash } from '@tabler/icons-react'
+import { ficha, relevo } from '../lib/animacion'
 import { useSimulador } from '../store/simulador'
 import { ID_BANDEJA } from './arrastre'
 import { CreadorFormulas } from './CreadorFormulas'
 import { FormulaArrastrable } from './FichaFormula'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Button } from './ui/button'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { cn } from '../lib/utils'
+
+/**
+ * Elimina de una vez las fórmulas que esperan en la bandeja.
+ *
+ * Confirma en su propio sitio en lugar de abrir un diálogo: la acción no
+ * necesita interrumpir nada, solo un segundo pulso deliberado. Y no hay vuelta
+ * atrás —estas fórmulas no se mueven, dejan de existir—, así que el botón que
+ * confirma dice cuántas se lleva. Lo colocado en el tablero y en la Lista «A» no
+ * se toca; para eso está el arrastre de vuelta.
+ */
+function VaciarBandeja({ cuantas }: { cuantas: number }) {
+  const vaciarBandeja = useSimulador((s) => s.vaciarBandeja)
+  const [confirmando, setConfirmando] = useState(false)
+  const preguntando = confirmando && cuantas > 0
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {preguntando ? (
+        <m.div
+          key="confirmar"
+          variants={relevo}
+          initial="oculto"
+          animate="visible"
+          exit="saliente"
+          className="flex items-center gap-1"
+        >
+          <Button
+            size="xs"
+            variant="destructive"
+            onClick={() => {
+              vaciarBandeja()
+              setConfirmando(false)
+            }}
+          >
+            Eliminar {cuantas}
+          </Button>
+          <Button size="xs" variant="ghost" onClick={() => setConfirmando(false)}>
+            Cancelar
+          </Button>
+        </m.div>
+      ) : (
+        <m.div key="pedir" variants={relevo} initial="oculto" animate="visible" exit="saliente">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            disabled={cuantas === 0}
+            onClick={() => setConfirmando(true)}
+            aria-label="Eliminar las fórmulas de la bandeja"
+            title="Eliminar las fórmulas que esperan en la bandeja. Las que ya están colocadas no se tocan."
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <IconTrash />
+          </Button>
+        </m.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 /**
  * Bandeja de fórmulas sin asignar. Es también el destino del efecto rebote: una
@@ -24,6 +85,9 @@ export function Bandeja({ arrastre }: { arrastre: boolean }) {
         <CardDescription>
           Pares anónimos de atributos jurídicos. El sistema no captura nombres.
         </CardDescription>
+        <CardAction>
+          <VaciarBandeja cuantas={bandeja.length} />
+        </CardAction>
       </CardHeader>
       <CardContent className="space-y-4">
         <CreadorFormulas />

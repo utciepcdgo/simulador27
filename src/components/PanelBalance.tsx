@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import { AnimatePresence, m } from 'motion/react'
 import { recuentoDe, type ParidadDeAmbito, type RecuentoGrupo } from '../domain/reglas'
 import { relevo } from '../lib/animacion'
+import { EtiquetaPartido } from './EtiquetaPartido'
 import { ROTULO_GRUPO } from '../lib/rotulos'
 import { cn } from '../lib/utils'
 import { useCriterios } from '../store/configuracion'
@@ -41,7 +42,11 @@ function TiraParidad({ fila }: { fila: ParidadDeAmbito }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2 text-xs">
-        <span className="font-medium">{fila.siglas}</span>
+        {fila.partido !== null ? (
+          <EtiquetaPartido partido={fila.partido} tamano="sm" className="font-medium" />
+        ) : (
+          <span className="font-medium">{fila.siglas}</span>
+        )}
         <span className="text-muted-foreground tabular-nums">
           {fila.mujeres} de {fila.total} encabezadas por mujeres
           {/* En coalición total el integrante no tiene mínimo propio: el
@@ -50,7 +55,7 @@ function TiraParidad({ fila }: { fila: ParidadDeAmbito }) {
         </span>
       </div>
       {celdas.length === 0 ? (
-        <div className="text-muted-foreground rounded-sm border border-dashed py-1 text-center text-[10px]">
+        <div className="text-muted-foreground rounded-sm border border-dashed py-1 text-center text-[0.625rem]">
           Sin distritos registrados
         </div>
       ) : (
@@ -127,7 +132,7 @@ export function PanelBalance() {
 
       <CardContent className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-3">
-          <h3 className="text-muted-foreground flex items-baseline justify-between text-[11px] font-medium tracking-wide uppercase">
+          <h3 className="text-muted-foreground flex items-baseline justify-between text-[0.6875rem] font-medium tracking-wide uppercase">
             Quién encabeza la fórmula
             <span className="tabular-nums normal-case">
               {mayoria.formulas} fórmulas · {mayoria.candidaturas} candidaturas
@@ -153,7 +158,7 @@ export function PanelBalance() {
         </section>
 
         <section className="space-y-2">
-          <h3 className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <h3 className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
             Grupos o sectores sociales en desventaja
           </h3>
 
@@ -181,7 +186,7 @@ export function PanelBalance() {
               className="w-full text-sm"
             >
               <thead>
-                <tr className="text-muted-foreground text-[11px] tracking-wide uppercase">
+                <tr className="text-muted-foreground text-[0.6875rem] tracking-wide uppercase">
                   <th scope="col" className="pb-1 text-left font-medium">
                     Grupo o sector social
                   </th>
@@ -193,7 +198,7 @@ export function PanelBalance() {
                   </th>
                   <th scope="col" className="pb-1 text-right font-medium">
                     Sin acreditar
-                    <span className="text-muted-foreground/70 block text-[10px] font-normal normal-case">
+                    <span className="text-muted-foreground/70 block text-[0.625rem] font-normal normal-case">
                       falta homogeneidad
                     </span>
                   </th>

@@ -9,8 +9,15 @@ const CSV = path.join(RAIZ, 'data/sirc-bloques-diputaciones-PEL-2026-2027.csv')
 const CSV_PARTIDOS = path.join(RAIZ, 'data/partidos-PEL-2026-2027.csv')
 const SALIDA = path.join(RAIZ, 'src/domain/catalogo')
 
-/** Host de los emblemas oficiales. El archivo se llama como las siglas. */
-const EMBLEMAS = 'https://s3.us-east-1.amazonaws.com/static.appsiepcdurango.mx/emblemas'
+/**
+ * Carpeta de los emblemas oficiales, servida por la propia aplicación.
+ *
+ * Antes se traían de S3. Depender de un host ajeno para la identidad de los
+ * once partidos significaba que una caída de red dejaba el tablero sin saber a
+ * quién se estaba siglando, y que el documento en PDF podía salir sin membrete.
+ * Los archivos viven ahora en `public/emblemas/` y se llaman como las siglas.
+ */
+const EMBLEMAS = 'emblemas'
 
 const ROMANOS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
   'XI', 'XII', 'XIII', 'XIV', 'XV']
@@ -152,9 +159,15 @@ export function nombreDe(id: IdPartido): string {
   return partidoDe(id).nombre
 }
 
-/** Emblema oficial. El archivo se llama como las siglas. */
+/**
+ * Emblema oficial, servido por la propia aplicación desde \`public/${EMBLEMAS}/\`.
+ *
+ * Lleva \`BASE_URL\` delante para que siga resolviendo si el sitio se publica
+ * bajo una subruta; es la única concesión de esta capa al empaquetador, y la
+ * alternativa —una barra inicial fija— rompería ese despliegue.
+ */
 export function emblemaDe(id: IdPartido): string {
-  return \`${EMBLEMAS}/\${siglasDe(id)}.svg\`
+  return \`\${import.meta.env.BASE_URL}${EMBLEMAS}/\${siglasDe(id)}.png\`
 }
 `)
 

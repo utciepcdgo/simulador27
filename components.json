@@ -21,5 +21,7 @@
   },
   "menuColor": "default-translucent",
   "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "@soundcn": "https://soundcn.xyz/r/{name}.json"
+  }
 }

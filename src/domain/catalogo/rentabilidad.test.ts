@@ -48,12 +48,12 @@ describe('integridad del catálogo', () => {
 
   it('da cero a los partidos sin historial en vez de dejarlos fuera', () => {
     expect(tieneHistorial(PARTIDO.MORENA)).toBe(true)
-    expect(tieneHistorial(PARTIDO.SOMOSMX)).toBe(false)
-    const nuevo = porcentajesDe([PARTIDO.SOMOSMX])
+    expect(tieneHistorial(PARTIDO.SOMOS)).toBe(false)
+    const nuevo = porcentajesDe([PARTIDO.SOMOS])
     expect(nuevo).toHaveLength(15)
     expect(nuevo.every((p) => p.porcentaje === 0)).toBe(true)
     // Y su tablero sigue teniendo los quince distritos, no queda vacío.
-    expect(competitividad(individual(PARTIDO.SOMOSMX))).toHaveLength(15)
+    expect(competitividad(individual(PARTIDO.SOMOS))).toHaveLength(15)
   })
 })
 

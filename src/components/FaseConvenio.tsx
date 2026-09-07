@@ -1,5 +1,5 @@
+import type { ReactNode } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { siglasDe } from '../domain/catalogo'
 import { repartirConvenio } from '../domain/reglas'
 import type { DistritoActivo } from '../domain/types'
 import { cn } from '../lib/utils'
@@ -12,6 +12,7 @@ import {
   leerCodigoDestino,
   SIN_SIGLAR,
 } from './arrastre'
+import { EtiquetaPartido } from './EtiquetaPartido'
 import { Badge } from './ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
@@ -31,7 +32,7 @@ export function CajaDistrito({ distrito }: { distrito: DistritoActivo }) {
       title={`Distrito ${distrito.numero_romano} · ${distrito.cabecera} · posición de rentabilidad ${distrito.posicion_rentabilidad} para la alianza`}
     >
       <span className="text-base leading-none font-semibold">{distrito.numero_romano}</span>
-      <span className="text-muted-foreground w-full truncate text-[10px] leading-tight">
+      <span className="text-muted-foreground w-full truncate text-[0.625rem] leading-tight">
         {distrito.cabecera}
       </span>
       <Badge variant="outline" className="mt-0.5">
@@ -65,7 +66,7 @@ function Columna({
   distritos,
   activo,
 }: {
-  titulo: string
+  titulo: ReactNode
   descripcion?: string
   destino: DestinoSiglado
   distritos: DistritoActivo[]
@@ -75,7 +76,7 @@ function Columna({
   return (
     <div className="min-w-0 space-y-1.5">
       <h3 className="flex items-center justify-between gap-2 text-sm font-medium">
-        <span className="min-w-0 truncate">{titulo}</span>
+        <span className="flex min-w-0 items-center gap-1 truncate">{titulo}</span>
         <Badge variant="secondary">{distritos.length}</Badge>
       </h3>
       {descripcion && <p className="text-muted-foreground text-xs">{descripcion}</p>}
@@ -109,7 +110,14 @@ function ListaConSelects({ distritos }: { distritos: DistritoActivo[] }) {
   // dos palabras clave; `leerCodigoDestino` los devuelve a su tipo.
   const opciones = [
     { label: 'Sin decidir', value: SIN_SIGLAR },
-    ...integrantes.map((p) => ({ label: `Convenio · ${siglasDe(p)}`, value: codigoDestino(p) })),
+    ...integrantes.map((p) => ({
+      label: (
+        <span className="flex items-center gap-1.5">
+          Convenio · <EtiquetaPartido partido={p} tamano="sm" />
+        </span>
+      ),
+      value: codigoDestino(p),
+    })),
     { label: 'Fuera del convenio', value: FUERA_DEL_CONVENIO },
   ]
   return (
@@ -174,11 +182,11 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sin convenio que armar</CardTitle>
+          <CardTitle className="text-base">Sin convenio que integrar</CardTitle>
           <CardDescription>
-            {siglasDe(integrantes[0])} postula individualmente: los quince distritos le
-            corresponden. El
-            siglado solo se negocia en coalición o candidatura común.
+            <EtiquetaPartido partido={integrantes[0]} tamano="sm" className="align-text-bottom" />{' '}
+            postula individualmente: los quince distritos le corresponden. El siglado solo se
+            negocia en coalición o candidatura común.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -202,10 +210,15 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
           )}
         </CardTitle>
         <CardDescription>
-          {modalidad} {integrantes.map(siglasDe).join('-')} · el número es la posición de
-          rentabilidad del
-          distrito para la alianza. Lo que queda fuera del convenio lo postula cada partido por su
-          cuenta, y ahí cuenta su propia competitividad, no la suma.
+          <span className="inline-flex flex-wrap items-center gap-1.5 align-text-bottom">
+            {modalidad}
+            {integrantes.map((partido) => (
+              <EtiquetaPartido key={partido} partido={partido} tamano="sm" />
+            ))}
+          </span>{' '}
+          · el número es la posición de rentabilidad del distrito para la alianza. Lo que queda
+          fuera del convenio lo postula cada partido por su cuenta, y al evaluarlo en la Fase 2
+          cuenta su propia competitividad, no la suma.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -224,7 +237,11 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
               {integrantes.map((partido) => (
                 <Columna
                   key={partido}
-                  titulo={`Convenio · ${siglasDe(partido)}`}
+                  titulo={
+                    <>
+                      Convenio · <EtiquetaPartido partido={partido} tamano="sm" />
+                    </>
+                  }
                   destino={partido}
                   distritos={porOrden.filter(
                     (d) => d.postulacion.modo === 'convenio' && d.postulacion.partido === partido,

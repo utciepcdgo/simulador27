@@ -19,12 +19,12 @@ export const PARTIDOS = [
   { id_partido: 3, siglas: 'PVEM', nombre: "Partido Verde Ecologista de México" },
   { id_partido: 4, siglas: 'PT', nombre: "Partido del Trabajo" },
   { id_partido: 5, siglas: 'MC', nombre: "Movimiento Ciudadano" },
-  { id_partido: 6, siglas: 'MORENA', nombre: "morena" },
+  { id_partido: 6, siglas: 'MORENA', nombre: "Morena" },
   { id_partido: 7, siglas: 'PESD', nombre: "Partido Encuentro Solidario Durango" },
   { id_partido: 8, siglas: 'PV', nombre: "Partido Villista" },
   { id_partido: 9, siglas: 'PER', nombre: "Partido Estatal Renovación" },
   { id_partido: 10, siglas: 'PAZ', nombre: "Partido PAZ" },
-  { id_partido: 11, siglas: 'SOMOSMX', nombre: "Somos México" },
+  { id_partido: 11, siglas: 'SOMOS', nombre: "Somos MX" },
 ] as const
 
 /** Atajo legible: `PARTIDO.MORENA` en vez de un 6 suelto. */
@@ -39,7 +39,7 @@ export const PARTIDO = {
   PV: 8,
   PER: 9,
   PAZ: 10,
-  SOMOSMX: 11,
+  SOMOS: 11,
 } as const
 
 export type IdPartido = (typeof PARTIDOS)[number]['id_partido']
@@ -62,7 +62,13 @@ export function nombreDe(id: IdPartido): string {
   return partidoDe(id).nombre
 }
 
-/** Emblema oficial. El archivo se llama como las siglas. */
+/**
+ * Emblema oficial, servido por la propia aplicación desde `public/emblemas/`.
+ *
+ * Lleva `BASE_URL` delante para que siga resolviendo si el sitio se publica
+ * bajo una subruta; es la única concesión de esta capa al empaquetador, y la
+ * alternativa —una barra inicial fija— rompería ese despliegue.
+ */
 export function emblemaDe(id: IdPartido): string {
-  return `https://s3.us-east-1.amazonaws.com/static.appsiepcdurango.mx/emblemas/${siglasDe(id)}.svg`
+  return `${import.meta.env.BASE_URL}emblemas/${siglasDe(id)}.png`
 }

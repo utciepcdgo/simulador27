@@ -27,6 +27,8 @@ export interface ReparticionConvenio {
   siglados: number
   fuera: number
   sinDecidir: number
+  /** Distritos donde no se postula: no son un pendiente, son una decisión. */
+  sinPostular: number
   clase: ClaseConvenio
 }
 
@@ -34,12 +36,14 @@ export function repartirConvenio(estado: EstadoSimulacion): ReparticionConvenio 
   let siglados = 0
   let fuera = 0
   let sinDecidir = 0
+  let sinPostular = 0
   for (const distrito of estado.distritos) {
     if (distrito.postulacion.modo === 'convenio') siglados += 1
     else if (distrito.postulacion.modo === 'fuera') fuera += 1
+    else if (distrito.postulacion.modo === 'sin-postular') sinPostular += 1
     else sinDecidir += 1
   }
-  return { siglados, fuera, sinDecidir, clase: claseDeConvenio(siglados) }
+  return { siglados, fuera, sinDecidir, sinPostular, clase: claseDeConvenio(siglados) }
 }
 
 /**

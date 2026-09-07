@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { coalicion, individual, PARTIDO, tableroInicial } from '../catalogo'
+import { coalicion, individual, PARTIDO, siglasDe, tableroInicial } from '../catalogo'
 import type {
   DistritoActivo,
   DistritoEvaluado,
@@ -28,6 +28,8 @@ import {
   cuotaJoven,
   encabezadoCompensatorioRP,
   esCerrable,
+  declinaPostular,
+  formulasEnDistrito,
   esFormulaJoven,
   evaluarMR,
   evaluarSimulacion,
@@ -44,9 +46,11 @@ import {
   requierenSustitucion,
   recontar,
   recuentoDe,
+  repartoNecesario,
   umbralRegistroRP,
   validarFormula,
   type Ambito,
+  type Reparto,
 } from './index'
 
 // ─── Constructores de escenario ─────────────────────────────────────────────
@@ -318,20 +322,42 @@ describe('ámbitos de evaluación', () => {
     expect(ambitos[0].distritos).toHaveLength(15)
   })
 
+  it('ordena a los integrantes por registro, sea cual sea el orden de elección', () => {
+    // Elegidos PRI, SOMOS y PAN en ese orden; deben salir PAN-PRI-SOMOS.
+    // El `id_partido` es el orden de registro, así que ordenar por él reproduce
+    // el orden oficial. Se normaliza al construir el postulante, de modo que el
+    // emblema, el tinte del encabezado, las pestañas y las Listas "A" quedan
+    // alineados sin que ninguno de ellos tenga que reordenar por su cuenta.
+    const alianza = coalicion(PARTIDO.PRI, PARTIDO.SOMOS, PARTIDO.PAN)
+    expect(alianza.integrantes).toEqual([PARTIDO.PAN, PARTIDO.PRI, PARTIDO.SOMOS])
+
+    const ambitos = ambitosDe(
+      simulacion(tablero('...............', {}, alianza), [], alianza),
+    )
+    expect(ambitos[0].etiqueta).toBe('Coalición PAN-PRI-SOMOS · convenio')
+    expect(ambitos.filter((a) => a.tipo === 'consolidado').map((a) => a.etiqueta)).toEqual([
+      'PAN · paridad global',
+      'PRI · paridad global',
+      'SOMOS · paridad global',
+    ])
+  })
+
   it('en coalición total produce el tablero del convenio y un registro por partido', () => {
     const alianza = coalicion(PARTIDO.PRI, PARTIDO.PAN)
     const distritos = repartir(tablero('...............', {}, alianza), (p) =>
       p % 2 === 1 ? PARTIDO.PRI : PARTIDO.PAN,
     )
     const ambitos = ambitosDe(simulacion(distritos, [], alianza))
+    // Los integrantes salen en orden de registro —PAN es 1, PRI es 2— sin
+    // importar en qué orden se hayan elegido al armar la coalición.
     expect(ambitos.map((a) => a.etiqueta)).toEqual([
-      'Coalición PRI-PAN · convenio',
-      'PRI · paridad global',
+      'Coalición PAN-PRI · convenio',
       'PAN · paridad global',
+      'PRI · paridad global',
     ])
     expect(ambitos[0].distritos).toHaveLength(15)
-    expect(ambitos[1].distritos).toHaveLength(8)
-    expect(ambitos[2].distritos).toHaveLength(7)
+    expect(ambitos[1].distritos).toHaveLength(7)
+    expect(ambitos[2].distritos).toHaveLength(8)
   })
 
   it('en coalición parcial añade un tablero propio a cada integrante', () => {
@@ -342,18 +368,18 @@ describe('ámbitos de evaluación', () => {
     )
     const ambitos = ambitosDe(simulacion(distritos, [], alianza))
     expect(ambitos.map((a) => a.etiqueta)).toEqual([
-      'Coalición PRI-PAN · convenio',
-      'PRI · postulaciones en lo individual',
-      'PRI · paridad global',
+      'Coalición PAN-PRI · convenio',
       'PAN · postulaciones en lo individual',
       'PAN · paridad global',
+      'PRI · postulaciones en lo individual',
+      'PRI · paridad global',
     ])
     // Los cuatro distritos fuera del convenio aparecen una vez por integrante.
     expect(ambitos[1].distritos).toHaveLength(4)
     expect(ambitos[3].distritos).toHaveLength(4)
     // Y el registro de cada uno suma sus siglados más esos cuatro.
-    expect(ambitos[2].distritos).toHaveLength(6 + 4)
-    expect(ambitos[4].distritos).toHaveLength(5 + 4)
+    expect(ambitos[2].distritos).toHaveLength(5 + 4)
+    expect(ambitos[4].distritos).toHaveLength(6 + 4)
   })
 
   it('aísla los distritos huérfanos y les reintegra bloques propios', () => {
@@ -583,7 +609,7 @@ describe('paridad general', () => {
     const resultados = ambitosDe(simulacion(distritos, [], alianza)).flatMap((a) => evaluarMR(a))
     const generales = resultados.filter((r) => r.regla.startsWith('Paridad general'))
     expect(generales).toHaveLength(1)
-    expect(generales[0].alcance).toBe('Coalición PRI-PAN · convenio')
+    expect(generales[0].alcance).toBe('Coalición PAN-PRI · convenio')
     expect(generales[0].cumple).toBe(true)
 
     // Y cada integrante recibe la explicación de por qué no se le mide.
@@ -603,9 +629,9 @@ describe('paridad general', () => {
       .filter((r) => r.regla.startsWith('Paridad general'))
       .map((r) => r.alcance)
     expect(alcances).toEqual([
-      'Coalición PRI-PAN · convenio',
-      'PRI · paridad global',
+      'Coalición PAN-PRI · convenio',
       'PAN · paridad global',
+      'PRI · paridad global',
     ])
     expect(resultados.some((r) => r.regla === 'Paridad global del partido')).toBe(false)
   })
@@ -824,7 +850,7 @@ describe('cuotas', () => {
     // Una sola evaluación, la del convenio, y cumplida. Ningún partido responde
     // por su cuenta: es el artículo 53.1 frente al 54.
     expect(joven).toHaveLength(1)
-    expect(joven[0].alcance).toBe('Coalición PRI-PAN · convenio')
+    expect(joven[0].alcance).toBe('Coalición PAN-PRI · convenio')
     expect(joven[0].cumple).toBe(true)
   })
 
@@ -1177,7 +1203,8 @@ describe('dictamen', () => {
     const alianza = coalicion(PARTIDO.PRI, PARTIDO.PAN)
     const estado = simulacion(
       repartir(tablero('...............', {}, alianza), (p) => (p % 2 === 1 ? PARTIDO.PRI : PARTIDO.PAN)),
-      [lista(PARTIDO.PRI, '.....'), lista(PARTIDO.PAN, '.....')],
+      // En orden de registro, como las crea el store con `listasVacias`.
+      [lista(PARTIDO.PAN, '.....'), lista(PARTIDO.PRI, '.....')],
       alianza,
     )
     const alcances = new Set(
@@ -1185,7 +1212,7 @@ describe('dictamen', () => {
         .filter((r) => r.ambito === 'RP')
         .map((r) => r.alcance),
     )
-    expect([...alcances]).toEqual(['PRI · Lista "A"', 'PAN · Lista "A"'])
+    expect([...alcances]).toEqual(['PAN · Lista "A"', 'PRI · Lista "A"'])
   })
 })
 
@@ -1261,10 +1288,10 @@ describe('recuento de fórmulas y candidaturas', () => {
     // El artículo 20.2 verifica la paridad exclusivamente sobre el conjunto.
     expect(paridad.map((f) => [f.siglas, f.total, f.minimo])).toEqual([
       ['Convenio', 15, 8],
-      ['PRI', 8, null],
       ['PAN', 7, null],
+      ['PRI', 8, null],
     ])
-    expect(paridad[1].mujeres).toBe(4)
+    expect(paridad[2].mujeres).toBe(4)
   })
 
   it('en coalición parcial cada integrante recupera su mínimo propio', () => {
@@ -1427,5 +1454,276 @@ describe('criterios de interpretación', () => {
     expect(
       criteriosFueraDeLey({ denominadorParidad: 'registradas', aritmeticaImposible: 'inaplicable' }),
     ).toHaveLength(2)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Postulación parcial (artículo 27)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('postulación parcial', () => {
+  /** Retira del ámbito los distritos que ocupan esas posiciones del ranking. */
+  function sinPostularEn(distritos: DistritoActivo[], posiciones: number[]): DistritoActivo[] {
+    return distritos.map((d) =>
+      posiciones.includes(d.posicion_rentabilidad)
+        ? { ...d, postulacion: { modo: 'sin-postular' as const } }
+        : d,
+    )
+  }
+
+  const RETIRADOS = [3, 7, 11, 15]
+  const parcial = () => ambitoDe(sinPostularEn(tablero('...............'), RETIRADOS))
+
+  it('deja fuera del ámbito los distritos donde no se postula', () => {
+    expect(parcial().distritos).toHaveLength(11)
+  })
+
+  it('renumera de uno en uno, sin heredar la posición del tablero de quince', () => {
+    // Artículo 27.1: los distritos donde se vaya a postular se ordenan de mayor
+    // a menor por porcentaje. No conservan el lugar que tenían entre los quince.
+    expect(parcial().distritos.map((d) => d.posicion_rentabilidad)).toEqual(
+      Array.from({ length: 11 }, (_, i) => i + 1),
+    )
+  })
+
+  it('conserva el orden relativo: retirar no reordena, solo renumera', () => {
+    const completo = ambitoDe(tablero('...............'))
+    const esperados = completo.distritos
+      .filter((d) => !RETIRADOS.includes(d.posicion_rentabilidad))
+      .map((d) => d.id_distrito)
+    expect(parcial().distritos.map((d) => d.id_distrito)).toEqual(esperados)
+  })
+
+  it('reparte los once en tres bloques, con el excedente en los primeros', () => {
+    // Artículo 27.1: tres bloques de número igual y, si no se puede, los
+    // primeros llevan uno más, sin que la diferencia pase de un distrito.
+    const cuenta = (bloque: string) =>
+      parcial().distritos.filter((d) => d.bloque === bloque).length
+    expect([cuenta('Alta'), cuenta('Media'), cuenta('Baja')]).toEqual([4, 4, 3])
+  })
+
+  it('mueve la prohibición del 28.2 a las nuevas posiciones de menor votación', () => {
+    expect(parcial().distritos.filter((d) => d.esBlindada).map((d) => d.posicion_rentabilidad))
+      .toEqual([10, 11])
+  })
+
+  it('mide las demás reglas sobre el ámbito reducido', () => {
+    // El piso del cincuenta por ciento baja de ocho a seis, y la medida de
+    // personas jóvenes sigue la proporción del 27.4.
+    const registro = ambitosDe(
+      simulacion(sinPostularEn(tablero('...............'), RETIRADOS)),
+    ).find((a) => a.tipo === 'consolidado')!
+    expect(registro.distritos).toHaveLength(11)
+    expect(paridadGeneral(registro).mensaje).toContain('mínimo de 6')
+    expect(minimoJovenes({ ...parcial(), fuera: true })).toBe(1)
+  })
+
+  it('un ámbito sin ningún distrito retirado se comporta como antes', () => {
+    const ambito = ambitoDe(tablero('...............'))
+    expect(ambito.distritos).toHaveLength(15)
+    expect(ambito.distritos.filter((d) => d.esBlindada).map((d) => d.posicion_rentabilidad))
+      .toEqual([14, 15])
+  })
+})
+
+// ─── El reparto que propone el llenado rápido ───────────────────────────────
+
+/** Retira de la postulación las posiciones indicadas, como hace el artículo 27. */
+function retirar(distritos: DistritoActivo[], posiciones: number[]): DistritoActivo[] {
+  return distritos.map((d) =>
+    posiciones.includes(d.posicion_rentabilidad)
+      ? { ...d, postulacion: { modo: 'sin-postular' as const } }
+      : d,
+  )
+}
+
+/** Coloca el reparto propuesto, con la fórmula joven que pida. */
+function aplicar(distritos: DistritoActivo[], reparto: Reparto): DistritoActivo[] {
+  let falta = reparto.faltaJoven
+  return distritos.map((d) => {
+    const genero = reparto.porDistrito.get(d.id_distrito)
+    if (!genero || d.postulacion.modo !== 'convenio' || d.postulacion.formula) return d
+    const joven = falta
+    falta = false
+    return {
+      ...d,
+      postulacion: { ...d.postulacion, formula: formula(perfil(genero, { esJoven: joven })) },
+    }
+  })
+}
+
+function incumplidas(distritos: DistritoActivo[]): string[] {
+  return ambitosDe(simulacion(distritos))
+    .flatMap((a) => evaluarMR(a))
+    .filter((r) => !r.cumple)
+    .map((r) => r.regla)
+}
+
+describe('repartoNecesario', () => {
+  it('propone un tablero de quince que no incumple ninguna regla', () => {
+    const vacio = tablero('...............')
+    const reparto = repartoNecesario(ambitoDe(vacio))
+
+    expect(reparto.porDistrito.size).toBe(15)
+    expect(incumplidas(aplicar(vacio, reparto))).toEqual([])
+  })
+
+  it('propone lo mínimo que la norma exige, no lo máximo que permite', () => {
+    const reparto = repartoNecesario(ambitoDe(tablero('...............')))
+
+    // Ocho es el piso del 23.1 para quince distritos; el reparto no lo rebasa.
+    expect(reparto.faltan).toEqual({ Mujer: 8, Hombre: 7 })
+  })
+
+  it('respeta lo ya colocado y solo propone para los distritos vacíos', () => {
+    const medio = tablero('HHH.. ..... .....')
+    const reparto = repartoNecesario(ambitoDe(medio))
+
+    expect(reparto.porDistrito.size).toBe(12)
+    for (const d of medio.slice(0, 3)) {
+      expect(reparto.porDistrito.has(d.id_distrito)).toBe(false)
+    }
+    // Los tres hombres del bloque alto no se mueven, así que las mujeres que
+    // faltan tienen que salir de los otros dos bloques.
+    expect(incumplidas(aplicar(medio, reparto))).toEqual([])
+  })
+
+  it('nunca propone mujer en una posición que el 28.2 cerró', () => {
+    const vacio = tablero('...............')
+    const ambito = ambitoDe(vacio)
+    const reparto = repartoNecesario(ambito)
+
+    for (const distrito of ambito.distritos) {
+      if (!distrito.esBlindada) continue
+      expect(reparto.porDistrito.get(distrito.id_distrito)).toBe('Hombre')
+    }
+  })
+
+  it('pide una fórmula joven, y deja de pedirla cuando ya hay una', () => {
+    expect(repartoNecesario(ambitoDe(tablero('...............'))).faltaJoven).toBe(true)
+
+    const conJoven = tablero('M..............', {
+      1: formula(perfil('Mujer', { esJoven: true })),
+    })
+    expect(repartoNecesario(ambitoDe(conJoven)).faltaJoven).toBe(false)
+  })
+
+  it('en un tablero de once dice qué no pudo resolver, y aun así propone', () => {
+    // El 28.5 exige mayoría femenina en el bloque bajo mientras el 28.2 le
+    // cierra la posición que haría falta: ningún acomodo cumple los dos.
+    const once = retirar(tablero('...............'), [3, 8, 13, 15])
+    const reparto = repartoNecesario(ambitoDe(once))
+
+    expect(reparto.porDistrito.size).toBe(11)
+    expect(reparto.irresolubles.length).toBeGreaterThan(0)
+    // Se coloca el reparto más cercano: reporta, no se planta.
+    expect(reparto.faltan.Mujer + reparto.faltan.Hombre).toBe(11)
+  })
+
+  it('cuadra el conteo por género con la propuesta distrito a distrito', () => {
+    const reparto = repartoNecesario(ambitoDe(tablero('..M..H.........')))
+    const contadas = { Mujer: 0, Hombre: 0 }
+    for (const genero of reparto.porDistrito.values()) contadas[genero] += 1
+
+    expect(contadas).toEqual(reparto.faltan)
+  })
+})
+
+// ─── No postular fuera del convenio (artículo 27) ───────────────────────────
+
+/** Un integrante declina contender en unos distritos que el convenio no abarca. */
+function declinar(
+  distritos: DistritoActivo[],
+  partido: IdPartido,
+  posiciones: number[],
+): DistritoActivo[] {
+  return distritos.map((d) => {
+    if (!posiciones.includes(d.posicion_rentabilidad)) return d
+    if (d.postulacion.modo !== 'fuera') throw new Error('Ese distrito no está fuera del convenio')
+    return {
+      ...d,
+      postulacion: {
+        modo: 'fuera',
+        formulas: { ...d.postulacion.formulas, [partido]: 'sin-postular' as const },
+      },
+    }
+  })
+}
+
+/** Coalición parcial PAN-PRI: doce distritos en el convenio y tres fuera. */
+function parcial(): { alianza: Postulante; distritos: DistritoActivo[] } {
+  const alianza = coalicion(PARTIDO.PRI, PARTIDO.PAN)
+  return {
+    alianza,
+    distritos: repartir(tablero('MHHHHHHH MMMMMMM', {}, alianza), (p) =>
+      p > 12 ? 'fuera' : p <= 6 ? PARTIDO.PRI : PARTIDO.PAN,
+    ),
+  }
+}
+
+function tableroDe(distritos: DistritoActivo[], alianza: Postulante, partido: IdPartido): Ambito {
+  const encontrado = ambitosDe(simulacion(distritos, [], alianza)).find(
+    (a) => a.tipo === 'tablero' && a.fuera && a.partido === partido,
+  )
+  if (!encontrado) throw new Error(`${siglasDe(partido)} no tiene tablero individual`)
+  return encontrado
+}
+
+describe('no postular fuera del convenio', () => {
+  it('saca el distrito del tablero del integrante que declina', () => {
+    const { alianza, distritos } = parcial()
+    expect(tableroDe(distritos, alianza, PARTIDO.PRI).distritos).toHaveLength(3)
+
+    const sinUno = declinar(distritos, PARTIDO.PRI, [14])
+    expect(tableroDe(sinUno, alianza, PARTIDO.PRI).distritos).toHaveLength(2)
+  })
+
+  it('no toca al aliado, que sigue postulando ahí', () => {
+    const { alianza, distritos } = parcial()
+    const sinUno = declinar(distritos, PARTIDO.PRI, [14])
+    const delPAN = tableroDe(sinUno, alianza, PARTIDO.PAN)
+
+    expect(delPAN.distritos).toHaveLength(3)
+    expect(declinaPostular(sinUno[13].postulacion, PARTIDO.PAN)).toBe(false)
+  })
+
+  it('rehace los bloques con los distritos que quedan, no con los de antes', () => {
+    // Artículo 27.1.1: el orden se integra con aquellos en los que sí se postula.
+    const { alianza, distritos } = parcial()
+    const sinUno = declinar(distritos, PARTIDO.PRI, [14])
+    const propio = tableroDe(sinUno, alianza, PARTIDO.PRI)
+
+    expect(propio.distritos.map((d) => d.posicion_rentabilidad)).toEqual([1, 2])
+    expect(propio.distritos.map((d) => d.bloque)).toEqual(['Alta', 'Media'])
+  })
+
+  it('deja de contarlo en la paridad global del partido', () => {
+    const { alianza, distritos } = parcial()
+    const consolidado = (ds: DistritoActivo[]) =>
+      ambitosDe(simulacion(ds, [], alianza)).find(
+        (a) => a.tipo === 'consolidado' && a.partido === PARTIDO.PRI,
+      )!
+
+    expect(consolidado(distritos).distritos).toHaveLength(9)
+    expect(consolidado(declinar(distritos, PARTIDO.PRI, [13, 14])).distritos).toHaveLength(7)
+  })
+
+  it('el convenio no se entera: sigue abarcando los mismos doce', () => {
+    const { alianza, distritos } = parcial()
+    const sinDos = declinar(distritos, PARTIDO.PRI, [13, 14])
+    const convenio = ambitosDe(simulacion(sinDos, [], alianza)).find(
+      (a) => a.tipo === 'tablero' && !a.fuera,
+    )!
+
+    expect(convenio.distritos).toHaveLength(12)
+  })
+
+  it('la negativa no se confunde con una fórmula', () => {
+    const { distritos } = parcial()
+    const sinUno = declinar(distritos, PARTIDO.PRI, [14])
+    const conFormula = formulasEnDistrito(distritos[13].postulacion)
+
+    expect(formulasEnDistrito(sinUno[13].postulacion)).toEqual(conFormula)
+    expect(formulasEnDistrito(sinUno[13].postulacion).every((f) => 'propietario' in f)).toBe(true)
   })
 })

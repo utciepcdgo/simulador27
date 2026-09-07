@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { nombreDe, PARTIDOS, tieneHistorial } from '../domain/catalogo'
+import { nombreDe, ordenarPorRegistro, PARTIDOS, tieneHistorial } from '../domain/catalogo'
 import type { IdPartido, Postulante } from '../domain/types'
 import { cn } from '../lib/utils'
 import { useSimulador } from '../store/simulador'
@@ -38,7 +38,15 @@ function invalidez(modalidad: Modalidad | null, integrantes: IdPartido[]): strin
  * fórmulas ya creadas regresan a la bandeja en lugar de quedarse en distritos
  * que dejaron de significar lo mismo.
  */
-export function ConfiguracionPostulante() {
+export function ConfiguracionPostulante({
+  enPopover = false,
+  onAplicar,
+}: {
+  /** Sin marco propio: la superficie y la elevación las pone el popover. */
+  enPopover?: boolean
+  /** Se avisa al aplicar, para que quien lo hospeda pueda cerrarse. */
+  onAplicar?: () => void
+} = {}) {
   const postulante = useSimulador((s) => s.postulante)
   const configurar = useSimulador((s) => s.configurar)
   const [modalidad, setModalidad] = useState<Modalidad | null>(postulante?.modalidad ?? null)
@@ -56,20 +64,29 @@ export function ConfiguracionPostulante() {
     setIntegrantes((previos) => {
       if (marcado) {
         // En Individual el partido nuevo sustituye al anterior: nunca hay dos.
-        return modalidad === 'Individual' ? [partido] : [...previos, partido]
+        // En alianza se reordena al vuelo, para que lo que se ve mientras se
+        // elige sea ya lo que quedará registrado.
+        return modalidad === 'Individual'
+          ? [partido]
+          : ordenarPorRegistro([...previos, partido])
       }
       return previos.filter((p) => p !== partido)
     })
   }
 
   return (
-    <Card className="gap-4">
+    <Card
+      className={cn(
+        'gap-4',
+        enPopover && 'bg-transparent shadow-none ring-0 [--card-spacing:--spacing(4)]',
+      )}
+    >
       <CardHeader>
         <CardTitle className="text-base">Postulante</CardTitle>
         <CardDescription>
           {postulante
             ? 'La competitividad se calcula sumando los porcentajes individuales del PEL 2023-2024 de cada integrante.'
-            : 'Elige un modo de postulación y los partidos que participan para armar el tablero.'}
+            : 'Elige un modo de postulación y los partidos que participan para crear el tablero.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -127,7 +144,7 @@ export function ConfiguracionPostulante() {
                     !marcado && 'opacity-45 grayscale',
                   )}
                 />
-                <span className="text-[10px] leading-none font-medium">{siglas}</span>
+                <span className="text-[0.625rem] leading-none font-medium">{siglas}</span>
               </label>
             )
           })}
@@ -146,9 +163,13 @@ export function ConfiguracionPostulante() {
         <Button
           className="w-full"
           disabled={error !== null || sinCambios}
-          onClick={() => modalidad && configurar(integrantes, modalidad)}
+          onClick={() => {
+            if (!modalidad) return
+            configurar(integrantes, modalidad)
+            onAplicar?.()
+          }}
         >
-          {postulante ? 'Aplicar y rehacer el tablero' : 'Armar el tablero'}
+          {postulante ? 'Aplicar y rehacer el tablero' : 'Crear el tablero'}
         </Button>
       </CardContent>
     </Card>

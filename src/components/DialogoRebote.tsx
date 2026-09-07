@@ -1,4 +1,7 @@
+import { useEffect } from 'react'
 import { IconAlertTriangle } from '@tabler/icons-react'
+import { sonarError } from '../lib/sonido'
+import { useConfiguracion } from '../store/configuracion'
 import { useSimulador } from '../store/simulador'
 import { Button } from './ui/button'
 import {
@@ -17,6 +20,13 @@ import {
 export function DialogoRebote() {
   const rechazo = useSimulador((s) => s.rechazo)
   const descartarRechazo = useSimulador((s) => s.descartarRechazo)
+  const conSonido = useConfiguracion((c) => c.opciones.sonidos)
+
+  // Cada rechazo es un objeto nuevo, así que dos seguidos de la misma regla
+  // suenan las dos veces. Es lo correcto: son dos intentos, no uno repintado.
+  useEffect(() => {
+    if (rechazo && conSonido) sonarError()
+  }, [rechazo, conSonido])
 
   return (
     <Dialog open={rechazo !== null} onOpenChange={(abierto) => !abierto && descartarRechazo()}>

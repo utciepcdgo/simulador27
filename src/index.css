@@ -150,4 +150,21 @@
   html {
     @apply font-sans;
     }
+  /*
+    El puntero de mano sobre lo que se pulsa.
+
+    El Preflight de Tailwind v4 dejó de declararlo —en la v3 sí lo hacía— y el
+    valor de origen del navegador para `button` es `default`, así que todos los
+    controles de la herramienta perdieron a la vez la única señal de que se podía
+    hacer clic en ellos. Va aquí y no en cada componente porque el `button` lo
+    ponen shadcn, Base UI y nuestros propios botones sueltos: repartir la regla
+    garantizaba que alguno se quedara fuera.
+
+    Los deshabilitados quedan excluidos: prometer un clic que no va a ocurrir es
+    peor que no prometer nada.
+  */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+    }
 }

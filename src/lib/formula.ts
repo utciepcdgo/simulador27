@@ -1,6 +1,6 @@
 import { accionAfirmativaEfectiva } from '../domain/genero'
 import { accionAfirmativaAcreditada, esFormulaJoven } from '../domain/reglas'
-import type { TokenFormula } from '../domain/types'
+import type { AccionAfirmativa, Genero, PerfilCandidato, TokenFormula } from '../domain/types'
 import { ROTULO_GENERO, ROTULO_GRUPO } from './rotulos'
 
 /**
@@ -46,4 +46,29 @@ export function descripcion(formula: TokenFormula): string {
       ? ', sin medida compensatoria'
       : ''
   return `Fórmula ${ROTULO_GENERO[formula.propietario.genero]} propietaria, ${ROTULO_GENERO[formula.suplente.genero]} suplente${sufijo}`
+}
+
+/** Los géneros y las medidas, en el orden en que se ofrecen en pantalla. */
+export const GENEROS: Genero[] = ['Mujer', 'Hombre', 'No Binario']
+
+export const ACCIONES: AccionAfirmativa[] = [
+  'Ninguna',
+  'Indígena',
+  'Discapacidad',
+  'Diversidad Sexual',
+  'Adulto Mayor',
+  'Migrante',
+]
+
+export const PERFIL_INICIAL: PerfilCandidato = {
+  genero: 'Mujer',
+  esJoven: false,
+  accionAfirmativa: 'Ninguna',
+}
+
+/** Si dos perfiles se postulan con los mismos atributos jurídicos. */
+export function mismosAtributos(a: PerfilCandidato, b: PerfilCandidato): boolean {
+  return (
+    a.genero === b.genero && a.esJoven === b.esJoven && a.accionAfirmativa === b.accionAfirmativa
+  )
 }

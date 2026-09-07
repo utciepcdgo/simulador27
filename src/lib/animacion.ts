@@ -65,3 +65,19 @@ export const relevo: Variants = {
   visible: { opacity: 1, scale: 1, transition: RAPIDO },
   saliente: { opacity: 0, scale: 0.9, transition: RAPIDO },
 }
+
+/**
+ * Contenido que se revela en su sitio y empuja lo que tiene debajo.
+ *
+ * A diferencia de `aparicion`, anima el alto: se usa donde el contenedor crece
+ * —un popover que despliega un campo más, o que suma el motivo de un rechazo—.
+ * Sin esto la caja da un salto y el texto entra desvanecido sobre un espacio que
+ * ya estaba abierto, que es justo el orden inverso al que ocurrió.
+ *
+ * Pide `overflow-hidden` en el mismo elemento.
+ */
+export const revelado: Variants = {
+  oculto: { opacity: 0, height: 0 },
+  visible: { opacity: 1, height: 'auto', transition: SUAVE },
+  saliente: { opacity: 0, height: 0, transition: RAPIDO },
+}

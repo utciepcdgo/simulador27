@@ -38,21 +38,62 @@ export interface Opciones {
    * son.
    */
   mostrarSiglado: boolean
+  /**
+   * Muestra sobre la bandeja los controles de llenado rápido.
+   *
+   * Van apagados de origen y detrás de una opción porque tres de los cuatro
+   * escriben sobre lo que ya está armado. Son andamio para probar el motor
+   * deprisa, no parte del procedimiento de postulación.
+   */
+  mostrarLlenadoRapido: boolean
+  /**
+   * Permite pulsar una fórmula ya colocada para cambiar sus atributos.
+   *
+   * Va encendida de origen, a diferencia de las demás: no añade nada a la
+   * pantalla ni escribe sobre lo armado, sino que ahorra el rodeo de devolver la
+   * fórmula a la bandeja para corregirle un género. La opción está para poder
+   * quitarla —apagada, la ficha vuelve a ser solo algo que se arrastra—.
+   */
+  mostrarEditorFormulas: boolean
+  /**
+   * Avisos sonoros de la interfaz: el rechazo de un movimiento y el cierre de la
+   * postulación.
+   *
+   * Encendida de origen. Ninguno suena por su cuenta: los dos acompañan a algo
+   * que la propia persona provocó y que ya está escrito en pantalla, y sirven de
+   * canal redundante para quien no estaba mirando esa parte del tablero. La
+   * opción existe para poder callarlos: en una sesión con público, un pitido
+   * inesperado basta para que alguien apague los sonidos y no vuelva a
+   * encenderlos.
+   */
+  sonidos: boolean
 }
 
 const INICIALES: Opciones = {
   mostrarRentabilidad: false,
   mostrarSiglado: false,
+  mostrarLlenadoRapido: false,
+  mostrarEditorFormulas: true,
+  sonidos: true,
 }
 
 interface Configuracion {
   opciones: Opciones
+  /**
+   * Si el recorrido guiado ya se mostró en este navegador.
+   *
+   * Va fuera de `opciones` a propósito: no es una preferencia que alguien elija
+   * en el diálogo de configuración, es una marca de que algo ya ocurrió. Mezclar
+   * las dos cosas pondría en el catálogo una casilla que nadie querría marcar.
+   */
+  tutorialVisto: boolean
   /**
    * Lecturas alternativas de los artículos ambiguos. Se guardan aquí, pero solo
    * `criteriosVigentes` decide cuáles rigen de verdad.
    */
   criterios: Criterios
   establecer: <K extends keyof Opciones>(opcion: K, valor: Opciones[K]) => void
+  marcarTutorialVisto: () => void
   elegirCriterio: <K extends keyof Criterios>(criterio: K, valor: Criterios[K]) => void
 }
 
@@ -60,25 +101,36 @@ export const useConfiguracion = create<Configuracion>()(
   persist(
     (set) => ({
       opciones: INICIALES,
+      tutorialVisto: false,
       criterios: CRITERIOS_LEY,
       establecer: (opcion, valor) =>
         set((estado) => ({ opciones: { ...estado.opciones, [opcion]: valor } })),
+      marcarTutorialVisto: () => set({ tutorialVisto: true }),
       elegirCriterio: (criterio, valor) =>
         set((estado) => ({ criterios: { ...estado.criterios, [criterio]: valor } })),
     }),
     {
       name: 'simulador27:configuracion',
-      partialize: (estado) => ({ opciones: estado.opciones, criterios: estado.criterios }),
+      partialize: (estado) => ({
+        opciones: estado.opciones,
+        tutorialVisto: estado.tutorialVisto,
+        criterios: estado.criterios,
+      }),
       // Una preferencia guardada antes de que existiera una opción nueva no la
       // trae; sin este merge llegaría como `undefined` en vez de su valor
       // inicial, y la opción parecería apagada sin estarlo.
       merge: (persistido, actual) => {
         const guardado = persistido as
-          | { opciones?: Partial<Opciones>; criterios?: Partial<Criterios> }
+          | {
+              opciones?: Partial<Opciones>
+              tutorialVisto?: boolean
+              criterios?: Partial<Criterios>
+            }
           | undefined
         return {
           ...actual,
           opciones: { ...actual.opciones, ...guardado?.opciones },
+          tutorialVisto: guardado?.tutorialVisto ?? actual.tutorialVisto,
           // En producción se descarta lo guardado: los criterios de la ley no se
           // heredan de una sesión de desarrollo ni de un navegador ajeno.
           criterios: MODO_DESARROLLO

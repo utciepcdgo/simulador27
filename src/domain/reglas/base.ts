@@ -11,8 +11,43 @@ import type {
   DistritoEvaluado,
   EstadoSimulacion,
   IdPartido,
+  Postulacion,
   TokenFormula,
 } from '../types'
+
+// ─── Decisiones individuales fuera del convenio ─────────────────────────────
+
+/**
+ * La fórmula que un integrante puso en un distrito fuera del convenio.
+ *
+ * `null` tanto si no ha puesto ninguna como si declinó postular: en las dos
+ * situaciones no hay candidatura que evaluar, y quien necesita distinguirlas
+ * pregunta por `declinaPostular`.
+ */
+export function formulaIndividualDe(
+  postulacion: Postulacion,
+  partido: IdPartido,
+): TokenFormula | null {
+  if (postulacion.modo !== 'fuera') return null
+  const decision = postulacion.formulas[partido]
+  return decision && decision !== 'sin-postular' ? decision : null
+}
+
+/** Si el integrante declaró que no postula en este distrito (artículo 27). */
+export function declinaPostular(postulacion: Postulacion, partido: IdPartido): boolean {
+  return postulacion.modo === 'fuera' && postulacion.formulas[partido] === 'sin-postular'
+}
+
+/** Todas las fórmulas que hay en un distrito, sea cual sea su modo. */
+export function formulasEnDistrito(postulacion: Postulacion): TokenFormula[] {
+  if (postulacion.modo === 'convenio') return postulacion.formula ? [postulacion.formula] : []
+  if (postulacion.modo === 'fuera') {
+    return Object.values(postulacion.formulas).filter(
+      (d): d is TokenFormula => Boolean(d) && d !== 'sin-postular',
+    )
+  }
+  return []
+}
 
 // ─── Proyección de ámbitos ──────────────────────────────────────────────────
 
@@ -112,8 +147,23 @@ function enConvenio(distritos: readonly DistritoActivo[], partido?: IdPartido): 
   )
 }
 
-function fueraDelConvenio(distritos: readonly DistritoActivo[]): DistritoActivo[] {
-  return distritos.filter((d) => d.postulacion.modo === 'fuera')
+/**
+ * Los distritos que la coalición dejó fuera del convenio.
+ *
+ * Con `partido`, solo aquellos en los que ese integrante sí postula. Un distrito
+ * fuera del convenio es una decisión de cada quien: en una coalición parcial o
+ * flexible es justo donde un partido puede quedarse sin contender, y el artículo
+ * 27 integra los bloques con los distritos en los que **sí** se postula.
+ */
+function fueraDelConvenio(
+  distritos: readonly DistritoActivo[],
+  partido?: IdPartido,
+): DistritoActivo[] {
+  return distritos.filter(
+    (d) =>
+      d.postulacion.modo === 'fuera' &&
+      (partido === undefined || !declinaPostular(d.postulacion, partido)),
+  )
 }
 
 function formulaEnConvenio(distrito: DistritoActivo): TokenFormula | null {
@@ -122,7 +172,7 @@ function formulaEnConvenio(distrito: DistritoActivo): TokenFormula | null {
 
 function formulaIndividual(partido: IdPartido) {
   return (distrito: DistritoActivo): TokenFormula | null =>
-    distrito.postulacion.modo === 'fuera' ? (distrito.postulacion.formulas[partido] ?? null) : null
+    formulaIndividualDe(distrito.postulacion, partido)
 }
 
 function etiquetaAlianza(estado: EstadoSimulacion): string {
@@ -170,8 +220,10 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
   for (const partido of postulante.integrantes) {
     // Sin distritos fuera del convenio no hay tablero individual que evaluar: la
     // coalición es total y el partido no compite solo en ningún lado.
-    const propio = huerfanos.length
-      ? proyectarTablero(huerfanos, [partido], formulaIndividual(partido))
+    // Los suyos, no los de la coalición: los que este integrante no declinó.
+    const suyos = fueraDelConvenio(distritos, partido)
+    const propio = suyos.length
+      ? proyectarTablero(suyos, [partido], formulaIndividual(partido))
       : []
     if (propio.length > 0) {
       ambitos.push({

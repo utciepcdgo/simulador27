@@ -106,14 +106,32 @@ export interface TokenFormula {
  * competitividad. De ahí que las fórmulas sean un mapa por partido y no una
  * sola. Es lo que convierte a una coalición en parcial o flexible.
  *
- * Se modela como unión y no como campos sueltos porque los tres modos son
+ * `sin-postular` es la postulación parcial del artículo 27: el partido decide no
+ * competir ahí. No es un distrito vacío a la espera de fórmula —eso es
+ * `sin-decidir`—, sino uno que queda **fuera del ámbito**, de modo que no cuenta
+ * para el reordenamiento por porcentaje, ni para el reparto en bloques, ni para
+ * ninguna de las reglas que se miden sobre ellos.
+ *
+ * Se modela como unión y no como campos sueltos porque los cuatro modos son
  * excluyentes: no existe un distrito que tenga a la vez fórmula de convenio y
  * fórmulas individuales, y el tipo no debe permitir escribirlo.
  */
+/**
+ * Lo que un integrante decide en un distrito que la coalición dejó fuera del
+ * convenio, donde cada quien postula por su cuenta.
+ *
+ * Sin entrada es «sin decidir», la fórmula es «postula esto» y `'sin-postular'`
+ * es la negativa del artículo 27. Que la negativa sea un valor del mismo hueco y
+ * no una lista aparte impide el estado imposible: un partido no puede a la vez
+ * declinar el distrito y tener una fórmula puesta en él.
+ */
+export type PostulacionIndividual = TokenFormula | 'sin-postular'
+
 export type Postulacion =
   | { modo: 'sin-decidir' }
+  | { modo: 'sin-postular' }
   | { modo: 'convenio'; partido: IdPartido; formula: TokenFormula | null }
-  | { modo: 'fuera'; formulas: Readonly<Partial<Record<IdPartido, TokenFormula>>> }
+  | { modo: 'fuera'; formulas: Readonly<Partial<Record<IdPartido, PostulacionIndividual>>> }
 
 /**
  * Distrito en el tablero. La `Competitividad` que trae es la del postulante como
@@ -201,6 +219,14 @@ export interface ResultadoRegla {
   fundamento_legal: string
   /** `id_distrito` en MR, número de posición (1-5) en RP. */
   implicados?: readonly number[]
+  /**
+   * Partidos a los que corresponde el ámbito evaluado.
+   *
+   * Es del mismo orden que `implicados`: metadato para que la interfaz pueda
+   * señalar de qué habla el resultado —ahí, acompañar el rótulo con los
+   * emblemas— sin volver a deducirlo del texto de `alcance`.
+   */
+  partidos?: readonly IdPartido[]
 }
 
 /** Todo lo que el motor necesita para emitir un dictamen. */

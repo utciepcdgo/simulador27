@@ -5,10 +5,11 @@ import type {
   EstadoSimulacion,
   Genero,
   GeneroParidad,
+  IdPartido,
   PerfilCandidato,
   TokenFormula,
 } from '../types'
-import { ambitosDe, conteoGenero, minimoMujeres } from './base'
+import { ambitosDe, conteoGenero, formulasEnDistrito, minimoMujeres } from './base'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
 
 /**
@@ -102,6 +103,8 @@ export function recontar(formulas: readonly TokenFormula[]): Recuento {
 export interface ParidadDeAmbito {
   /** Llave estable de render: la etiqueta del ámbito. */
   ambito: string
+  /** `null` en el convenio de una alianza, que no es de un partido concreto. */
+  partido: IdPartido | null
   /** Rótulo corto: las siglas del partido, o el nombre de la alianza. */
   siglas: string
   mujeres: number
@@ -125,14 +128,7 @@ export interface RecuentoPostulacion {
 }
 
 function formulasEnMR(estado: EstadoSimulacion): TokenFormula[] {
-  return estado.distritos.flatMap((distrito) => {
-    const { postulacion } = distrito
-    if (postulacion.modo === 'convenio') return postulacion.formula ? [postulacion.formula] : []
-    if (postulacion.modo === 'fuera') {
-      return Object.values(postulacion.formulas).filter((f): f is TokenFormula => Boolean(f))
-    }
-    return []
-  })
+  return estado.distritos.flatMap((distrito) => formulasEnDistrito(distrito.postulacion))
 }
 
 /**
@@ -157,6 +153,7 @@ export function recuentoDe(
       const universo = criterios.denominadorParidad === 'registradas' ? asignadas : total
       return {
         ambito: ambito.etiqueta,
+        partido: ambito.partido,
         siglas: ambito.partido !== null ? siglasDe(ambito.partido) : 'Convenio',
         mujeres,
         hombres,

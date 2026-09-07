@@ -6,18 +6,19 @@ import { cn } from '../lib/utils'
 /**
  * Emblema oficial de un partido, con las siglas de respaldo.
  *
- * Los emblemas viven en un servidor externo. Si no cargan —red caída, host
- * inaccesible— la casilla no puede quedarse en blanco: sin emblema y sin siglas
- * no habría forma de saber a quién se está eligiendo, así que el fallo se
- * degrada a texto en vez de a nada.
+ * Los emblemas los sirve la propia aplicación desde `public/emblemas/`. Si aun
+ * así no cargan —el archivo falta, o el despliegue quedó incompleto— la casilla
+ * no puede quedarse en blanco: sin emblema y sin siglas no habría forma de saber
+ * a quién se está eligiendo, así que el fallo se degrada a texto en vez de a
+ * nada.
  *
  * `decorativo` invierte esa decisión para los lugares donde el emblema acompaña
  * a unas siglas que ya están escritas al lado. Ahí no carga ninguna información
  * por su cuenta, y degradar a texto imprimiría las siglas dos veces.
  *
  * Los archivos no comparten proporción: la mayoría son cuadrados y traen su
- * propio fondo opaco, pero PESD es vertical y PER es un logotipo horizontal de
- * 409×57 con fondo transparente. Por eso el tamaño se fija con una caja y
+ * propio fondo opaco, pero PESD es vertical y PER es un logotipo horizontal con
+ * fondo transparente. Por eso el tamaño se fija con una caja y
  * `object-contain`, nunca con un alto suelto: así el más ancho de todos se
  * encaja dentro en vez de desbordar la fila.
  */

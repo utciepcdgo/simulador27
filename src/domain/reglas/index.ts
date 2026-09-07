@@ -4,7 +4,7 @@ import { ambitosDe } from './base'
 import { integracionDelConvenio } from './convenio'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
 import { evaluarMR, umbralRegistroRP } from './mr'
-import { evaluarRP } from './rp'
+import { ambitosRP, evaluarListaRP } from './rp'
 import { validarFormula } from './token'
 
 export {
@@ -36,6 +36,8 @@ export {
   type Criterios,
 } from './criterios'
 export { FUNDAMENTOS } from './fundamentos'
+export { declinaPostular, formulaIndividualDe, formulasEnDistrito } from './base'
+export { repartoNecesario, type Reparto } from './reparto'
 export {
   GRUPOS,
   recontar,
@@ -86,8 +88,9 @@ function formulasColocadas(estado: EstadoSimulacion): { alcance: string; formula
         colocadas.push({ alcance: `Distrito ${distrito.numero_romano}`, formula: postulacion.formula })
       }
     } else if (postulacion.modo === 'fuera') {
-      for (const [clave, formula] of Object.entries(postulacion.formulas)) {
+      for (const [clave, decision] of Object.entries(postulacion.formulas)) {
         // `Object.entries` devuelve las llaves como texto aunque el id sea número.
+        const formula = decision === 'sin-postular' ? null : decision
         if (formula) {
           colocadas.push({
             alcance: `Distrito ${distrito.numero_romano} · ${siglasDe(Number(clave) as IdPartido)}`,
@@ -138,14 +141,24 @@ export function evaluarSimulacion(
 ): ResultadoRegla[] {
   const convenio = integracionDelConvenio(estado)
   const ambitos = ambitosDe(estado)
+  const todos = estado.postulante.integrantes
+  // De qué partidos habla cada resultado. Se marca aquí, en un solo lugar, y no
+  // en cada regla: ninguna de ellas necesita saberlo para calcular.
+  const de =
+    (partidos: readonly IdPartido[]) =>
+    (resultado: ResultadoRegla): ResultadoRegla => ({ ...resultado, partidos })
   return [
-    ...(convenio ? [convenio] : []),
+    ...(convenio ? [de(todos)(convenio)] : []),
     ...evaluarTokens(estado),
-    ...ambitos.flatMap((ambito) => evaluarMR(ambito, criterios)),
+    ...ambitos.flatMap((ambito) =>
+      evaluarMR(ambito, criterios).map(de(ambito.partido !== null ? [ambito.partido] : todos)),
+    ),
     // El umbral abre —o no— la Lista "A" de cada partido, así que se agrupa con
     // el resto de las reglas de RP y no con las de mayoría relativa.
-    ...estado.postulante.integrantes.map((partido) => umbralRegistroRP(ambitos, partido)),
-    ...evaluarRP(estado),
+    ...todos.map((partido) => de([partido])(umbralRegistroRP(ambitos, partido))),
+    ...ambitosRP(estado).flatMap((ambito) =>
+      evaluarListaRP(ambito).map(de([ambito.partido])),
+    ),
   ]
 }
 

@@ -1,15 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
-import { IconFeather, IconLock } from '@tabler/icons-react'
-import { nombreDe, siglasDe } from '../domain/catalogo'
-import { ambitosDe, type Ambito } from '../domain/reglas'
-import type { Bloque, DistritoEvaluado, IdPartido } from '../domain/types'
+import { AnimatePresence, m } from 'motion/react'
+import { IconArrowBackUp, IconFeather, IconLock, IconMapPinOff } from '@tabler/icons-react'
+import { nombreDe, siglasDe } from '@/domain/catalogo'
+import { ambitosDe, declinaPostular, type Ambito } from '@/domain/reglas'
+import type { Bloque, DistritoActivo, DistritoEvaluado, IdPartido } from '../domain/types'
+import { aparicion, ficha } from '../lib/animacion'
 import { descripcion } from '../lib/formula'
 import { cn } from '../lib/utils'
 import { useConfiguracion } from '../store/configuracion'
+import { tableroVigente, useNavegacion } from '../store/navegacion'
 import { estadoDe, useSimulador } from '../store/simulador'
 import { idCasillaMR } from './arrastre'
 import { EmblemaPartido } from './EmblemaPartido'
+import { BotonEditarFormula } from './EditorFormula'
+import { EmblemasDe, EtiquetaPartido } from './EtiquetaPartido'
 import { FormulaArrastrable } from './FichaFormula'
 import { Badge } from './ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -42,33 +47,37 @@ function SelectorFormula({
     { label: 'Sin fórmula', value: SIN_FORMULA },
     ...disponibles.map((f) => ({ label: descripcion(f), value: f.id })),
   ]
+  // Sin arrastre no hay ficha que pulsar: el lápiz es la única puerta al editor.
   return (
-    <Select
-      items={opciones}
-      value={asignada?.id ?? SIN_FORMULA}
-      onValueChange={(valor) => {
-        if (!valor || valor === SIN_FORMULA) {
-          if (asignada) devolverABandeja(asignada.id)
-        } else {
-          asignarMR(valor, distrito.id_distrito, partido)
-        }
-      }}
-    >
-      <SelectTrigger
-        size="sm"
-        className="w-full"
-        aria-label={`Fórmula del Distrito ${distrito.numero_romano}`}
+    <div className="flex items-center gap-1">
+      <Select
+        items={opciones}
+        value={asignada?.id ?? SIN_FORMULA}
+        onValueChange={(valor) => {
+          if (!valor || valor === SIN_FORMULA) {
+            if (asignada) devolverABandeja(asignada.id)
+          } else {
+            asignarMR(valor, distrito.id_distrito, partido)
+          }
+        }}
       >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {opciones.map((o) => (
-          <SelectItem key={o.value} value={o.value}>
-            {o.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          size="sm"
+          className="w-full flex-1"
+          aria-label={`Fórmula del Distrito ${distrito.numero_romano}`}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {opciones.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {asignada && <BotonEditarFormula formula={asignada} />}
+    </div>
   )
 }
 
@@ -77,13 +86,23 @@ function TarjetaDistrito({
   partido,
   arrastre,
   conSiglado,
+  puedeRetirarse,
 }: {
   distrito: DistritoEvaluado
   partido: IdPartido | null
   arrastre: boolean
   conSiglado: boolean
+  /**
+   * Si en este tablero se puede decidir no postular. Lo permiten el de quien
+   * compite solo y los individuales de una coalición parcial o flexible; el del
+   * convenio no, porque un distrito que la alianza no va a disputar sencillamente
+   * no se sigla.
+   */
+  puedeRetirarse: boolean
 }) {
   const devolverABandeja = useSimulador((s) => s.devolverABandeja)
+  const alternarPostulacion = useSimulador((s) => s.alternarPostulacion)
+  const alternarPostulacionIndividual = useSimulador((s) => s.alternarPostulacionIndividual)
   const mostrarRentabilidad = useConfiguracion((c) => c.opciones.mostrarRentabilidad)
   const { setNodeRef, isOver } = useDroppable({
     id: idCasillaMR(distrito.id_distrito, partido),
@@ -135,10 +154,29 @@ function TarjetaDistrito({
         <Badge variant="outline" className="shrink-0">
           #{distrito.posicion_rentabilidad}
         </Badge>
+        {puedeRetirarse && (
+          <button
+            type="button"
+            onClick={() =>
+              partido === null
+                ? alternarPostulacion(distrito.id_distrito)
+                : alternarPostulacionIndividual(distrito.id_distrito, partido)
+            }
+            aria-label={
+              partido === null
+                ? `No postular en el Distrito ${distrito.numero_romano}`
+                : `${siglasDe(partido)} no postula en el Distrito ${distrito.numero_romano}`
+            }
+            title="No postular en este distrito. Los bloques se rehacen con los distritos restantes."
+            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring -mr-0.5 shrink-0 rounded p-1 transition-colors outline-none focus-visible:ring-[3px]"
+          >
+            <IconMapPinOff className="size-3.5" />
+          </button>
+        )}
       </div>
 
       {(blindada || distrito.mayoria_indigena) && (
-        <div className="text-muted-foreground flex flex-wrap gap-2 text-[10px]">
+        <div className="text-muted-foreground flex flex-wrap gap-2 text-[0.625rem]">
           {blindada && (
             <span
               className="flex items-center gap-0.5"
@@ -175,7 +213,7 @@ function TarjetaDistrito({
               onQuitar={() => devolverABandeja(asignada.id)}
             />
           ) : (
-            <p className="text-muted-foreground py-1 text-center text-[10px]">Suelta una fórmula</p>
+            <p className="text-muted-foreground py-1 text-center text-[0.625rem]">Suelta una fórmula</p>
           )}
         </div>
       ) : (
@@ -193,7 +231,75 @@ function TarjetaDistrito({
  * partido y en el Baja del de otro, porque cada uno compite ahí con su propia
  * fuerza. No es una inconsistencia: es el artículo 28.8 en pantalla.
  */
-function Tablero({ ambito, arrastre }: { ambito: Ambito; arrastre: boolean }) {
+/**
+ * Los distritos que el partido dejó fuera de su postulación.
+ *
+ * Van al pie del tablero y no dentro de los bloques, porque el artículo 27
+ * integra los bloques con los distritos donde **sí** se postula: uno retirado no
+ * pertenece a ninguno. Se muestran para poder devolverlos, y en su orden de
+ * distrito, no de rentabilidad —ya no tienen posición—.
+ */
+function SinPostular({
+  distritos,
+  partido,
+}: {
+  distritos: DistritoActivo[]
+  /** El integrante que declinó, o `null` si la decisión es del tablero entero. */
+  partido: IdPartido | null
+}) {
+  const alternarPostulacion = useSimulador((s) => s.alternarPostulacion)
+  const alternarPostulacionIndividual = useSimulador((s) => s.alternarPostulacionIndividual)
+  if (distritos.length === 0) return null
+  return (
+    <m.div
+      variants={aparicion}
+      initial="oculto"
+      animate="visible"
+      exit="saliente"
+      className="mt-4 border-t pt-3"
+    >
+      <h3 className="text-muted-foreground mb-2 text-xs font-medium">
+        No postula en {distritos.length} distrito(s)
+      </h3>
+      <ul className="flex flex-wrap gap-1.5">
+        <AnimatePresence initial={false}>
+          {distritos.map((distrito) => (
+            <m.li key={distrito.id_distrito} layout="position" variants={ficha} initial="oculto" animate="visible" exit="saliente">
+              <button
+                type="button"
+                onClick={() =>
+                  partido === null
+                    ? alternarPostulacion(distrito.id_distrito)
+                    : alternarPostulacionIndividual(distrito.id_distrito, partido)
+                }
+                aria-label={`Volver a postular en el Distrito ${distrito.numero_romano}`}
+                title="Devolver este distrito a la postulación"
+                className="text-muted-foreground hover:border-foreground/30 hover:text-foreground focus-visible:ring-ring flex items-center gap-1 rounded-md border border-dashed px-2 py-1 text-xs transition-colors outline-none focus-visible:ring-[3px]"
+              >
+                <IconArrowBackUp className="size-3.5" aria-hidden />
+                <span className="font-semibold">{distrito.numero_romano}</span>
+                <span className="max-w-24 truncate">{distrito.cabecera}</span>
+              </button>
+            </m.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+    </m.div>
+  )
+}
+
+function Tablero({
+  ambito,
+  arrastre,
+  integrantes,
+  distritos,
+}: {
+  ambito: Ambito
+  arrastre: boolean
+  integrantes: readonly IdPartido[]
+  /** El tablero completo del estado, para saber qué quedó fuera de este ámbito. */
+  distritos: readonly DistritoActivo[]
+}) {
   const partido = ambito.fuera ? ambito.partido : null
   const mostrarSiglado = useConfiguracion((c) => c.opciones.mostrarSiglado)
   // `partido === null` identifica exactamente al tablero del convenio de una
@@ -201,12 +307,30 @@ function Tablero({ ambito, arrastre }: { ambito: Ambito; arrastre: boolean }) {
   // el suyo. Es la misma condición que pide la opción, sin repetirla.
   const conSiglado = mostrarSiglado && ambito.partido === null
 
+  // Quién decidió no postular aquí. En un tablero individual es cosa de ese
+  // partido; en el de quien compite solo, del distrito entero. En el convenio de
+  // una alianza no hay tal decisión: lo que no se sigla queda fuera de él.
+  const retirados = partido
+    ? distritos.filter((d) => declinaPostular(d.postulacion, partido))
+    : integrantes.length === 1
+      ? distritos.filter((d) => d.postulacion.modo === 'sin-postular')
+      : []
+  const puedeRetirarse = partido !== null || integrantes.length === 1
+
   return (
     <Card className="gap-3">
       <CardHeader>
-        <CardTitle className="text-base">{ambito.etiqueta}</CardTitle>
+        <CardTitle className="flex min-w-0 items-center gap-2 text-base">
+          {/* La etiqueta ya trae las siglas dentro, así que aquí va el emblema
+              solo: repetirlas al lado sería tartamudear. */}
+          <EmblemasDe
+            partidos={ambito.partido !== null ? [ambito.partido] : integrantes}
+            tamano="sm"
+          />
+          <span className="min-w-0 truncate">{ambito.etiqueta}</span>
+        </CardTitle>
         <CardDescription>
-          {ambito.distritos.length} distrito(s)
+          {ambito.distritos.length} de {ambito.distritos.length + retirados.length} distrito(s)
           {ambito.fuera
             ? ` · ranking propio de ${siglasDe(ambito.partido!)}, con su porcentaje individual`
             : ' · ranking de la postulación conjunta'}
@@ -236,7 +360,7 @@ function Tablero({ ambito, arrastre }: { ambito: Ambito; arrastre: boolean }) {
                     </Badge>
                   </h3>
                   {delBloque.length === 0 ? (
-                    <p className="text-muted-foreground rounded-md border border-dashed py-4 text-center text-[10px]">
+                    <p className="text-muted-foreground rounded-md border border-dashed py-4 text-center text-[0.625rem]">
                       Sin distritos
                     </p>
                   ) : (
@@ -248,6 +372,7 @@ function Tablero({ ambito, arrastre }: { ambito: Ambito; arrastre: boolean }) {
                           partido={partido}
                           arrastre={arrastre}
                           conSiglado={conSiglado}
+                          puedeRetirarse={puedeRetirarse}
                         />
                       ))}
                     </ul>
@@ -257,16 +382,47 @@ function Tablero({ ambito, arrastre }: { ambito: Ambito; arrastre: boolean }) {
             })}
           </div>
         )}
+        <SinPostular distritos={retirados} partido={partido} />
       </CardContent>
     </Card>
   )
 }
 
-/** Rótulo corto para la pestaña, con la cuenta de distritos que la ley separa. */
-function rotulo(ambito: Ambito, enAlianza: boolean): string {
-  const n = ambito.distritos.length
-  if (ambito.fuera) return `${siglasDe(ambito.partido!)} en lo individual (${n})`
-  return enAlianza ? `Convenio de coalición (${n})` : `${siglasDe(ambito.partido!)} (${n})`
+/**
+ * Rótulo de la pestaña, con la cuenta de distritos que la ley separa.
+ *
+ * Una pestaña es un nombre, no una oración: el ámbito completo —«PAN ·
+ * postulaciones en lo individual»— lo dice el encabezado del tablero que se abre
+ * debajo, así que aquí basta con distinguirlo del convenio.
+ *
+ * De qué partido es la pestaña es lo único que no puede encogerse. Todo lo que
+ * identifica lleva `shrink-0` y el calificativo es lo que cede: en el peor de los
+ * anchos se lee «PAN · indiv… 3», nunca «PA 3». Antes era al revés, porque el
+ * `truncate` de las siglas era lo único elástico de la fila.
+ */
+function Rotulo({ ambito, enAlianza }: { ambito: Ambito; enAlianza: boolean }) {
+  const cuenta = (
+    <span className="text-muted-foreground shrink-0 tabular-nums">
+      {ambito.distritos.length}
+    </span>
+  )
+  if (!ambito.fuera && enAlianza) {
+    return (
+      <>
+        <span className="shrink-0">Convenio</span>
+        {cuenta}
+      </>
+    )
+  }
+  return (
+    <>
+      <EtiquetaPartido partido={ambito.partido!} tamano="sm" className="shrink-0" />
+      {ambito.fuera && (
+        <span className="text-muted-foreground min-w-0 truncate">· individual</span>
+      )}
+      {cuenta}
+    </>
+  )
 }
 
 /**
@@ -283,37 +439,61 @@ export function FaseMayoria({ arrastre }: { arrastre: boolean }) {
   const postulante = useSimulador((s) => s.postulante)
   const distritos = useSimulador((s) => s.distritos)
   const listasRP = useSimulador((s) => s.listasRP)
-  const [activo, setActivo] = useState<string | null>(null)
+  const abierto = useNavegacion((n) => n.tablero)
+  const abrirTablero = useNavegacion((n) => n.abrirTablero)
 
   const tableros = useMemo(() => {
     const estado = estadoDe({ postulante, distritos, listasRP })
     return estado ? ambitosDe(estado).filter((a) => a.tipo === 'tablero') : []
   }, [postulante, distritos, listasRP])
 
-  // El conjunto de pestañas cambia al repartir el convenio: si la que estaba
-  // abierta desaparece —la coalición pasó a total—, se vuelve a la primera.
-  const seleccionado =
-    activo && tableros.some((a) => a.etiqueta === activo) ? activo : tableros[0]?.etiqueta
+  const seleccionado = tableroVigente(tableros, abierto)?.etiqueta
 
   if (tableros.length === 0) return null
+  const integrantes = postulante?.integrantes ?? []
   if (tableros.length === 1) {
-    return <Tablero ambito={tableros[0]} arrastre={arrastre} />
+    return (
+      <Tablero
+        ambito={tableros[0]}
+        arrastre={arrastre}
+        integrantes={integrantes}
+        distritos={distritos}
+      />
+    )
   }
 
-  const enAlianza = (postulante?.integrantes.length ?? 1) > 1
+  const enAlianza = integrantes.length > 1
 
   return (
-    <Tabs value={seleccionado} onValueChange={(v) => setActivo(String(v))}>
-      <TabsList variant="line">
+    <Tabs value={seleccionado} onValueChange={(v) => abrirTablero(String(v))}>
+      {/*
+        `max-w-full` para que la fila se ajuste a la columna en vez de desbordarla,
+        y `flex-initial` en cada pestaña para deshacer el reparto a partes iguales
+        que hereda de la variante segmentada: aquí cada rótulo ocupa lo que mide y
+        solo cede cuando de verdad no cabe la fila entera.
+      */}
+      <TabsList variant="line" className="max-w-full">
         {tableros.map((ambito) => (
-          <TabsTrigger key={ambito.etiqueta} value={ambito.etiqueta}>
-            {rotulo(ambito, enAlianza)}
+          <TabsTrigger
+            key={ambito.etiqueta}
+            value={ambito.etiqueta}
+            title={ambito.etiqueta}
+            className="min-w-0 flex-initial"
+          >
+            <span className="flex min-w-0 items-center gap-1.5">
+              <Rotulo ambito={ambito} enAlianza={enAlianza} />
+            </span>
           </TabsTrigger>
         ))}
       </TabsList>
       {tableros.map((ambito) => (
         <TabsContent key={ambito.etiqueta} value={ambito.etiqueta} className="pt-2">
-          <Tablero ambito={ambito} arrastre={arrastre} />
+          <Tablero
+            ambito={ambito}
+            arrastre={arrastre}
+            integrantes={integrantes}
+            distritos={distritos}
+          />
         </TabsContent>
       ))}
     </Tabs>

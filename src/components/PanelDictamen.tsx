@@ -1,11 +1,21 @@
+import { useState } from 'react'
 import { AnimatePresence, m } from 'motion/react'
-import { IconArrowsExchange, IconCircleCheck, IconProgressCheck } from '@tabler/icons-react'
+import {
+  IconArrowsExchange,
+  IconChevronDown,
+  IconCircleCheck,
+  IconProgressCheck,
+} from '@tabler/icons-react'
 import { criteriosFueraDeLey } from '../domain/reglas'
+import { DescargarDictamen } from './DescargarDictamen'
+import { EmblemasDe } from './EtiquetaPartido'
 import type { ResultadoRegla } from '../domain/types'
 import { relevo } from '../lib/animacion'
 import { useDictamen } from '../store/dictamen'
 import { Badge } from './ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
+import { cn } from '../lib/utils'
 
 function Icono({ resultado }: { resultado: ResultadoRegla }) {
   if (resultado.cumple) {
@@ -62,15 +72,104 @@ function agrupar(resultados: readonly ResultadoRegla[]): [string, ResultadoRegla
 }
 
 /**
+ * Lo que el pliegue de un ámbito recuerda.
+ *
+ * `cumplia` no es información redundante: es la memoria que permite distinguir
+ * un **cambio** de cumplimiento de un estado sostenido. Sin ella no se podría
+ * saber si este render es el primero en que el ámbito quedó completo —y toca
+ * plegarlo— o el quinto seguido, en el que la persona ya lo desplegó a mano y
+ * volver a plegarlo sería pelearse con ella.
+ */
+interface Pliegue {
+  abierto: boolean
+  cumplia: boolean
+}
+
+/**
+ * Cabecera de un ámbito: el rótulo y, cuando está plegado, su estado.
+ *
+ * La insignia es la parte que hace seguro plegar. Un pliegue que oculta *que*
+ * hay un problema sería una trampa; este oculta el detalle y deja el resumen a
+ * la vista, así que la fila plegada sigue diciendo la verdad.
+ */
+function Cabecera({
+  alcance,
+  reglas,
+  cumple,
+}: {
+  alcance: string
+  reglas: readonly ResultadoRegla[]
+  cumple: boolean
+}) {
+  const sustituciones = reglas.filter((r) => !r.cumple && r.gravedad === 'sustitucion').length
+  const pendientes = reglas.filter((r) => !r.cumple).length
+
+  return (
+    <CollapsibleTrigger
+      className="group hover:text-foreground focus-visible:ring-ring text-muted-foreground -mx-1 flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-xs font-medium tracking-wide uppercase transition-colors outline-none focus-visible:ring-[3px]"
+      aria-label={`${alcance}: ${cumple ? 'cumple todo' : `${pendientes} sin cumplir`}`}
+    >
+      <EmblemasDe partidos={reglas[0]?.partidos ?? []} tamano="sm" />
+      <span className="min-w-0 truncate">{alcance}</span>
+      <span className="ml-auto flex shrink-0 items-center gap-1.5">
+        {cumple ? (
+          <IconCircleCheck className="size-4 text-emerald-600" aria-hidden />
+        ) : (
+          <Badge variant={sustituciones > 0 ? 'destructive' : 'secondary'}>{pendientes}</Badge>
+        )}
+        {/*
+          El disparador de Base UI recibe `data-panel-open` cuando está abierto,
+          y no `data-closed`. Así que el galón parte girado y se endereza al
+          abrir: al revés, la clase no habría coincidido nunca y el galón habría
+          quedado quieto sin que nada lo delatara.
+        */}
+        <IconChevronDown
+          className="size-3.5 -rotate-90 transition-transform group-data-panel-open:rotate-0"
+          aria-hidden
+        />
+      </span>
+    </CollapsibleTrigger>
+  )
+}
+
+/**
  * Dictamen en vivo. Distingue lo irreparable de lo que todavía falta, porque un
  * tablero a medio llenar incumple casi todos los mínimos sin haber infringido
  * nada.
  */
 export function PanelDictamen() {
   const dictamen = useDictamen()
+  const [pliegues, setPliegues] = useState<Record<string, Pliegue>>({})
   if (!dictamen) return null
   const { resultados, sustituciones, porCompletar, cerrable, criterios } = dictamen
   const alterados = criteriosFueraDeLey(criterios)
+  const grupos = agrupar(resultados)
+
+  /*
+    El pliegue sigue al cumplimiento, y solo en sus cambios.
+
+    Se ajusta durante el render y no en un efecto, que es el patrón que React
+    admite para sincronizar estado con lo que llega de fuera: así el ámbito se
+    pliega en el mismo pintado en que su última regla queda cumplida, sin el
+    fotograma de retraso que dejaría un `useEffect`. Es idempotente —después de
+    ajustar, `cumplia` ya coincide con `cumple`— así que no se repite.
+
+    Y solo actúa en la transición. Mientras el estado se sostiene, manda lo que
+    la persona haya decidido a mano: puede desplegar uno que cumple para
+    revisarlo, o plegar uno con pendientes para quitarse ruido, y no se lo
+    volvemos a cambiar en el siguiente movimiento.
+  */
+  const siguiente = { ...pliegues }
+  let ajustado = false
+  for (const [alcance, reglas] of grupos) {
+    const cumple = reglas.every((r) => r.cumple)
+    const previo = pliegues[alcance]
+    if (!previo || previo.cumplia !== cumple) {
+      siguiente[alcance] = { abierto: !cumple, cumplia: cumple }
+      ajustado = true
+    }
+  }
+  if (ajustado) setPliegues(siguiente)
 
   return (
     <Card className="gap-4">
@@ -104,7 +203,10 @@ export function PanelDictamen() {
           hace que los que quedan se acomoden en vez de saltar.
         */}
         <AnimatePresence initial={false}>
-        {agrupar(resultados).map(([alcance, delAlcance]) => (
+        {grupos.map(([alcance, delAlcance]) => {
+          const cumple = delAlcance.every((r) => r.cumple)
+          const abierto = siguiente[alcance]?.abierto ?? true
+          return (
           <m.section
             key={alcance}
             layout="position"
@@ -112,11 +214,25 @@ export function PanelDictamen() {
             initial="oculto"
             animate="visible"
             exit="saliente"
-            className="space-y-1.5"
           >
-            <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              {alcance}
-            </h3>
+            <Collapsible
+              open={abierto}
+              onOpenChange={(v) =>
+                setPliegues((p) => ({ ...p, [alcance]: { abierto: v, cumplia: cumple } }))
+              }
+              className="space-y-1.5"
+            >
+            <Cabecera alcance={alcance} reglas={delAlcance} cumple={cumple} />
+            {/*
+              `--collapsible-panel-height` la publica Base UI en el propio panel,
+              así que el alto se anima sin medirlo a mano ni fijar un máximo.
+            */}
+            <CollapsibleContent
+              className={cn(
+                'h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-out',
+                'data-closed:h-0',
+              )}
+            >
             <ul className="space-y-1.5">
               {delAlcance.map((resultado, i) => (
                 <li key={`${resultado.regla}-${i}`} className="flex gap-2 text-sm">
@@ -152,9 +268,21 @@ export function PanelDictamen() {
                 </li>
               ))}
             </ul>
+            </CollapsibleContent>
+            </Collapsible>
           </m.section>
-        ))}
+          )
+        })}
         </AnimatePresence>
+
+        {/*
+          El producto final vive al pie de la revisión, que es donde se sabe si
+          la postulación cierra. No en configuración: esto no es una preferencia.
+        */}
+        <DescargarDictamen
+          cerrable={cerrable}
+          pendientes={sustituciones.length + porCompletar.length}
+        />
       </CardContent>
     </Card>
   )

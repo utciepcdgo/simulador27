@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, m } from 'motion/react'
+import { IconArrowRight } from '@tabler/icons-react'
 import {
   DndContext,
   DragOverlay,
@@ -9,33 +10,84 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { siglasDe } from './domain/catalogo'
 import { aparicion, contenedor, paso } from './lib/animacion'
 import type { TokenFormula } from './domain/types'
 import { useEsEscritorio } from './lib/media'
+import { useConfiguracion } from './store/configuracion'
 import { useSimulador } from './store/simulador'
 import { leerDestino, leerOrigen } from './components/arrastre'
 import { Bandeja } from './components/Bandeja'
+import { ControlesLlenado } from './components/ControlesLlenado'
 import { ConfiguracionPostulante } from './components/ConfiguracionPostulante'
 import { Consideraciones } from './components/Consideraciones'
+import { AvisoCierre } from './components/AvisoCierre'
 import { DialogoRebote } from './components/DialogoRebote'
 import { EmblemaInstituto } from './components/EmblemaInstituto'
+import { EtiquetaPartido } from './components/EtiquetaPartido'
 import { CajaDistrito, FaseConvenio } from './components/FaseConvenio'
 import { FaseMayoria } from './components/FaseMayoria'
 import { FaseProporcional } from './components/FaseProporcional'
 import { FichaFormula } from './components/FichaFormula'
+import { FondoMica } from './components/FondoMica'
 import { ModalConfiguracion } from './components/ModalConfiguracion'
 import { PanelBalance } from './components/PanelBalance'
 import { PanelDictamen } from './components/PanelDictamen'
 import { SelectorTema } from './components/SelectorTema'
+import { Tutorial } from './components/tutorial/Tutorial'
 import { Badge } from './components/ui/badge'
+import { Button } from './components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
+import { formulasEnDistrito } from './domain/reglas'
+import type { Postulante } from './domain/types'
 
 const FASES = [
-  { valor: 'convenio', etiqueta: '1 · Convenio' },
-  { valor: 'mayoria', etiqueta: '2 · Mayoría relativa' },
-  { valor: 'proporcional', etiqueta: '3 · Lista "A"' },
+  { valor: 'convenio', etiqueta: '1 · Convenio', corto: 'Convenio' },
+  { valor: 'mayoria', etiqueta: '2 · Mayoría relativa', corto: 'Mayoría relativa' },
+  { valor: 'proporcional', etiqueta: '3 · Lista "A"', corto: 'Lista "A"' },
 ] as const
+
+/**
+ * Quién postula, en una insignia.
+ *
+ * Vive en el encabezado porque es el dato que gobierna todo lo demás y conviene
+ * tenerlo a la vista sin gastar una columna. Desde la Fase 2 es además la puerta
+ * para cambiarlo.
+ */
+function InsigniaPostulante({ postulante }: { postulante: Postulante }) {
+  return (
+    <Badge variant="outline" className="h-auto gap-1.5 py-1 pl-1.5">
+      {postulante.modalidad}
+      <span aria-hidden className="text-muted-foreground">
+        ·
+      </span>
+      {postulante.integrantes.map((partido) => (
+        <EtiquetaPartido key={partido} partido={partido} tamano="sm" />
+      ))}
+    </Badge>
+  )
+}
+
+/**
+ * Avanza al paso siguiente.
+ *
+ * Nombra el destino en vez de decir solo «Siguiente»: quien lo pulsa sabe a
+ * dónde va sin volver a leer las pestañas. En el último paso no se dibuja,
+ * porque no hay a dónde avanzar —el cierre lo dictamina el panel de la
+ * izquierda— y un botón muerto es peor que ninguno.
+ */
+function Siguiente({ desde, onAvanzar }: { desde: string; onAvanzar: (valor: string) => void }) {
+  const proxima = FASES[FASES.findIndex((f) => f.valor === desde) + 1]
+  if (!proxima) return null
+  return (
+    <div className="flex justify-end">
+      <Button onClick={() => onAvanzar(proxima.valor)}>
+        Siguiente: {proxima.corto}
+        <IconArrowRight data-icon="inline-end" />
+      </Button>
+    </div>
+  )
+}
 
 function App() {
   const arrastre = useEsEscritorio()
@@ -43,6 +95,8 @@ function App() {
   const [direccion, setDireccion] = useState(1)
   const [activo, setActivo] = useState<string | null>(null)
   const [aceptado, setAceptado] = useState(false)
+  const [postulanteAbierto, setPostulanteAbierto] = useState(false)
+  const llenadoRapido = useConfiguracion((c) => c.opciones.mostrarLlenadoRapido)
 
   // El sentido del movimiento sale del orden de las fases, no de qué pestaña se
   // pulsó: saltar de la 1 a la 3 sigue siendo avanzar.
@@ -67,15 +121,10 @@ function App() {
   const sensores = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
   function formulaPorId(id: string): TokenFormula | undefined {
-    const enDistritos = distritos.flatMap((d) => {
-      const { postulacion } = d
-      if (postulacion.modo === 'convenio') return postulacion.formula ? [postulacion.formula] : []
-      if (postulacion.modo === 'fuera') return Object.values(postulacion.formulas)
-      return []
-    })
+    const enDistritos = distritos.flatMap((d) => formulasEnDistrito(d.postulacion))
     return (
       bandeja.find((f) => f.id === id) ??
-      enDistritos.find((f) => f?.id === id) ??
+      enDistritos.find((f) => f.id === id) ??
       listasRP.flatMap((l) => l.posiciones).find((f) => f?.id === id) ??
       undefined
     )
@@ -113,6 +162,8 @@ function App() {
       onDragCancel={() => setActivo(null)}
       onDragEnd={alSoltar}
     >
+      <FondoMica />
+
       {/*
         Encabezado a sangre, separado del tablero por una regla: el emblema es
         de la institución y el simulador es una herramienta suya, así que la
@@ -129,16 +180,39 @@ function App() {
             <h1 className="text-lg font-semibold tracking-tight text-balance sm:text-xl">
               Simulador de Postulaciones Electorales
             </h1>
-            <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+            <p className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
               Proceso Electoral Local 2026-2027
             </p>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            {postulante && (
-              <Badge variant="outline">
-                {postulante.modalidad} · {postulante.integrantes.map(siglasDe).join('-')}
-              </Badge>
-            )}
+            {/*
+              La caja del postulante vive en un solo sitio a la vez. En la Fase 1
+              está en la columna derecha, donde todavía se negocia con quién se
+              compite; desde la Fase 2 esa columna la ocupa la bandeja y el
+              postulante se consulta desde aquí. Dos instancias a la vez tendrían
+              dos estados locales que acabarían discrepando.
+            */}
+            {postulante &&
+              (fase === 'convenio' ? (
+                <InsigniaPostulante postulante={postulante} />
+              ) : (
+                <Popover open={postulanteAbierto} onOpenChange={setPostulanteAbierto}>
+                  <PopoverTrigger
+                    aria-label="Cambiar el postulante"
+                    className="focus-visible:ring-ring rounded-4xl transition-opacity outline-none hover:opacity-80 focus-visible:ring-[3px]"
+                  >
+                    <InsigniaPostulante postulante={postulante} />
+                  </PopoverTrigger>
+                  {/* Sin relleno propio: lo pone la `Card` de dentro. */}
+                  <PopoverContent className="w-[22rem] p-0">
+                    <ConfiguracionPostulante
+                      enPopover
+                      onAplicar={() => setPostulanteAbierto(false)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              ))}
+            <Tutorial />
             <SelectorTema />
             <ModalConfiguracion />
           </div>
@@ -215,36 +289,76 @@ function App() {
                 ))}
               </TabsList>
               <TabsContent value="convenio" className="pt-2">
-                <m.div custom={direccion} variants={paso} initial="entra" animate="centro">
+                <m.div
+                  custom={direccion}
+                  variants={paso}
+                  initial="entra"
+                  animate="centro"
+                  className="space-y-4"
+                >
                   <FaseConvenio arrastre={arrastre} />
+                  <Siguiente desde="convenio" onAvanzar={cambiarFase} />
                 </m.div>
               </TabsContent>
               <TabsContent value="mayoria" className="pt-2">
-                <m.div custom={direccion} variants={paso} initial="entra" animate="centro">
+                <m.div
+                  custom={direccion}
+                  variants={paso}
+                  initial="entra"
+                  animate="centro"
+                  className="space-y-4"
+                >
                   <FaseMayoria arrastre={arrastre} />
+                  <Siguiente desde="mayoria" onAvanzar={cambiarFase} />
                 </m.div>
               </TabsContent>
               <TabsContent value="proporcional" className="pt-2">
-                <m.div custom={direccion} variants={paso} initial="entra" animate="centro">
+                <m.div
+                  custom={direccion}
+                  variants={paso}
+                  initial="entra"
+                  animate="centro"
+                  className="space-y-4"
+                >
                   <FaseProporcional arrastre={arrastre} />
+                  <Siguiente desde="proporcional" onAvanzar={cambiarFase} />
                 </m.div>
               </TabsContent>
             </Tabs>
             <PanelBalance />
           </m.div>
 
-          <m.aside variants={aparicion} className="space-y-4 xl:col-start-3 xl:row-start-1">
-            <ConfiguracionPostulante />
-            {/* La bandeja no existe en la Fase 1: no hay fórmulas que repartir. */}
-            <AnimatePresence>
-              {fase !== 'convenio' && (
+          <m.aside variants={aparicion} className="xl:col-start-3 xl:row-start-1">
+            {/*
+              Una caja releva a la otra en vez de apilarse. En la Fase 1 no hay
+              fórmulas que repartir, así que la bandeja sobra; a partir de la
+              Fase 2 el postulante ya está decidido y se consulta desde el
+              encabezado. El relevo se cruza para que el cambio de paso no sea un
+              parpadeo.
+            */}
+            <AnimatePresence mode="wait" initial={false}>
+              {fase === 'convenio' ? (
                 <m.div
+                  key="postulante"
                   variants={aparicion}
                   initial="oculto"
                   animate="visible"
                   exit="saliente"
                 >
-                  <Bandeja arrastre={arrastre} />
+                  <ConfiguracionPostulante />
+                </m.div>
+              ) : (
+                <m.div
+                  key="bandeja"
+                  variants={aparicion}
+                  initial="oculto"
+                  animate="visible"
+                  exit="saliente"
+                >
+                  <div className="space-y-4">
+                    {llenadoRapido && <ControlesLlenado fase={fase} />}
+                    <Bandeja arrastre={arrastre} />
+                  </div>
                 </m.div>
               )}
             </AnimatePresence>
@@ -264,6 +378,7 @@ function App() {
       </DragOverlay>
 
       <DialogoRebote />
+      <AvisoCierre />
     </DndContext>
   )
 }

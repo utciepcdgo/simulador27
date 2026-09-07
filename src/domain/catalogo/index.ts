@@ -16,6 +16,7 @@ export {
   coalicion,
   competitividad,
   individual,
+  ordenarPorRegistro,
   integrarBloques,
   porcentajesDe,
   posicionesBlindadas,

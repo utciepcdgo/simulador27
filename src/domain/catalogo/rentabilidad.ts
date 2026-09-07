@@ -193,10 +193,26 @@ export function tableroInicial(postulante: Postulante): DistritoActivo[] {
   })
 }
 
+/**
+ * Integrantes en orden de registro.
+ *
+ * El `id_partido` **es** el orden en que cada partido obtuvo su registro, así
+ * que ordenar por él reproduce el orden oficial, sea cual sea el orden en que se
+ * hayan elegido en pantalla.
+ *
+ * Se normaliza al construir el postulante y no al pintarlo. Con eso quedan
+ * alineados de una sola vez el emblema del encabezado, el tinte de la franja,
+ * las pestañas de tablero, las Listas "A" y las etiquetas de cada ámbito.
+ * Ordenar en cada sitio garantizaría que algún día dos de ellos discreparan.
+ */
+export function ordenarPorRegistro(integrantes: readonly IdPartido[]): IdPartido[] {
+  return [...integrantes].sort((a, b) => a - b)
+}
+
 export function individual(partido: IdPartido): Postulante {
   return { integrantes: [partido], modalidad: 'Individual' }
 }
 
 export function coalicion(...integrantes: IdPartido[]): Postulante {
-  return { integrantes, modalidad: 'Coalición' }
+  return { integrantes: ordenarPorRegistro(integrantes), modalidad: 'Coalición' }
 }

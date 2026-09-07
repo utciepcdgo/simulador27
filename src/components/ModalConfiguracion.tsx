@@ -5,6 +5,8 @@ import { siglasDe } from '../domain/catalogo'
 import type { Postulante } from '../domain/types'
 import { MODO_DESARROLLO, useConfiguracion, type Opciones } from '../store/configuracion'
 import { useSimulador } from '../store/simulador'
+import { SelectorTamanoTexto } from './SelectorTamanoTexto'
+import { ScrollArea } from './ui/scroll-area'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import {
@@ -43,6 +45,24 @@ const CATALOGO: Opcion[] = [
       postulante && postulante.integrantes.length === 1
         ? `Sin efecto en esta postulación: ${siglasDe(postulante.integrantes[0])} compite de forma individual y los quince distritos son suyos.`
         : null,
+  },
+  {
+    clave: 'mostrarEditorFormulas',
+    titulo: 'Modificar fórmulas con un clic',
+    detalle:
+      'Pulsar una fórmula abre sus atributos para cambiar el género, la medida compensatoria o la edad, sin devolverla a la bandeja. Funciona en el tablero, en la Lista «A» y en la bandeja. El cambio atraviesa las mismas reglas que un arrastre. Sin la opción, la ficha solo se arrastra.',
+  },
+  {
+    clave: 'sonidos',
+    titulo: 'Sonidos de la interfaz',
+    detalle:
+      'Dos avisos breves: uno cuando una regla no admite lo que acabas de hacer, por ejemplo al dar a una fórmula encabezada por mujer una suplencia de hombre, y otro cuando la postulación pasa a cumplirlas todas. Acompañan al mensaje, no lo sustituyen: lo que explica el motivo y cita el artículo sigue siendo el texto en pantalla.',
+  },
+  {
+    clave: 'mostrarLlenadoRapido',
+    titulo: 'Mostrar controles de llenado rápido',
+    detalle:
+      'Añade sobre la bandeja cuatro atajos para plantear un escenario deprisa: crear fórmulas al azar, crear las que le faltan al tablero abierto, repartirlas en sus distritos y devolverlas todas a la bandeja. Los tres últimos escriben sobre lo que ya esté puesto.',
   },
 ]
 
@@ -133,16 +153,38 @@ export function ModalConfiguracion() {
       </Button>
 
       <Dialog open={abierto} onOpenChange={setAbierto}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="grid-rows-[auto_minmax(0,1fr)] overflow-hidden sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Configuración</DialogTitle>
             <DialogDescription>
-              Estas preferencias se recuerdan en este navegador. El escenario que armes en el
+              Estas preferencias se recuerdan en este navegador. El escenario que plantees en el
               tablero no.
             </DialogDescription>
           </DialogHeader>
 
-          <ul className="space-y-2">
+          {/*
+            Solo el cuerpo se desplaza. El encabezado y el botón de cerrar se
+            quedan donde están: si el título se fuera con el desplazamiento, en
+            una pantalla corta se perdería de vista de qué es este diálogo.
+
+            `-mr-4 pr-4` mete la barra en el hueco del relleno del diálogo en vez
+            de estrechar el texto, y `pb-1` deja aire para que el foco del último
+            control no quede pegado al borde recortado.
+          */}
+          <ScrollArea className="-mr-4 pr-4">
+          <div className="space-y-4 pb-1">
+          <section className="space-y-2">
+            <header className="space-y-0.5">
+              <h3 className="text-sm font-medium">Tamaño del texto</h3>
+              <p className="text-muted-foreground text-xs leading-snug">
+                Se aplica a toda la herramienta. «Seguir al sistema» respeta el tamaño que ya
+                tengas configurado en el navegador, y los demás lo escalan a partir de ahí.
+              </p>
+            </header>
+            <SelectorTamanoTexto />
+          </section>
+
+          <ul className="space-y-2 border-t pt-4">
             {CATALOGO.map(({ clave, titulo, detalle, inaplicable }) => {
               const aviso = inaplicable?.(postulante) ?? null
               return (
@@ -193,7 +235,7 @@ export function ModalConfiguracion() {
               {CRITERIOS.map((criterio) => (
                 <fieldset key={criterio.clave} className="space-y-1.5 rounded-md border p-3">
                   <legend className="px-1 text-xs font-medium">{criterio.titulo}</legend>
-                  <p className="text-muted-foreground text-[11px]">{criterio.articulo}</p>
+                  <p className="text-muted-foreground text-[0.6875rem]">{criterio.articulo}</p>
                   {criterio.lecturas.map((lectura) => (
                     <label
                       key={String(lectura.valor)}
@@ -223,6 +265,8 @@ export function ModalConfiguracion() {
               ))}
             </section>
           )}
+          </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>

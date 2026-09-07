@@ -1,11 +1,13 @@
 import { useDroppable } from '@dnd-kit/core'
 import { siglasDe } from '../domain/catalogo'
+import { EmblemasDe } from './EtiquetaPartido'
 import { ambitosRP, generoSubrepresentado } from '../domain/reglas'
 import type { IdPartido, ListaRP } from '../domain/types'
 import { cn } from '../lib/utils'
 import { descripcion } from '../lib/formula'
 import { estadoDe, useSimulador } from '../store/simulador'
 import { idCasillaRP } from './arrastre'
+import { BotonEditarFormula } from './EditorFormula'
 import { FormulaArrastrable } from './FichaFormula'
 import { Badge } from './ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -58,10 +60,11 @@ function Casilla({
               onQuitar={() => devolverABandeja(asignada.id)}
             />
           ) : (
-            <p className="text-muted-foreground py-1 text-center text-[10px]">Suelta una fórmula</p>
+            <p className="text-muted-foreground py-1 text-center text-[0.625rem]">Suelta una fórmula</p>
           )}
         </div>
       ) : (
+        <>
         <Select
           items={opciones}
           value={asignada?.id ?? SIN_FORMULA}
@@ -88,6 +91,8 @@ function Casilla({
             ))}
           </SelectContent>
         </Select>
+        {asignada && <BotonEditarFormula formula={asignada} />}
+        </>
       )}
     </li>
   )
@@ -116,6 +121,7 @@ export function FaseProporcional({ arrastre }: { arrastre: boolean }) {
           <Card key={lista.partido} className="gap-3">
             <CardHeader>
               <CardTitle className="text-base">
+                <EmblemasDe partidos={[lista.partido]} tamano="sm" />
                 {siglasDe(lista.partido)} · Lista &ldquo;A&rdquo;
               </CardTitle>
               <CardDescription>
