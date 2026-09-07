@@ -39,12 +39,12 @@ export interface Paso {
 export const PASOS: readonly Paso[] = [
   {
     id: 'anonimato',
-    titulo: 'No almacenamos la información',
+    titulo: 'No se almacena información',
     cuerpo: (
       <>
         El simulador trabaja con <strong>fórmulas anónimas</strong>. Una fórmula son tres atributos
         jurídicos y nada más: género, edad y medida compensatoria. El sistema no captura ni almacena
-        nombres de personas. No es una carencia, es una decisión de diseño.
+        nombres de personas debido a la decisión de diseño de este Simulador.
       </>
     ),
     Miniatura: Anonimato,
@@ -69,8 +69,8 @@ export const PASOS: readonly Paso[] = [
       <>
         El trabajo avanza de izquierda a derecha. En el <strong>convenio</strong> decides con quién
         postulas y a quién se sigla cada distrito. En <strong>mayoría relativa</strong> integras el
-        tablero de los quince. En la <strong>Lista "A"</strong>, las cinco posiciones de
-        representación proporcional. Puedes volver atrás cuando quieras.
+        tablero de los quince distritos. En la <strong>Lista "A"</strong>, las cinco posiciones de
+        representación proporcional. Puedes retroceder cuando quieras.
       </>
     ),
     Miniatura: Fases,
