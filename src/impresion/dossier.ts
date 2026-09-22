@@ -110,7 +110,7 @@ export function armarDossier(estado: EstadoSimulacion, criterios: Criterios): Do
   const solo = postulante.integrantes.length === 1
   const resultados = evaluarSimulacion(estado, criterios)
 
-  const tableros = ambitosDe(estado)
+  const tableros = ambitosDe(estado, criterios)
     .filter((a) => a.tipo === 'tablero')
     .map<TableroImpreso>((ambito) => {
       const suyo = ambito.fuera ? ambito.partido : null

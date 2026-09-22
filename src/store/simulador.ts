@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { criteriosVigentes } from './configuracion'
 import { ordenarPorRegistro, tableroInicial } from '../domain/catalogo'
 import { esMujer } from '../domain/genero'
 import { perfilesAlAzar, perfilesPara } from '../domain/muestras'
@@ -138,7 +139,9 @@ export function estadoDe(
 function ambitoPorEtiqueta(s: Simulador, etiqueta: string): Ambito | undefined {
   const estado = estadoDe(s)
   if (!estado) return undefined
-  return ambitosDe(estado).find((a) => a.tipo === 'tablero' && a.etiqueta === etiqueta)
+  return ambitosDe(estado, criteriosVigentes()).find(
+    (a) => a.tipo === 'tablero' && a.etiqueta === etiqueta,
+  )
 }
 
 function contiene(postulacion: Postulacion, id: string): boolean {
@@ -322,18 +325,20 @@ modificarFormula: (id, propietario, suplente) => {
 
     const estado = estadoDe(s)
     if (estado) {
-      const proyectado = ambitosDe(estado)
+      const proyectado = ambitosDe(estado, criteriosVigentes())
         .filter((a) => a.tipo === 'tablero')
         .flatMap((a) => a.distritos)
         .find((d) => d.formula_asignada?.id === id)
       if (proyectado) {
-        const rechazo = admiteEnDistrito(formula, proyectado)
+        const rechazo = admiteEnDistrito(formula, proyectado, criteriosVigentes())
         if (rechazo) return rechazo
       }
 
       const lista = s.listasRP.find((l) => l.posiciones.some((f) => f?.id === id))
       if (lista) {
-        const ambito = ambitosRP(estado).find((a) => a.partido === lista.partido)
+        const ambito = ambitosRP(estado, criteriosVigentes()).find(
+          (a) => a.partido === lista.partido,
+        )
         const posicion = lista.posiciones.findIndex((f) => f?.id === id) + 1
         if (ambito) {
           const rechazo = admiteEnListaRP(ambito, posicion, formula)
@@ -386,13 +391,13 @@ modificarFormula: (id, propietario, suplente) => {
     // posición y el bloque salen de reintegrar el conjunto al que pertenece.
     const estado = estadoDe(s)
     if (!estado) return
-    const tablero = ambitosDe(estado).find((a) =>
+    const tablero = ambitosDe(estado, criteriosVigentes()).find((a) =>
       a.tipo === 'tablero' && (partido ? a.fuera && a.partido === partido : !a.fuera),
     )
     const proyectado = tablero?.distritos.find((d) => d.id_distrito === id_distrito)
     if (!proyectado) return
 
-    const rechazo = admiteEnDistrito(formula, proyectado)
+    const rechazo = admiteEnDistrito(formula, proyectado, criteriosVigentes())
     if (rechazo) {
       set({ rechazo })
       return
@@ -523,10 +528,24 @@ modificarFormula: (id, propietario, suplente) => {
       grupo.sort((a, b) => Number(esFormulaJoven(b)) - Number(esFormulaJoven(a)))
     }
 
+    // El reparto propone un género por distrito, pero eso no basta para saber si
+    // la fórmula cabe: bajo la lectura de la ley, una posición de menor votación
+    // no admite ninguna mujer, y una fórmula `H-M` encabeza como hombre y aun así
+    // queda fuera. Así que se pregunta a la misma puerta que consulta el
+    // arrastre, en vez de repetir aquí el criterio y arriesgarse a que discrepen.
+    const criterios = criteriosVigentes()
+    const porId = new Map(ambito.distritos.map((d) => [d.id_distrito, d]))
     const asignadas = new Map<number, TokenFormula>()
     for (const [id_distrito, genero] of reparto.porDistrito) {
-      const formula = libres[genero].shift()
-      if (formula) asignadas.set(id_distrito, formula)
+      const destino = porId.get(id_distrito)
+      const grupo = libres[genero]
+      const i = destino
+        ? grupo.findIndex((f) => !admiteEnDistrito(f, destino, criterios))
+        : grupo.length > 0
+          ? 0
+          : -1
+      if (i === -1) continue
+      asignadas.set(id_distrito, grupo.splice(i, 1)[0])
     }
     if (asignadas.size === 0) return { colocadas: 0, irresolubles: reparto.irresolubles }
 

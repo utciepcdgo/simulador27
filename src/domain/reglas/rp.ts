@@ -10,6 +10,7 @@ import type {
   TokenFormula,
 } from '../types'
 import { accionAfirmativaAcreditada, ambitosDe, conteoGenero } from './base'
+import { CRITERIOS_LEY, type Criterios } from './criterios'
 import { FUNDAMENTOS } from './fundamentos'
 
 /** Posiciones de la Lista "A". */
@@ -33,9 +34,12 @@ export interface AmbitoRP {
   distritosMR: readonly DistritoEvaluado[]
 }
 
-export function ambitosRP(estado: EstadoSimulacion): AmbitoRP[] {
+export function ambitosRP(
+  estado: EstadoSimulacion,
+  criterios: Criterios = CRITERIOS_LEY,
+): AmbitoRP[] {
   const consolidados = new Map(
-    ambitosDe(estado)
+    ambitosDe(estado, criterios)
       .filter((a) => a.tipo === 'consolidado')
       .map((a) => [a.partido, a.distritos]),
   )
@@ -143,9 +147,15 @@ export function alternanciaRP(ambito: AmbitoRP): ResultadoRegla {
   if (cumple) {
     mensaje = `La lista alterna correctamente a partir de una posición 1 encabezada por ${encabezado === 'Mujer' ? 'mujer' : 'hombre'}.`
   } else if (conflictos.length > 0) {
-    mensaje = `La posición ${conflictos.join(', ')} rompe la alternancia: el resto de la lista exige que la posición 1 la encabece ${encabezado === 'Mujer' ? 'una mujer' : 'un hombre'}.`
+    mensaje = `${
+      conflictos.length === 1
+        ? `La posición ${conflictos[0]} no alterna`
+        : `Las posiciones ${conflictos.join(', ')} no alternan`
+    } con el resto de la lista. La posición 1 debe encabezarla ${encabezado === 'Mujer' ? 'una mujer' : 'un hombre'}.`
   } else {
-    mensaje = `Faltan ${vacias.length} posición(es) por asignar: ${vacias.join(', ')}.`
+    mensaje = `${
+      vacias.length === 1 ? 'Falta 1 posición' : `Faltan ${vacias.length} posiciones`
+    } por asignar: ${vacias.join(', ')}.`
   }
   return {
     regla: 'Alternancia de género en RP',
@@ -186,15 +196,15 @@ export function encabezadoCompensatorioRP(ambito: AmbitoRP): ResultadoRegla {
       cumple: false,
       gravedad: 'por-completar',
       mensaje: exigido
-        ? `La posición 1 está vacía y debe encabezarla ${exigido === 'Mujer' ? 'una mujer' : 'un hombre'}, por ser el género subrepresentado en la mayoría relativa de ${nombreDe(ambito.partido)}.`
-        : 'La posición 1 está vacía. La mayoría relativa de este partido está en equivalencia, así que la puede encabezar cualquier género.',
+        ? `La posición 1 está vacía. Debe encabezarla ${exigido === 'Mujer' ? 'una mujer' : 'un hombre'}, el género subrepresentado en la mayoría relativa de ${nombreDe(ambito.partido)}.`
+        : 'La posición 1 está vacía. La mayoría relativa de este partido está en equivalencia entre géneros. Cualquier género puede encabezar la lista.',
     }
   }
   if (!exigido) {
     return {
       ...base,
       cumple: true,
-      mensaje: `La mayoría relativa de ${nombreDe(ambito.partido)} está en equivalencia entre géneros, por lo que el encabezado de la lista es de libre determinación.`,
+      mensaje: `La mayoría relativa de ${nombreDe(ambito.partido)} está en equivalencia entre géneros. El encabezado de la lista es de libre determinación.`,
     }
   }
   const genero = generoDe(encabeza)
@@ -205,7 +215,7 @@ export function encabezadoCompensatorioRP(ambito: AmbitoRP): ResultadoRegla {
     gravedad: cumple ? undefined : mrCompleto ? 'sustitucion' : 'por-completar',
     mensaje: cumple
       ? `La lista la encabeza ${exigido === 'Mujer' ? 'una mujer' : 'un hombre'}, género subrepresentado en la mayoría relativa de ${nombreDe(ambito.partido)}.`
-      : `La lista la encabeza ${genero === 'Mujer' ? 'una mujer' : 'un hombre'}, pero el género subrepresentado en la mayoría relativa de ${nombreDe(ambito.partido)} es ${exigido === 'Mujer' ? 'el femenino' : 'el masculino'}.${mrCompleto ? '' : ' Todavía es subsanable: quedan distritos de mayoría relativa por asignar.'}`,
+      : `La lista la encabeza ${genero === 'Mujer' ? 'una mujer' : 'un hombre'}. El género subrepresentado en la mayoría relativa de ${nombreDe(ambito.partido)} es ${exigido === 'Mujer' ? 'el femenino' : 'el masculino'}.${mrCompleto ? '' : ' Quedan distritos de mayoría relativa por asignar.'}`,
   }
 }
 
@@ -292,7 +302,7 @@ export function admiteEnListaRP(
   if (resultado.gravedad === 'sustitucion') {
     return {
       ...resultado,
-      mensaje: `La posición ${posicion} rompe la alternancia de la lista: le corresponde una fórmula encabezada por ${generoDe(formula) === 'Mujer' ? 'hombre' : 'mujer'}.`,
+      mensaje: `La posición ${posicion} de la Lista "A" corresponde a una fórmula encabezada por ${generoDe(formula) === 'Mujer' ? 'un hombre' : 'una mujer'}.`,
       implicados: [posicion],
     }
   }

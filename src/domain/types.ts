@@ -20,10 +20,10 @@ export interface Distrito {
    * El Distrito XV: el que se conforma con los municipios de mayor porcentaje
    * de población indígena (artículo 6.2).
    *
-   * Nombra un hecho del distrito, **no una obligación**. El artículo 55.1 dice
-   * que los partidos «procurarán» postular ahí una fórmula integrada por
-   * personas de origen étnico, y el 55.2 la califica de «optativa más no
-   * limitativa». No es un espacio reservado: cualquier fórmula cabe.
+   * Nombra un hecho del distrito, **no una obligación**. El artículo 56.1 dice
+   * que los partidos «podrán» postular ahí una fórmula integrada por personas de
+   * origen étnico, y el 56.2 la califica de «optativa más no limitativa». No es
+   * un espacio reservado: cualquier fórmula cabe.
    */
   mayoria_indigena: boolean
 }

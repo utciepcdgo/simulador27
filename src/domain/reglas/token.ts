@@ -1,5 +1,7 @@
 import { esMujer } from '../genero'
 import type { DistritoEvaluado, ResultadoRegla, TokenFormula } from '../types'
+import { alcanzaProhibicion } from './base'
+import { CRITERIOS_LEY, type Criterios } from './criterios'
 import { REGLA_PROHIBICION_MENOR_VOTACION } from './mr'
 import { FUNDAMENTOS } from './fundamentos'
 
@@ -28,7 +30,9 @@ export function homogeneidadGenero(formula: TokenFormula): ResultadoRegla {
     gravedad: cumple ? undefined : 'sustitucion',
     mensaje: cumple
       ? 'La fórmula es homogénea.'
-      : `Una fórmula encabezada por una mujer requiere suplencia mujer; se recibió "${suplente.genero}".`,
+      : `Una fórmula encabezada por una mujer requiere suplencia mujer. La de esta fórmula es ${
+          suplente.genero === 'No Binario' ? 'una persona no binaria' : 'un hombre'
+        }.`,
     fundamento_legal: FUNDAMENTOS.homogeneidadGenero,
   }
 }
@@ -50,14 +54,18 @@ export function validarFormula(formula: TokenFormula): ResultadoRegla[] {
   return [homogeneidadGenero(formula)]
 }
 
-function rechazoBlindaje(distrito: DistritoEvaluado): ResultadoRegla {
+function rechazoBlindaje(distrito: DistritoEvaluado, criterios: Criterios): ResultadoRegla {
   return {
     regla: REGLA_PROHIBICION_MENOR_VOTACION,
     ambito: 'MR',
     alcance: `Distrito ${distrito.numero_romano}`,
     cumple: false,
     gravedad: 'sustitucion',
-    mensaje: `La posición de rentabilidad ${distrito.posicion_rentabilidad} está entre las de menor porcentaje de votación: no admite fórmulas encabezadas por mujeres.`,
+    mensaje: `La posición de rentabilidad ${distrito.posicion_rentabilidad} está entre las de menor porcentaje de votación. No admite ${
+      criterios.alcanceMenorVotacion === 'candidatura'
+        ? 'ninguna candidatura de mujer, ni propietaria ni suplente'
+        : 'fórmulas encabezadas por mujeres'
+    }.`,
     fundamento_legal: FUNDAMENTOS.blindajeBaja,
     implicados: [distrito.id_distrito],
   }
@@ -70,14 +78,17 @@ function rechazoBlindaje(distrito: DistritoEvaluado): ResultadoRegla {
  * Queda un solo impedimento: la prohibición del artículo 28.2 en los distritos
  * de menor porcentaje de votación. **No hay espacios reservados.** El Distrito
  * XV rebotaba aquí toda fórmula que no acreditara la adscripción indígena, y eso
- * excedía la norma: el artículo 55.1 dice que los partidos «procurarán»
- * postularla y el 55.2 la llama «optativa más no limitativa». Impedir una
+ * excedía la norma: el artículo 56.1 dice que los partidos «podrán» postularla y
+ * el 56.2 la llama «optativa más no limitativa». Impedir una
  * postulación lícita es el error más grave que puede cometer esta herramienta.
  */
 export function admiteEnDistrito(
   formula: TokenFormula,
   distrito: DistritoEvaluado,
+  criterios: Criterios = CRITERIOS_LEY,
 ): ResultadoRegla | null {
-  if (distrito.esBlindada && esMujer(formula.propietario)) return rechazoBlindaje(distrito)
+  if (distrito.esBlindada && alcanzaProhibicion(formula, criterios)) {
+    return rechazoBlindaje(distrito, criterios)
+  }
   return null
 }

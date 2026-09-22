@@ -17,11 +17,17 @@ export interface Reparto {
   /**
    * Requisitos que ninguna composición satisface en este ámbito.
    *
-   * En tableros de 5, 7 y 11 distritos el artículo 28 no admite reparto: el
+   * En los tableros de 5 y 11 distritos el artículo 28 no admite reparto: el
    * 28.5 exige mayoría femenina en el bloque bajo mientras el 28.2 le cierra las
    * posiciones que harían falta. Cuando eso ocurre se devuelve el acomodo que
    * más se acerca en lugar de no devolver nada, y se dice qué quedó fuera. El
    * simulador refleja, no impide.
+   *
+   * Los de 7 y 8 tampoco tienen composición válida, y **esta búsqueda no lo
+   * declara**: el rango de su bloque bajo se ensancha en vez de quedar vacío, y
+   * el reparto se da por bueno con una mujer menos que el piso. Es un defecto
+   * propio de este archivo; `holgura.ts` sí los detecta, y el recorrido de los
+   * quince tamaños está en `docs/tableros-parciales.md`.
    */
   irresolubles: string[]
 }

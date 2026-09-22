@@ -85,11 +85,11 @@ Consecuencias en el código:
 fórmula que no acreditara la adscripción indígena y lo reportaba como incumplimiento. El
 articulado no lo sostiene.
 
-> **Artículo 55.1.** …en el caso del distrito con mayor población indígena (Distrito XV), los
-> partidos políticos **procurarán** postular a una fórmula integrada por personas de origen
+> **Artículo 56.1.** …en el caso del distrito con mayor población indígena (Distrito XV), los
+> partidos políticos **podrán** postular a una fórmula integrada por personas de origen
 > étnico.
 >
-> **Artículo 55.2.** La postulación de fórmulas integradas por personas de origen étnico en
+> **Artículo 56.2.** La postulación de fórmulas integradas por personas de origen étnico en
 > distritos distintos al XV será igualmente **optativa más no limitativa**…
 
 «Procurarán» y «optativa» no fundan una prohibición. Impedir una postulación lícita es el error
@@ -256,7 +256,7 @@ cosas distintas:
 | | Qué contiene | Para qué sirve |
 |---|---|---|
 | **Candidaturas propias** | Lo que el partido **sigló** + lo que postula por su cuenta | Paridad general y cuota joven (art. 20.2) |
-| **Huella de participación** | **Todo** el convenio + lo que postula por su cuenta | Umbral de once distritos para RP (art. 74.1.a) |
+| **Huella de participación** | **Todo** el convenio + lo que postula por su cuenta | Umbral de once distritos para RP (art. 75, numeral 1, fracción I) |
 
 Firmar un convenio es postular en **todos** los distritos que abarca, con independencia de a
 quién se siglen. El siglado tiene efectos precisos y acotados —reparto de votos, financiamiento y
@@ -288,7 +288,7 @@ El 54 dice lo contrario con todas sus letras, y por eso la cuota de inclusión d
 evaluándose lista por lista. Los dos artículos se leen juntos: si el legislador hubiera querido
 lo mismo en ambos, no habría cambiado la enumeración del sujeto.
 
-### La proporción del artículo 27.4
+### La proporción del artículo 27, numeral 1, punto V
 
 El convenio no cubre lo que cada partido postula por su cuenta. Ahí la medida vuelve, pero «en
 proporción al número de distritos que integre cada bloque, y **en lo que resulte aplicable**».
@@ -310,11 +310,11 @@ once le exigen la suya.
 rubro —el artículo 9.3, para integrar coaliciones— manda tomar «siempre el número entero
 siguiente», es decir un `ceil()`. Un revisor del Consejo General que trasladara ese criterio a las
 cuotas de vulnerabilidad exigiría fórmula joven incluso en un tablero de un distrito. La frase «y
-en lo que resulte aplicable» del 27.4 es lo que sostiene el redondeo natural frente a esa lectura;
+en lo que resulte aplicable» del 27.1.V es lo que sostiene el redondeo natural frente a esa lectura;
 si el Consejo optara por el `ceil()`, el cambio es una línea en `minimoJovenes`.
 
 **Asimetría deliberada.** El convenio exige una fórmula joven aunque abarque solo cuatro
-distritos: el 53.1 no habla de proporción, y la proporcionalidad del 27.4 está escrita para los
+distritos: el 53.1 no habla de proporción, y la proporcionalidad del 27.1.V está escrita para los
 distritos que se postulan individualmente. **Conviene confirmarlo.**
 
 ### Registro unificado
@@ -437,7 +437,7 @@ pruebas que corren las dos lecturas: `src/domain/reglas/criterios.ts`.
 | Criterio | Artículo | Lectura de la ley | Lectura alterna |
 |---|---|---|---|
 | `denominadorParidad` | 20.2 | `ambito` — todos los distritos del ámbito | `registradas` — solo las candidaturas colocadas |
-| `aritmeticaImposible` | 27.4, 28.2 y 28.5 | `reportar` — se reporta el incumplimiento | `inaplicable` — no resulta exigible |
+| `aritmeticaImposible` | 27.1.V, 28.2 y 28.5 | `reportar` — se reporta el incumplimiento | `inaplicable` — no resulta exigible |
 
 **`CRITERIOS_LEY` es lo que corre en producción**, sin interruptor. La capa que permite cambiarlos
 existe solo en desarrollo y tiene tres candados:
@@ -471,7 +471,7 @@ alcanzables: once es lo que le queda a cada socio de una coalición flexible en 
 además el umbral de registro para RP.
 
 Bajo la lectura de la ley el motor lo reporta y añade que ningún acomodo lo satisface. Bajo la
-alterna se apoya en el «y en lo que resulte aplicable» del 27.4 y lo tiene por no exigible —pero
+alterna se apoya en el «y en lo que resulte aplicable» del 27.1.V y lo tiene por no exigible —pero
 **lo dice**: la regla sigue en el dictamen con la explicación. Una regla que se esfuma callada es
 peor que una que se contradice, porque la contradicción se ve y la ausencia no.
 

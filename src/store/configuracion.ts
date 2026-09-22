@@ -154,3 +154,16 @@ export function useCriterios(): Criterios {
   const criterios = useConfiguracion((c) => c.criterios)
   return MODO_DESARROLLO ? criterios : CRITERIOS_LEY
 }
+
+/**
+ * Lo mismo, fuera de React.
+ *
+ * Lo necesitan las acciones del store que consultan al motor antes de aceptar un
+ * movimiento —el rebote del arrastre—, que no son componentes y no pueden usar
+ * un hook. Pasa por la **misma** compuerta: fuera de desarrollo devuelve la ley
+ * sin mirar lo guardado, así que sigue habiendo un solo camino y una sola
+ * garantía.
+ */
+export function criteriosVigentes(): Criterios {
+  return MODO_DESARROLLO ? useConfiguracion.getState().criterios : CRITERIOS_LEY
+}

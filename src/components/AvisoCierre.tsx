@@ -48,17 +48,23 @@ export function AvisoCierre() {
             <DialogContent className="sm:max-w-md">
                 <div className="space-y-3">
                     <IconCircleCheck className="size-9 text-emerald-600" aria-hidden/>
+                    {/*
+                      Misma forma que el título del rebote —«Movimiento
+                      rechazado»—, porque son los dos extremos del mismo
+                      trámite y conviene que suenen igual.
+                    */}
                     <DialogTitle className="text-lg leading-tight">
-                        Has concluído con éxito
+                        Revisión preliminar cumplida
                     </DialogTitle>
                     <DialogDescription className="space-y-2 text-sm leading-snug">
-            <span className="block">
-              Las {dictamen.resultados.length} reglas de la revisión preliminar quedaron cumplidas
-              y ya puedes descargar el resultado en PDF.
-            </span>
                         <span className="block">
-              O, continúa probando escenarios. También puedes descargar el resultado desde el panel de revisión preliminar.
-            </span>
+                            {dictamen.resultados.length === 1
+                                ? 'La regla evaluada quedó cumplida.'
+                                : `Las ${dictamen.resultados.length} reglas evaluadas quedaron cumplidas.`}
+                        </span>
+                        <span className="block">
+                            El botón de descarga también está en el panel de revisión preliminar.
+                        </span>
                     </DialogDescription>
                 </div>
 
@@ -71,8 +77,8 @@ export function AvisoCierre() {
           precisamente donde hay que decir que no.
         */}
                 <p className="text-muted-foreground border-t pt-3 text-xs leading-snug">
-                    Esto es un ensayo. El documento no sustituye la revisión que se hará al momento del
-                    registro de candidaturas.
+                    Esto es un ensayo. El documento no sustituye la revisión del registro de
+                    candidaturas.
                 </p>
 
                 <Button variant="ghost" size="default" onClick={() => setAbierto(false)}>

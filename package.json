@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "catalogo:generar": "node scripts/generar-catalogo.mjs"
+    "catalogo:generar": "node scripts/generar-catalogo.mjs",
+    "reglas:generar": "vitest run -u src/domain/reglas/inventario.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -280,8 +280,9 @@ function Tablero({
 
       {hayCerradas && (
         <Text style={estilos.nota}>
-          * Posición de menor porcentaje de votación del ámbito: no admite fórmulas encabezadas por
-          mujeres (artículo 28, numeral 2 de los Lineamientos).
+          * Posición de menor porcentaje de votación del ámbito: en ningún caso admite candidaturas
+          de mujeres, ni como propietaria ni como suplente (artículo 28, numeral 2 de los
+          Lineamientos).
         </Text>
       )}
 

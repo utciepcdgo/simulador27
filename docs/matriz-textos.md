@@ -42,7 +42,7 @@ F-22 a F-25.
 **Fundamentos legales.** Las citas de la revisión se trasladaron a
 `src/domain/reglas/fundamentos.ts`: quedan resueltos `acreditacionCuota` (art. 5),
 `paridadGeneral` (20.2), `liderazgoBloque` (28.1), `blindajeBaja` (28.2), `mayoriaBloqueImpar`
-(28.4 y 186.6.b.ii LIPEED), `cuotaJoven` (186.6.c LIPEED y 27.4), `accionAfirmativaRP` (56) y,
+(28.4 y 186.6.b.ii LIPEED), `cuotaJoven` (186.6.c LIPEED y 27.1.V), `accionAfirmativaRP` (55.1 y 57) y,
 parcialmente, `convenio` (24.1). **Siguen en `PENDIENTE` seis:** `homogeneidadGenero`,
 `paridadBloques`, `cuotaIndigena`, `umbralRegistroRP`, `alternanciaRP` y
 `encabezadoCompensatorioRP`, más los mínimos de coalición parcial y flexible.
@@ -281,7 +281,7 @@ Salen del campo `alcance` de cada regla. `src/domain/reglas/base.ts` y `convenio
 
 | Id | Texto actual | Observación | Redacción propuesta |
 |---|---|---|---|
-| D-48 | `Cumplido por inaplicabilidad matemática: {n} de 15 distritos no alcanzan la proporción de una fórmula joven.` | «Inaplicabilidad matemática» no es de la norma, pero describe con precisión el «en lo que resulte aplicable» del 27.4. Conviene citarlo | No aplicable: {n} de 15 distritos no alcanzan la proporción de una fórmula, conforme al artículo 27.4. ⚠ |
+| D-48 | `Cumplido por inaplicabilidad matemática: {n} de 15 distritos no alcanzan la proporción de una fórmula joven.` | «Inaplicabilidad matemática» no es de la norma, pero describe con precisión el «en lo que resulte aplicable» del 27.1.V. Conviene citarlo | No aplicable: {n} de 15 distritos no alcanzan la proporción de una fórmula, conforme al artículo 27, numeral 1, punto V. ⚠ |
 | D-49 | `{n} fórmula(s) integrada(s) por personas jóvenes (mínimo {n}).` | T-05 | — |
 | D-50 | `Falta 1 fórmula integrada por personas jóvenes.` | Único lugar con rama singular escrita. Modelo para T-05 | — |
 | D-51 | `Faltan {n} fórmulas integradas por personas jóvenes.` | — | — |

@@ -47,7 +47,7 @@ export function DialogoRebote() {
         </div>
 
         <DialogFooter>
-          <Button onClick={descartarRechazo}>Entendido</Button>
+          <Button onClick={descartarRechazo}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

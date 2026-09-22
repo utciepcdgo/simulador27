@@ -8,7 +8,7 @@ import type { Bloque, DistritoActivo, DistritoEvaluado, IdPartido } from '../dom
 import { aparicion, ficha } from '../lib/animacion'
 import { descripcion } from '../lib/formula'
 import { cn } from '../lib/utils'
-import { useConfiguracion } from '../store/configuracion'
+import { useConfiguracion, useCriterios } from '../store/configuracion'
 import { tableroVigente, useNavegacion } from '../store/navegacion'
 import { estadoDe, useSimulador } from '../store/simulador'
 import { idCasillaMR } from './arrastre'
@@ -442,10 +442,12 @@ export function FaseMayoria({ arrastre }: { arrastre: boolean }) {
   const abierto = useNavegacion((n) => n.tablero)
   const abrirTablero = useNavegacion((n) => n.abrirTablero)
 
+  const criterios = useCriterios()
+
   const tableros = useMemo(() => {
     const estado = estadoDe({ postulante, distritos, listasRP })
-    return estado ? ambitosDe(estado).filter((a) => a.tipo === 'tablero') : []
-  }, [postulante, distritos, listasRP])
+    return estado ? ambitosDe(estado, criterios).filter((a) => a.tipo === 'tablero') : []
+  }, [postulante, distritos, listasRP, criterios])
 
   const seleccionado = tableroVigente(tableros, abierto)?.etiqueta
 

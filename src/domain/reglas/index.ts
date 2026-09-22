@@ -33,6 +33,7 @@ export {
 export {
   CRITERIOS_LEY,
   criteriosFueraDeLey,
+  NOMBRE_CRITERIO,
   type Criterios,
 } from './criterios'
 export { FUNDAMENTOS } from './fundamentos'
@@ -140,7 +141,7 @@ export function evaluarSimulacion(
   criterios: Criterios = CRITERIOS_LEY,
 ): ResultadoRegla[] {
   const convenio = integracionDelConvenio(estado)
-  const ambitos = ambitosDe(estado)
+  const ambitos = ambitosDe(estado, criterios)
   const todos = estado.postulante.integrantes
   // De qué partidos habla cada resultado. Se marca aquí, en un solo lugar, y no
   // en cada regla: ninguna de ellas necesita saberlo para calcular.
@@ -156,7 +157,7 @@ export function evaluarSimulacion(
     // El umbral abre —o no— la Lista "A" de cada partido, así que se agrupa con
     // el resto de las reglas de RP y no con las de mayoría relativa.
     ...todos.map((partido) => de([partido])(umbralRegistroRP(ambitos, partido))),
-    ...ambitosRP(estado).flatMap((ambito) =>
+    ...ambitosRP(estado, criterios).flatMap((ambito) =>
       evaluarListaRP(ambito).map(de([ambito.partido])),
     ),
   ]

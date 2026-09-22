@@ -3,6 +3,7 @@ import { AnimatePresence, m } from 'motion/react'
 import { IconArrowBackUp, IconDice5, IconLayoutGridAdd, IconStack2 } from '@tabler/icons-react'
 import { ambitosDe } from '../domain/reglas'
 import { aparicion } from '../lib/animacion'
+import { useCriterios } from '../store/configuracion'
 import { tableroVigente, useNavegacion } from '../store/navegacion'
 import { estadoDe, useSimulador } from '../store/simulador'
 import { Button } from './ui/button'
@@ -42,11 +43,15 @@ export function ControlesLlenado({ fase }: { fase: string }) {
   const vaciarTablero = useSimulador((s) => s.vaciarTablero)
   const [aviso, setAviso] = useState<Aviso | null>(null)
 
+  const criterios = useCriterios()
+
   const tablero = useMemo(() => {
     const estado = estadoDe({ postulante, distritos, listasRP })
-    const tableros = estado ? ambitosDe(estado).filter((a) => a.tipo === 'tablero') : []
+    const tableros = estado
+      ? ambitosDe(estado, criterios).filter((a) => a.tipo === 'tablero')
+      : []
     return tableroVigente(tableros, abierto)
-  }, [postulante, distritos, listasRP, abierto])
+  }, [postulante, distritos, listasRP, abierto, criterios])
 
   const [cuantas, setCuantas] = useState(3)
 

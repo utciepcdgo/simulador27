@@ -1,9 +1,17 @@
 # Simulador de Postulaciones Electorales — PEL 2026-2027, Durango
 
 SPA para simular y validar jurídicamente la postulación de candidaturas: 15 distritos de
-Mayoría Relativa y 5 posiciones de Representación Proporcional. Especificación completa en
-[docs/technical-brief-v2.md](docs/technical-brief-v2.md); las decisiones que el brief dejaba
-abiertas están resueltas en [docs/decisiones.md](docs/decisiones.md).
+Mayoría Relativa y 5 posiciones de Representación Proporcional.
+
+**Qué evalúa el motor, regla por regla:** [docs/reglas.md](docs/reglas.md). Se **genera** desde
+`src/domain/reglas/inventario.ts` con `pnpm reglas:generar`, y la suite falla si se queda atrás;
+no editarlo a mano. Las decisiones de interpretación están en
+[docs/decisiones.md](docs/decisiones.md), y las que siguen abiertas en
+[docs/pendientes-juridicos.md](docs/pendientes-juridicos.md).
+
+[docs/technical-brief-v2.md](docs/technical-brief-v2.md) es el brief de origen y se conserva como
+**documento histórico**: su matriz de reglas ya no describe al motor y en un punto afirma lo
+contrario de la norma. No usarlo como especificación.
 
 ## Restricción absoluta
 

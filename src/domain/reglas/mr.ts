@@ -7,7 +7,7 @@ import {
 } from '../catalogo/rentabilidad'
 import { esMujer } from '../genero'
 import type { IdPartido, ResultadoRegla } from '../types'
-import type { Ambito } from './base'
+import { alcanzaProhibicion, type Ambito } from './base'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
 import {
   acreditaIndigena,
@@ -292,7 +292,7 @@ export function mayoriaBloqueImpar(
     return {
       ...base,
       cumple: true,
-      mensaje: `No aplicable, conforme al artículo 27.4: en un ámbito de ${ambito.distritos.length} distritos la prohibición del artículo 28.2 ocupa las posiciones que harían falta para la mayoría exigida, así que ningún acomodo la satisface.`,
+      mensaje: `No aplicable, conforme al artículo 27, numeral 1, punto V: en un ámbito de ${ambito.distritos.length} distritos la prohibición del artículo 28.2 ocupa las posiciones que harían falta para la mayoría exigida, así que ningún acomodo la satisface.`,
     }
   }
   const exigencia = impares
@@ -317,23 +317,32 @@ export function mayoriaBloqueImpar(
  * ámbito** no admiten fórmulas encabezadas por mujeres. Los perfiles no binarios
  * sí caben, porque para paridad cuentan como hombres.
  */
-export function blindajeBaja(ambito: Ambito): ResultadoRegla {
+export function blindajeBaja(
+  ambito: Ambito,
+  criterios: Criterios = CRITERIOS_LEY,
+): ResultadoRegla {
+  const alcanzaSuplencia = criterios.alcanceMenorVotacion === 'candidatura'
+  const cargo = alcanzaSuplencia ? 'candidaturas de mujeres' : 'fórmulas encabezadas por mujeres'
   const blindadas = ambito.distritos.filter((d) => d.esBlindada)
   const infractores = blindadas.filter(
-    (d) => d.formula_asignada && esMujer(d.formula_asignada.propietario),
+    (d) => d.formula_asignada && alcanzaProhibicion(d.formula_asignada, criterios),
   )
   const cumple = infractores.length === 0
   const posiciones = blindadas.map((d) => d.posicion_rentabilidad).join(' y ')
   let mensaje: string
   if (!cumple) {
-    mensaje = `Distrito ${infractores.map((d) => d.numero_romano).join(', ')}: ${ubicacionProhibida(blindadas.length)} y no admite fórmula encabezada por mujer.`
+    mensaje = `Distrito ${infractores.map((d) => d.numero_romano).join(', ')}: ${ubicacionProhibida(blindadas.length)} y en ningún caso admite ${cargo}.`
+  } else if (blindadas.length === 0 && tamanosDeBloque(ambito.distritos.length).Baja === 0) {
+    mensaje = `El bloque Baja de este ámbito está vacío, así que la prohibición es inoperante: admite ${cargo} en cualquiera de sus posiciones.`
   } else if (blindadas.length === 0) {
-    mensaje =
-      'El bloque Baja de este ámbito está vacío, así que la prohibición es inoperante: admite fórmulas encabezadas por mujeres en cualquiera de sus posiciones.'
+    // El bloque Baja sí existe: la prohibición se graduó a cero. Decir aquí que
+    // el bloque está vacío sería falso, y dejaría al dictamen afirmando que no
+    // hay nada que proteger justo donde se decidió no proteger nada.
+    mensaje = `En un ámbito de ${ambito.distritos.length} distritos la prohibición no alcanza a ninguna posición: aplicarla dejaría al bloque Baja sin composición posible, y el artículo 27, numeral 1, punto V manda cumplir estos criterios «en proporción al número de distritos que integre cada bloque, y en lo que resulte aplicable».`
   } else if (blindadas.length === 1) {
-    mensaje = `La posición de rentabilidad ${posiciones} no lleva fórmula encabezada por mujer.`
+    mensaje = `La posición de rentabilidad ${posiciones} no lleva ${alcanzaSuplencia ? 'ninguna candidatura de mujer' : 'fórmula encabezada por mujer'}.`
   } else {
-    mensaje = `Las posiciones de rentabilidad ${posiciones} no llevan fórmulas encabezadas por mujeres.`
+    mensaje = `Las posiciones de rentabilidad ${posiciones} no llevan ${cargo}.`
   }
   return {
     regla: REGLA_PROHIBICION_MENOR_VOTACION,
@@ -356,7 +365,7 @@ export function blindajeBaja(ambito: Ambito): ResultadoRegla {
  * integrantes en ese tablero. Es el contraste deliberado con el artículo 54, que
  * para la Lista "A" exige a los partidos «de manera individual».
  *
- * **Fuera del convenio, la proporción.** El artículo 27.4 pide cumplir la medida
+ * **Fuera del convenio, la proporción.** El artículo 27.1.V pide cumplir la medida
  * «en proporción al número de distritos que integre cada bloque, y en lo que
  * resulte aplicable». Una fórmula por cada quince distritos, redondeada: el
  * umbral cae en ocho, más de la mitad. Por debajo de eso la cuota es
@@ -390,7 +399,7 @@ export function cuotaJoven(ambito: Ambito): ResultadoRegla {
     return {
       ...base,
       cumple: true,
-      mensaje: `No aplicable: ${ambito.distritos.length} de 15 distritos no alcanzan la proporción de una fórmula, conforme al artículo 27.4.`,
+      mensaje: `No aplicable: ${ambito.distritos.length} de 15 distritos no alcanzan la proporción de una fórmula, conforme al artículo 27, numeral 1, punto V.`,
     }
   }
 
@@ -422,8 +431,8 @@ export function cuotaJoven(ambito: Ambito): ResultadoRegla {
 /**
  * Medida compensatoria de personas indígenas en el Distrito XV: **optativa**.
  *
- * El artículo 55.1 dice que los partidos «procurarán» postular ahí una fórmula
- * integrada por personas de origen étnico, y el 55.2 la califica de «optativa
+ * El artículo 56.1 dice que los partidos «podrán» postular ahí una fórmula
+ * integrada por personas de origen étnico, y el 56.2 la califica de «optativa
  * más no limitativa». No es un espacio reservado ni un requisito, así que esta
  * regla **nunca incumple**: informa si la medida se tomó y no la exige.
  *
@@ -565,7 +574,7 @@ export function evaluarMR(
     ...paridadBloques(ambito),
     mayoriaBloqueImpar(ambito, criterios),
     ...(completo ? [liderazgoBloque(ambito)] : []),
-    blindajeBaja(ambito),
+    blindajeBaja(ambito, criterios),
     cuotaJoven(ambito),
     cuotaIndigena(ambito),
   ]
