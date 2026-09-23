@@ -24,7 +24,7 @@ export const PARTIDOS = [
   { id_partido: 8, siglas: 'PV', nombre: "Partido Villista" },
   { id_partido: 9, siglas: 'PER', nombre: "Partido Estatal Renovación" },
   { id_partido: 10, siglas: 'PAZ', nombre: "Partido PAZ" },
-  { id_partido: 11, siglas: 'SOMOS', nombre: "Somos MX" },
+  { id_partido: 11, siglas: 'SOMOS', nombre: "SOMOS" },
 ] as const
 
 /** Atajo legible: `PARTIDO.MORENA` en vez de un 6 suelto. */

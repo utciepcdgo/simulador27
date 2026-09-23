@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { emblemaDe, nombreDe, siglasDe } from '../domain/catalogo'
+import { emblemaDe, nombreDe, siglasDe } from '@/domain/catalogo'
 import type { IdPartido } from '../domain/types'
 import { cn } from '../lib/utils'
 
