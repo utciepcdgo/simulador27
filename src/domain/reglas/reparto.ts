@@ -117,6 +117,45 @@ function mujeresPorBloque(ambito: Ambito, franjas: Franja[]): {
 }
 
 /**
+ * El reparto cuando no hay bloques que respetar.
+ *
+ * Cae aquí el tablero de un partido local o de nuevo registro, y el de cualquier
+ * ámbito sin porcentaje con el que ordenar. Queda una sola exigencia, el piso
+ * del artículo 23.1, y ninguna posición cerrada: siempre tiene solución, así que
+ * nunca devuelve requisitos irresolubles.
+ *
+ * Las mujeres se colocan en los distritos de menor número primero, que es el
+ * orden en que se presenta el tablero. Sin rentabilidad que medir, cualquier
+ * orden es igual de defendible y el ascendente es el único que no insinúa un
+ * ranking que no existe.
+ */
+function sinBloques(ambito: Ambito): Reparto {
+  const { mujeres } = conteoGenero(ambito.distritos)
+  let porColocar = minimoMujeres(ambito.distritos.length) - mujeres
+
+  const porDistrito = new Map<number, GeneroParidad>()
+  const enOrden = [...ambito.distritos].sort((a, b) => a.id_distrito - b.id_distrito)
+  for (const distrito of enOrden) {
+    if (distrito.formula_asignada) continue
+    const cabeMujer = porColocar > 0
+    porDistrito.set(distrito.id_distrito, cabeMujer ? 'Mujer' : 'Hombre')
+    if (cabeMujer) porColocar -= 1
+  }
+
+  const faltan = { Mujer: 0, Hombre: 0 }
+  for (const genero of porDistrito.values()) faltan[genero] += 1
+
+  return {
+    porDistrito,
+    faltan,
+    faltaJoven: !ambito.distritos.some(
+      (d) => d.formula_asignada?.propietario.esJoven && d.formula_asignada.suplente.esJoven,
+    ),
+    irresolubles: [],
+  }
+}
+
+/**
  * El reparto de géneros que el ámbito necesita, distrito por distrito.
  *
  * Es constructivo, no una búsqueda: dentro de cada bloque las mujeres van a las
@@ -129,6 +168,7 @@ function mujeresPorBloque(ambito: Ambito, franjas: Franja[]): {
  * de modo que el reparto se pueda aplicar sobre un tablero a medio llenar.
  */
 export function repartoNecesario(ambito: Ambito): Reparto {
+  if (!ambito.conBloques) return sinBloques(ambito)
   const franjas = franjasDe(ambito)
   const { reparto, cumpleMayoria, cumplePiso } = mujeresPorBloque(ambito, franjas)
 

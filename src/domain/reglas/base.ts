@@ -2,6 +2,7 @@ import { siglasDe } from '../catalogo/partidos'
 import { integrarBloques, porcentajesDe } from '../catalogo/rentabilidad'
 import { accionAfirmativaEfectiva, esMujer } from '../genero'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
+import { aplicanBloques } from './elegibilidad'
 import { posicionesBlindadasSegun } from './holgura'
 import type {
   AccionAfirmativa,
@@ -99,6 +100,17 @@ export interface Ambito {
    * sus fórmulas se cuentan dentro del consolidado del partido.
    */
   paridadPropia: boolean
+  /**
+   * Si a este ámbito le aplican los bloques de competitividad.
+   *
+   * Falso por dos motivos distintos que conviene no confundir. Por derecho: el
+   * artículo 23.2 exime a los partidos locales y a los nacionales de nuevo
+   * registro, y el 29.2 lo repite para los locales. Por aritmética: ningún
+   * integrante compitió en 2023-2024, así que no hay porcentaje con el que
+   * ordenar. En los dos casos el tablero se presenta en orden ascendente de
+   * distrito y no corren las cuatro reglas que cuelgan de la geometría.
+   */
+  conBloques: boolean
   distritos: readonly DistritoEvaluado[]
 }
 
@@ -121,10 +133,19 @@ function proyectarTablero(
   criterios: Criterios,
 ): DistritoEvaluado[] {
   const porId = new Map(distritos.map((d) => [d.id_distrito, d]))
+  // La exención del 23.2 es de cada partido. Una alianza no es ninguno de los
+  // tres supuestos que enumera, así que su convenio conserva los bloques aunque
+  // incluya a un partido exento; lo que decide entonces es si queda algún
+  // porcentaje con el que ordenar, y de eso se encarga `integrarBloques`.
+  const exento = integrantes.length === 1 && !aplicanBloques(integrantes[0])
   const competitividades = integrarBloques(
     porcentajesDe(integrantes, [...porId.keys()]),
+    !exento,
   )
-  const blindadas = new Set(posicionesBlindadasSegun(competitividades.length, criterios))
+  const sinBloques = competitividades.every((c) => c.bloque === null)
+  const blindadas = sinBloques
+    ? new Set<number>()
+    : new Set(posicionesBlindadasSegun(competitividades.length, criterios))
 
   return competitividades.map((comp) => {
     const distrito = porId.get(comp.id_distrito)!
@@ -141,6 +162,11 @@ function proyectarTablero(
       formula_asignada: formulaDe(distrito),
     }
   })
+}
+
+/** Si la proyección llegó a repartir bloques. Ver `Ambito.conBloques`. */
+function conBloques(distritos: readonly DistritoEvaluado[]): boolean {
+  return distritos.some((d) => d.bloque !== null)
 }
 
 function enConvenio(distritos: readonly DistritoActivo[], partido?: IdPartido): DistritoActivo[] {
@@ -214,6 +240,13 @@ export function ambitosDe(
   const coalicionTotal =
     !solo && postulante.modalidad === 'Coalición' && huerfanos.length === 0
 
+  const tableroDelConvenio = proyectarTablero(
+    enConvenio(distritos),
+    postulante.integrantes,
+    formulaEnConvenio,
+    criterios,
+  )
+
   const ambitos: Ambito[] = [
     {
       etiqueta: solo ? `${alianza} · tablero` : `${alianza} · convenio`,
@@ -221,12 +254,8 @@ export function ambitosDe(
       partido: solo ? postulante.integrantes[0] : null,
       fuera: false,
       paridadPropia: !solo,
-      distritos: proyectarTablero(
-        enConvenio(distritos),
-        postulante.integrantes,
-        formulaEnConvenio,
-        criterios,
-      ),
+      conBloques: conBloques(tableroDelConvenio),
+      distritos: tableroDelConvenio,
     },
   ]
 
@@ -245,6 +274,7 @@ export function ambitosDe(
         partido,
         fuera: true,
         paridadPropia: false,
+        conBloques: conBloques(propio),
         distritos: propio,
       })
     }
@@ -261,6 +291,7 @@ export function ambitosDe(
       partido,
       fuera: false,
       paridadPropia: !coalicionTotal,
+      conBloques: false,
       distritos: [...siglados, ...propio],
     })
   }

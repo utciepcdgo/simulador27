@@ -1602,6 +1602,81 @@ describe('criterios de interpretación', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Exención de bloques (artículos 23.2 y 29.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ámbitos sin bloques de competitividad', () => {
+  const pesd = ambitoDe(tablero('...............', {}, individual(PARTIDO.PESD)), individual(PARTIDO.PESD))
+  const pan = ambitoDe(tablero('...............'))
+
+  it('el partido local no lleva bloques y el nacional sí', () => {
+    expect(pesd.conBloques).toBe(false)
+    expect(pan.conBloques).toBe(true)
+  })
+
+  it('sus distritos van en orden ascendente, sin bloque ni porcentaje', () => {
+    expect(pesd.distritos.map((d) => d.id_distrito)).toEqual(
+      Array.from({ length: 15 }, (_, i) => i + 1),
+    )
+    expect(pesd.distritos.every((d) => d.bloque === null)).toBe(true)
+    expect(pesd.distritos.every((d) => d.porcentaje === null)).toBe(true)
+  })
+
+  it('ninguna posición queda cerrada por el artículo 28.2', () => {
+    // La prohibición vive en el capítulo de los bloques. Sin bloques no tiene
+    // dónde operar, y el rebote del arrastre tiene que abrir esas casillas.
+    expect(pesd.distritos.some((d) => d.esBlindada)).toBe(false)
+    const mujer = formula(perfil('Mujer'), perfil('Mujer'))
+    const ultimo = pesd.distritos[14]
+    expect(admiteEnDistrito(mujer, ultimo, CRITERIOS_LEY)).toBeNull()
+  })
+
+  it('el dictamen cambia cuatro reglas de bloque por una que lo explica', () => {
+    const reglas = (ambito: Ambito) => evaluarMR(ambito, CRITERIOS_LEY).map((r) => r.regla)
+    expect(reglas(pan)).toEqual(
+      expect.arrayContaining([
+        'Paridad del bloque Alta',
+        'Mayoría de fórmulas encabezadas por mujeres en bloques impares',
+        'Prohibición en distritos de menor porcentaje de votación',
+      ]),
+    )
+    expect(reglas(pesd)).toEqual([
+      'Bloques de competitividad',
+      'Medida compensatoria de personas jóvenes',
+      'Medida compensatoria de personas indígenas',
+    ])
+    const exencion = regla(evaluarMR(pesd, CRITERIOS_LEY), 'Bloques de competitividad')
+    expect(exencion.cumple).toBe(true)
+    expect(exencion.mensaje).toContain('PESD')
+    expect(exencion.fundamento_legal).toContain('23')
+  })
+
+  it('el reparto sugerido llega al piso sin declarar nada irresoluble', () => {
+    const propuesta = repartoNecesario(pesd)
+    expect(propuesta.irresolubles).toEqual([])
+    expect(propuesta.faltan.Mujer).toBe(8)
+    expect(propuesta.faltan.Hombre).toBe(7)
+  })
+
+  it('una alianza conserva los bloques aunque incluya a un partido local', () => {
+    // El artículo 23.2 exime a los partidos, y una coalición no es ninguno de
+    // los tres supuestos que enumera. La suma ignora el nulo del local.
+    const alianza = coalicion(PARTIDO.PAN, PARTIDO.PESD)
+    const convenio = ambitoDe(tablero('...............', {}, alianza), alianza)
+    expect(convenio.conBloques).toBe(true)
+    expect(convenio.distritos.every((d) => d.porcentaje !== null)).toBe(true)
+  })
+
+  it('una alianza de dos locales no tiene con qué ordenar', () => {
+    const alianza = coalicion(PARTIDO.PESD, PARTIDO.PV)
+    const convenio = ambitoDe(tablero('...............', {}, alianza), alianza)
+    expect(convenio.conBloques).toBe(false)
+    const exencion = regla(evaluarMR(convenio, CRITERIOS_LEY), 'Bloques de competitividad')
+    expect(exencion.mensaje).toContain('Ningún integrante de este ámbito compitió')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Postulación parcial (artículo 27)
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -210,16 +210,17 @@ function Tablero({
         <Text>{tablero.partido}</Text>
       </View>
       <Text style={estilos.nota}>
-        {total} distrito(s) · {procedencia}
+        {total === 1 ? '1 distrito' : `${total} distritos`} · {procedencia}
       </Text>
 
       {tablero.bloques.map(({ bloque, distritos }) => (
-        <View key={bloque} wrap={false}>
+        <View key={bloque ?? 'sin-bloques'} wrap={false}>
           <Text style={estilos.subrubro}>
-            Bloque {bloque} · {distritos.length} distrito(s)
+            {bloque === null ? 'Sin bloques de competitividad' : `Bloque ${bloque}`} ·{' '}
+            {distritos.length === 1 ? '1 distrito' : `${distritos.length} distritos`}
           </Text>
           {distritos.length === 0 ? (
-            <Text style={estilos.nota}>Sin distritos en este bloque.</Text>
+            <Text style={estilos.nota}>Este bloque no tiene distritos.</Text>
           ) : (
             <>
               <View style={estilos.cabecera}>
@@ -238,12 +239,14 @@ function Tablero({
                 return (
                   <View key={distrito.id_distrito} style={estilos.fila}>
                     <Text style={COL.posicion}>
-                      {distrito.posicion_rentabilidad}
+                      {distrito.bloque === null ? '—' : distrito.posicion_rentabilidad}
                       {distrito.esBlindada ? ' *' : ''}
                     </Text>
                     <Text style={[COL.distrito, estilos.destacado]}>{distrito.numero_romano}</Text>
                     <Text style={colCabecera}>{distrito.cabecera}</Text>
-                    <Text style={COL.votacion}>{distrito.porcentaje.toFixed(2)}%</Text>
+                    <Text style={COL.votacion}>
+                      {distrito.porcentaje === null ? '—' : `${distrito.porcentaje.toFixed(2)}%`}
+                    </Text>
                     {tablero.conSiglado && (
                       <View style={[COL.siglado, estilos.celdaConEmblema]}>
                         {distrito.siglado !== null ? (

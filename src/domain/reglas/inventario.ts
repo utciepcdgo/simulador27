@@ -79,6 +79,18 @@ export const INVENTARIO_REGLAS: readonly ReglaInventariada[] = [
     nota: 'Aparece cuando un tablero se queda sin distritos: sin ellos, ninguna otra regla puede decir nada de él.',
   },
 
+  {
+    regla: 'Bloques de competitividad',
+    ambito: 'MR',
+    exigencia: 'condicionada',
+    exige:
+      'Nada: es la exención. El ámbito se presenta en orden ascendente de distrito y no se le evalúan la paridad por bloque, el liderazgo de bloque, la mayoría en bloques impares ni la prohibición en distritos de menor votación.',
+    universo:
+      'Los partidos políticos locales y los nacionales de nuevo registro. También cualquier ámbito donde ningún integrante compitió en 2023-2024, porque entonces no hay porcentaje con el que ordenar.',
+    fundamento: FUNDAMENTOS.bloquesInaplicables,
+    nota: 'Aparece en el dictamen para decir que esas cuatro reglas no se evaluaron. Sin ella desaparecerían sin explicación y no se sabría si el motor las verificó o ni las miró.',
+  },
+
   // ── Paridad ───────────────────────────────────────────────────────────────
   {
     regla: 'Paridad general de MR',

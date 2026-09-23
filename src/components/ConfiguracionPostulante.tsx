@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { nombreDe, ordenarPorRegistro, PARTIDOS, tieneHistorial } from '../domain/catalogo'
+import { nombreDe, ordenarPorRegistro, PARTIDOS, siglasDe, tieneHistorial } from '../domain/catalogo'
+import { FUNDAMENTOS, sinDerechoACoalicion } from '../domain/reglas'
 import type { IdPartido, Postulante } from '../domain/types'
 import { cn } from '../lib/utils'
 import { useSimulador } from '../store/simulador'
@@ -12,18 +13,42 @@ type Modalidad = Postulante['modalidad']
 
 const MODALIDADES: Modalidad[] = ['Individual', 'Coalición', 'Candidatura Común']
 
-function invalidez(modalidad: Modalidad | null, integrantes: IdPartido[]): string | null {
-  if (!modalidad) return 'Selecciona un modo de postulación.'
+/**
+ * Por qué no se puede crear este postulante, si es que no se puede.
+ *
+ * Las tres primeras son de forma y se explican solas. La cuarta es una
+ * prohibición legal, y por eso lleva fundamento: quien se topa con ella tiene
+ * que poder citar el artículo ante un tercero, igual que en el rebote.
+ */
+function invalidez(
+  modalidad: Modalidad | null,
+  integrantes: IdPartido[],
+): { mensaje: string; fundamento?: string } | null {
+  if (!modalidad) return { mensaje: 'Falta elegir un modo de postulación.' }
   if (integrantes.length === 0) {
-    return modalidad === 'Individual'
-      ? 'Selecciona el partido que postula.'
-      : `Selecciona los partidos que integran la ${modalidad.toLowerCase()}.`
+    return {
+      mensaje:
+        modalidad === 'Individual'
+          ? 'Falta elegir el partido que postula.'
+          : `Faltan los partidos que integran la ${modalidad.toLowerCase()}.`,
+    }
   }
   if (modalidad === 'Individual' && integrantes.length > 1) {
-    return 'La modalidad Individual admite un solo partido.'
+    return { mensaje: 'La modalidad Individual admite un solo partido.' }
   }
   if (modalidad !== 'Individual' && integrantes.length < 2) {
-    return `La modalidad ${modalidad} requiere cuando menos dos partidos.`
+    return { mensaje: `La modalidad ${modalidad} requiere cuando menos dos partidos.` }
+  }
+  // Solo la coalición. El artículo 9.5 no menciona la candidatura común, y
+  // cerrarla aquí impediría una postulación que la norma no prohíbe.
+  if (modalidad === 'Coalición') {
+    const vetados = sinDerechoACoalicion(integrantes)
+    if (vetados.length > 0) {
+      return {
+        mensaje: `${vetados.map(siglasDe).join(' y ')} no puede suscribir convenio de coalición. La candidatura común y la postulación individual siguen disponibles.`,
+        fundamento: FUNDAMENTOS.coalicionNuevoRegistro,
+      }
+    }
   }
   return null
 }
@@ -158,7 +183,16 @@ export function ConfiguracionPostulante({
           </p>
         )}
 
-        {error && <p className="text-muted-foreground text-xs">{error}</p>}
+        {error && (
+          <div className="space-y-1.5">
+            <p className="text-muted-foreground text-xs">{error.mensaje}</p>
+            {error.fundamento && (
+              <blockquote className="text-muted-foreground border-l-2 pl-3 text-xs leading-relaxed whitespace-pre-line">
+                {error.fundamento}
+              </blockquote>
+            )}
+          </div>
+        )}
 
         <Button
           className="w-full"

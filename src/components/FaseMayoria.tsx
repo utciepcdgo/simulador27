@@ -142,7 +142,7 @@ function TarjetaDistrito({
         <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
           {distrito.cabecera}
         </span>
-        {mostrarRentabilidad && (
+        {mostrarRentabilidad && distrito.porcentaje !== null && (
           <Badge
             variant="secondary"
             className="shrink-0 tabular-nums"
@@ -151,9 +151,15 @@ function TarjetaDistrito({
             {distrito.porcentaje.toFixed(2)}%
           </Badge>
         )}
-        <Badge variant="outline" className="shrink-0">
-          #{distrito.posicion_rentabilidad}
-        </Badge>
+        {/*
+          Sin bloques no hay posición de rentabilidad: el número sería el orden
+          del distrito y leerlo como ranking de votación sería falso.
+        */}
+        {distrito.bloque !== null && (
+          <Badge variant="outline" className="shrink-0">
+            #{distrito.posicion_rentabilidad}
+          </Badge>
+        )}
         {puedeRetirarse && (
           <button
             type="button"
@@ -341,6 +347,26 @@ function Tablero({
           <p className="text-muted-foreground py-6 text-center text-xs">
             Todavía no hay distritos en este ámbito. Se reparten en la Fase 1.
           </p>
+        ) : !ambito.conBloques ? (
+          /*
+            Sin bloques de competitividad el tablero no se reparte en tres: los
+            quince distritos van en una sola lista, en orden ascendente de
+            número. Partirlos en columnas sugeriría un ranking que no existe.
+          */
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {[...ambito.distritos]
+              .sort((a, b) => a.id_distrito - b.id_distrito)
+              .map((distrito) => (
+                <TarjetaDistrito
+                  key={distrito.id_distrito}
+                  distrito={distrito}
+                  partido={partido}
+                  arrastre={arrastre}
+                  conSiglado={conSiglado}
+                  puedeRetirarse={puedeRetirarse}
+                />
+              ))}
+          </ul>
         ) : (
           <div className="grid gap-3 lg:grid-cols-3">
             {BLOQUES.map((bloque) => {

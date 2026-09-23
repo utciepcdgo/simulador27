@@ -60,10 +60,10 @@ export function AvisoCierre() {
                         <span className="block">
                             {dictamen.resultados.length === 1
                                 ? 'La regla evaluada quedó cumplida.'
-                                : `Las ${dictamen.resultados.length} reglas evaluadas quedaron cumplidas.`}
+                                : `Las ${dictamen.resultados.length} reglas evaluadas se cumplieron.`}
                         </span>
                         <span className="block">
-                            El botón de descarga también está en el panel de revisión preliminar.
+                            El botón de descarga también está disponible en el panel de revisión preliminar.
                         </span>
                     </DialogDescription>
                 </div>

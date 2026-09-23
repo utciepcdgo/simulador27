@@ -14,17 +14,17 @@
  * El cruce entre ambas fuentes se hace por siglas.
  */
 export const PARTIDOS = [
-  { id_partido: 1, siglas: 'PAN', nombre: "Partido Acción Nacional" },
-  { id_partido: 2, siglas: 'PRI', nombre: "Partido Revolucionario Institucional" },
-  { id_partido: 3, siglas: 'PVEM', nombre: "Partido Verde Ecologista de México" },
-  { id_partido: 4, siglas: 'PT', nombre: "Partido del Trabajo" },
-  { id_partido: 5, siglas: 'MC', nombre: "Movimiento Ciudadano" },
-  { id_partido: 6, siglas: 'MORENA', nombre: "Morena" },
-  { id_partido: 7, siglas: 'PESD', nombre: "Partido Encuentro Solidario Durango" },
-  { id_partido: 8, siglas: 'PV', nombre: "Partido Villista" },
-  { id_partido: 9, siglas: 'PER', nombre: "Partido Estatal Renovación" },
-  { id_partido: 10, siglas: 'PAZ', nombre: "Partido PAZ" },
-  { id_partido: 11, siglas: 'SOMOS', nombre: "SOMOS" },
+  { id_partido: 1, siglas: 'PAN', nombre: "Partido Acción Nacional", ambito: 'Nacional', nuevoRegistro: false },
+  { id_partido: 2, siglas: 'PRI', nombre: "Partido Revolucionario Institucional", ambito: 'Nacional', nuevoRegistro: false },
+  { id_partido: 3, siglas: 'PVEM', nombre: "Partido Verde Ecologista de México", ambito: 'Nacional', nuevoRegistro: false },
+  { id_partido: 4, siglas: 'PT', nombre: "Partido del Trabajo", ambito: 'Nacional', nuevoRegistro: false },
+  { id_partido: 5, siglas: 'MC', nombre: "Movimiento Ciudadano", ambito: 'Nacional', nuevoRegistro: false },
+  { id_partido: 6, siglas: 'MORENA', nombre: "Morena", ambito: 'Nacional', nuevoRegistro: false },
+  { id_partido: 7, siglas: 'PESD', nombre: "Partido Encuentro Solidario Durango", ambito: 'Local', nuevoRegistro: false },
+  { id_partido: 8, siglas: 'PV', nombre: "Partido Villista", ambito: 'Local', nuevoRegistro: false },
+  { id_partido: 9, siglas: 'PER', nombre: "Partido Estatal Renovación", ambito: 'Local', nuevoRegistro: false },
+  { id_partido: 10, siglas: 'PAZ', nombre: "Partido PAZ", ambito: 'Nacional', nuevoRegistro: true },
+  { id_partido: 11, siglas: 'SOMOS', nombre: "SOMOS", ambito: 'Nacional', nuevoRegistro: true },
 ] as const
 
 /** Atajo legible: `PARTIDO.MORENA` en vez de un 6 suelto. */

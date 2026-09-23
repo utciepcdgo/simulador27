@@ -70,7 +70,8 @@ export function posicionesBlindadas(total: number): number[] {
 
 export interface PorcentajeDistrital {
   id_distrito: number
-  porcentaje: number
+  /** `null` si ningún integrante compitió ahí en 2023-2024. No es cero. */
+  porcentaje: number | null
 }
 
 /** Evita que el ruido de punto flotante altere el orden al sumar porcentajes. */
@@ -98,20 +99,20 @@ export function porcentajesDe(
   integrantes: readonly IdPartido[],
   ids?: readonly number[],
 ): PorcentajeDistrital[] {
-  // Se parte de cero en cada distrito del alcance, no de lo que traiga la
-  // votación: un partido de registro nuevo no compitió en 2023-2024 y su
-  // porcentaje es cero, no «ausente». Sin esto, su tablero saldría vacío.
+  // Se parte de `null` en cada distrito del alcance, no de cero: un partido de
+  // registro nuevo o local no compitió en 2023-2024, y cero afirmaría que esa
+  // fue su votación válida emitida. La suma ignora el `null`, como `SUM`: una
+  // alianza vale lo que aportan los integrantes que sí compitieron.
   const alcance = ids ?? DISTRITOS.map((d) => d.id_distrito)
-  const acumulado = new Map<number, number>(alcance.map((id) => [id, 0]))
+  const acumulado = new Map<number, number | null>(alcance.map((id) => [id, null]))
   for (const registro of VOTACION) {
     if (!integrantes.includes(registro.partido)) continue
-    const previo = acumulado.get(registro.id_distrito)
-    if (previo === undefined) continue
-    acumulado.set(registro.id_distrito, previo + registro.porcentaje)
+    if (!acumulado.has(registro.id_distrito)) continue
+    acumulado.set(registro.id_distrito, (acumulado.get(registro.id_distrito) ?? 0) + registro.porcentaje)
   }
   return [...acumulado.entries()].map(([id_distrito, suma]) => ({
     id_distrito,
-    porcentaje: redondear(suma),
+    porcentaje: suma === null ? null : redondear(suma),
   }))
 }
 
@@ -131,15 +132,25 @@ export function tieneHistorial(partido: IdPartido): boolean {
  */
 export function integrarBloques(
   porcentajes: readonly PorcentajeDistrital[],
+  conBloques = true,
 ): Competitividad[] {
-  const ordenados = [...porcentajes].sort(
-    (a, b) => b.porcentaje - a.porcentaje || a.id_distrito - b.id_distrito,
+  // Sin bloques no hay rentabilidad que ordenar, y tampoco la hay cuando ningún
+  // integrante compitió: los quince distritos valen `null` y ordenarlos por
+  // porcentaje sería inventar un ranking. En los dos casos manda el número de
+  // distrito, ascendente.
+  const hayPorcentajes = porcentajes.some((p) => p.porcentaje !== null)
+  const porRentabilidad = conBloques && hayPorcentajes
+
+  const ordenados = [...porcentajes].sort((a, b) =>
+    porRentabilidad
+      ? (b.porcentaje ?? -1) - (a.porcentaje ?? -1) || a.id_distrito - b.id_distrito
+      : a.id_distrito - b.id_distrito,
   )
   return ordenados.map(({ id_distrito, porcentaje }, i) => ({
     id_distrito,
     porcentaje,
     posicion_rentabilidad: i + 1,
-    bloque: bloqueDePosicion(i + 1, ordenados.length),
+    bloque: porRentabilidad ? bloqueDePosicion(i + 1, ordenados.length) : null,
   }))
 }
 

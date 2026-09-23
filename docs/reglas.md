@@ -12,7 +12,7 @@
 > Lo que el motor todavía **no** resuelve, porque depende de una lectura que
 > nadie ha fijado, está en [pendientes-juridicos.md](pendientes-juridicos.md).
 
-El motor evalúa **15 reglas**: 9 obligatorias, 1 optativa y 5 condicionadas a un supuesto. Cada una devuelve si se cumple, un mensaje y el artículo que la sostiene. El dictamen de la interfaz y el documento en PDF imprimen exactamente eso.
+El motor evalúa **16 reglas**: 9 obligatorias, 1 optativa y 6 condicionadas a un supuesto. Cada una devuelve si se cumple, un mensaje y el artículo que la sostiene. El dictamen de la interfaz y el documento en PDF imprimen exactamente eso.
 
 ## Cómo se lee un incumplimiento
 
@@ -122,6 +122,20 @@ Artículo 9, numeral 1 de los Lineamientos. La coalición es total cuando abarca
 <details><summary>Fundamento</summary>
 
 Artículo 9, numeral 1 de los Lineamientos. La coalición es total cuando abarca la totalidad de las candidaturas de mayoría relativa, parcial cuando abarca al menos el cincuenta por ciento y flexible cuando abarca al menos el veinticinco por ciento. Artículo 9, numeral 3: si el cálculo de ese porcentaje resulta en un número fraccionado, siempre se toma como cifra válida el número entero siguiente. En los distritos que el convenio no abarca, cada integrante realiza su postulación en lo individual y responde de ella con su propia competitividad.
+
+</details>
+
+### Bloques de competitividad
+
+**Condicionada.** Nada: es la exención. El ámbito se presenta en orden ascendente de distrito y no se le evalúan la paridad por bloque, el liderazgo de bloque, la mayoría en bloques impares ni la prohibición en distritos de menor votación.
+
+**Se mide sobre:** Los partidos políticos locales y los nacionales de nuevo registro. También cualquier ámbito donde ningún integrante compitió en 2023-2024, porque entonces no hay porcentaje con el que ordenar.
+
+> Aparece en el dictamen para decir que esas cuatro reglas no se evaluaron. Sin ella desaparecerían sin explicación y no se sabría si el motor las verificó o ni las miró.
+
+<details><summary>Fundamento</summary>
+
+Artículo 23, numeral 2 de los Lineamientos. Los bloques de competitividad no aplicarán a las candidaturas independientes, a los partidos políticos nacionales de nuevo registro con acreditación ante el Instituto, ni a los partidos políticos locales. Artículo 29, numeral 2: los criterios establecidos para la integración de los bloques de competitividad (paridad transversal) no resultan aplicables a los partidos políticos locales, por tratarse del primer Proceso Electoral Local de diputaciones en que participan.
 
 </details>
 

@@ -9,11 +9,10 @@ Los cinco primeros salieron de verificar las catorce citas de
 arregladas— y destapó esos cinco puntos de fondo. El sexto es posterior y llegó por otro camino:
 al medir qué tableros parciales admiten alguna composición válida.
 
-Los cinco primeros van ordenados por riesgo. **El primero es el único donde el motor puede estar
-dando hoy un dictamen equivocado a un partido real**; los demás son lecturas alternas que conviene
-decidir antes del proceso, no errores confirmados. El sexto se numera al final para no mover los
-que ya estaban, pero por consecuencia práctica iría segundo: afecta al tamaño de tablero más
-probable de todos.
+Los cinco primeros van ordenados por riesgo; el sexto y el séptimo se numeran al final para no
+mover los que ya estaban. **El punto 1 y el punto 5 están resueltos** y se conservan con su
+respuesta, porque explican por qué el motor hace hoy lo que hace. El 6 afecta al tamaño de tablero
+más probable de todos, y el 7 nació al implementar el 1.
 
 Cada punto tiene un hueco de respuesta al final. Lo que se conteste aquí se traslada al motor, y
 donde la respuesta sea «admite las dos lecturas», el destino es
@@ -56,22 +55,34 @@ PEL 2023-2024, pero eso no basta: «sin historial» y «local o de nuevo registr
 
 | Partido | ¿Nacional o local? | ¿De nuevo registro? | ¿Se le aplican bloques? |
 |---|---|---|---|
-| PAN | N | | |
-| PRI | N | | |
-| PVEM | N | | |
-| PT | N | | |
-| MC | N | | |
-| MORENA | N | | |
-| PESD | L | | |
-| PV | L | | |
-| PER | L | | |
-| PAZ | N | | |
-| SOMOS | N | | |
+| PAN | N | N | S |
+| PRI | N | N | S |
+| PVEM | N | N | S |
+| PT | N | N | S | 
+| MC | N | N | S |
+| MORENA | N | N | S |
+| PESD | L | N | N |
+| PV | L | N | N |
+| PER | L | N | N |
+| PAZ | N | S | N |
+| SOMOS | N | S | N |
 
 **La pregunta.** ¿Cuáles de los once quedan fuera de los bloques de competitividad, y por cuál de
 los dos supuestos del 23.2?
 
-**Respuesta:**
+**Respuesta: RESUELTO.** La tabla de arriba la confirmó el área el 23 de septiembre de 2026. Cinco
+partidos quedan fuera: **PESD, PV y PER** por locales (artículos 23.2 y 29.2) y **PAZ y SOMOS** por
+nacionales de nuevo registro (artículo 23.2).
+
+Los dos hechos viven ahora en `data/partidos-PEL-2026-2027.csv`, columnas `AMBITO` y
+`NUEVO_REGISTRO`, y de ahí los lee `aplicanBloques` en
+[`elegibilidad.ts`](../src/domain/reglas/elegibilidad.ts). El dictamen de esos cinco pasó de nueve
+reglas de mayoría relativa a tres, más una que dice por qué. Su tablero se presenta en orden
+ascendente de distrito, sin posición de rentabilidad y sin bloques.
+
+Y su porcentaje de votación es **nulo, no cero**: cero afirmaría que esa fue su votación válida
+emitida, cuando lo que ocurrió es que no hubo elección en la que participar. Al sumar una alianza
+el nulo no aporta ni resta, como `SUM`.
 
 ---
 
@@ -217,7 +228,16 @@ Depende de la misma respuesta que el punto 1: saber qué partidos son de nuevo r
 **La pregunta.** ¿Se refleja esta prohibición en el simulador, o se deja fuera por ser una
 restricción del convenio y no de la postulación?
 
-**Respuesta:**
+**Respuesta: RESUELTO.** Se refleja. La Fase 1 impide crear la coalición y cita el artículo, con el
+mismo tratamiento que el rebote.
+
+Alcanza **solo a la coalición**: el 9.5 no menciona la candidatura común, y cerrarla habría
+impedido una postulación que la norma no prohíbe. PAZ y SOMOS pueden postular en candidatura común
+y en lo individual.
+
+**Queda un fleco.** El 9.5 remite al artículo 85, numeral 4, de la Ley General de Partidos
+Políticos, que no he verificado contra su texto. Si ese artículo fuera más amplio que el 9.5 —si
+alcanzara a otras formas de alianza—, la implementación se quedaría corta. Conviene contrastarlo.
 
 ---
 
@@ -293,6 +313,46 @@ de esto.
 **La pregunta.** ¿El «en proporción al número de distritos que integre cada bloque» del punto V
 alcanza a la prohibición del 28.2, de modo que se gradúe con el tamaño del bloque bajo como ya lo
 hace el 28.7? ¿O «en ningún caso» la blinda, y lo que cede es la regla de mayoría?
+
+**Respuesta:**
+
+---
+
+## 7 · Sin bloques, ¿sigue vinculando el artículo 21.1?
+
+**Riesgo: medio.** Afecta a los cinco partidos que acaban de quedar fuera de los bloques.
+
+**De dónde sale**
+
+Al implementar la exención del 23.2 caen las cuatro reglas que cuelgan de la geometría del tablero,
+y entre ellas la prohibición del 28.2. Es coherente: ese artículo vive en el capítulo «De la
+postulación de mujeres en los bloques de competitividad», y sin bloques no tiene dónde operar.
+
+La consecuencia es que hoy **PESD, PV, PER, PAZ y SOMOS pueden colocar fórmulas encabezadas por
+mujeres en sus distritos de menor votación sin que nada lo impida**.
+
+**Lo que dice el documento**
+
+> **Artículo 21, numeral 1.** En ningún caso se admitirá postular candidaturas de forma exclusiva
+> de mujeres en los distritos de menor votación, obligación que corresponde a cada partido en lo
+> individual aun cuando compita en coalición o candidatura común.
+
+Ese artículo **no está en el capítulo de los bloques**, habla de «los distritos de menor votación»
+sin referirse a un bloque bajo, y dice expresamente que la obligación es de cada partido en lo
+individual.
+
+**Las dos lecturas**
+
+Que el 21.1 sea una regla autónoma, y entonces siga vinculando a los cinco aunque no tengan
+bloques. O que sea el enunciado general que el 28.2 concreta, y entonces se vaya con él.
+
+Hay una dificultad práctica en la primera: sin porcentaje de votación, **esos partidos no tienen
+«distritos de menor votación»**. Habría que decidir cuáles lo son —¿los de mayor número?, ¿los de
+menor población?— y eso ya no lo dice el articulado.
+
+**La pregunta.** ¿El artículo 21.1 vincula por su cuenta a un partido sin bloques de
+competitividad? Y si vincula, ¿sobre qué distritos se mide, si no hay votación con la que
+ordenarlos?
 
 **Respuesta:**
 

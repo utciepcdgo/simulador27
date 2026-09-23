@@ -43,6 +43,9 @@ const ESCENARIOS = [
   escenario(coalicion(PARTIDO.PAN, PARTIDO.PRI), (p) =>
     p > 12 ? 'fuera' : p <= 6 ? PARTIDO.PAN : PARTIDO.PRI,
   ),
+  // Un partido local: es el único que hace aparecer la exención de bloques del
+  // artículo 23.2, y sin él la regla quedaría inventariada sin emitirse nunca.
+  escenario(individual(PARTIDO.PESD), () => PARTIDO.PESD),
 ]
 
 function emitidas(): Set<string> {

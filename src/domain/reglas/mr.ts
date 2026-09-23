@@ -9,6 +9,7 @@ import { esMujer } from '../genero'
 import type { IdPartido, ResultadoRegla } from '../types'
 import { alcanzaProhibicion, type Ambito } from './base'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
+import { aplicanBloques } from './elegibilidad'
 import {
   acreditaIndigena,
   conteoGenero,
@@ -540,6 +541,29 @@ export function umbralRegistroRP(
  * El umbral de RP no está aquí: no se mide sobre lo siglado sino sobre la huella
  * de participación del partido. Ver `umbralRegistroRP`.
  */
+/**
+ * Por qué este tablero no lleva bloques de competitividad.
+ *
+ * Aparece en el dictamen en lugar de las cuatro reglas que no corren. Una regla
+ * que se esfuma sin decirlo dejaría a quien lee el dictamen sin saber si el
+ * simulador la verificó y pasó, o si ni siquiera la miró.
+ */
+function exencionDeBloques(ambito: Ambito): ResultadoRegla {
+  const suyo = ambito.partido !== null ? siglasDe(ambito.partido) : null
+  const porDerecho = suyo !== null && !aplicanBloques(ambito.partido!)
+  return {
+    regla: 'Bloques de competitividad',
+    ambito: 'MR',
+    alcance: ambito.etiqueta,
+    cumple: true,
+    mensaje: porDerecho
+      ? `Los bloques de competitividad no le aplican a ${suyo}, así que sus ${ambito.distritos.length} distritos se presentan en orden ascendente y no se le evalúan la paridad por bloque, el liderazgo de bloque, la mayoría en bloques impares ni la prohibición en distritos de menor votación.`
+      : `Ningún integrante de este ámbito compitió en el Proceso Electoral Local 2023-2024, así que no hay porcentaje de votación con el que ordenar los distritos. Se presentan en orden ascendente y no se evalúan las reglas que dependen de los bloques.`,
+    fundamento_legal: FUNDAMENTOS.bloquesInaplicables,
+    implicados: ambito.distritos.map((d) => d.id_distrito),
+  }
+}
+
 export function evaluarMR(
   ambito: Ambito,
   criterios: Criterios = CRITERIOS_LEY,
@@ -560,6 +584,18 @@ export function evaluarMR(
         mensaje: 'Este tablero todavía no tiene distritos asignados en el convenio.',
         fundamento_legal: FUNDAMENTOS.convenio,
       },
+    ]
+  }
+  // Sin bloques caen las cuatro reglas que cuelgan de la geometría del tablero.
+  // No desaparecen en silencio: `exencionDeBloques` ocupa su sitio y explica por
+  // qué, que es la misma decisión que se tomó con la paridad de los integrantes
+  // de una coalición total.
+  if (!ambito.conBloques) {
+    return [
+      ...(ambito.paridadPropia ? [paridadGeneral(ambito, criterios)] : []),
+      exencionDeBloques(ambito),
+      cuotaJoven(ambito),
+      cuotaIndigena(ambito),
     ]
   }
   // El 28.1 se condiciona a que los tres bloques se conformen con los quince

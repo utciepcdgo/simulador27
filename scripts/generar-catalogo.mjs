@@ -27,14 +27,54 @@ const DISTRITO_INDIGENA = 15
 
 const NL = String.fromCharCode(10)
 
+/**
+ * Lee un CSV exigiendo UTF-8.
+ *
+ * Excel guarda como ANSI (Windows-1252) si no se elige «CSV UTF-8» al guardar, y
+ * entonces «Acción» viaja como un byte suelto que Node decodifica como el
+ * carácter de reemplazo. Sin esta comprobación el nombre roto llega al catálogo,
+ * de ahí a la pantalla y de ahí al PDF, y nadie lo nota hasta que se imprime.
+ */
+function leerUtf8(ruta) {
+  const bytes = fs.readFileSync(ruta)
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes).replace(/^﻿/, '')
+  } catch {
+    throw new Error(
+      `${path.basename(ruta)} no está en UTF-8. Suele pasar al guardarlo desde Excel: ` +
+        'hay que elegir «CSV UTF-8 (delimitado por comas)» y volver a guardar.',
+    )
+  }
+}
+
 // --- Registro de partidos: el padrón vigente, no solo los que tienen historial ---
-const registro = fs.readFileSync(CSV_PARTIDOS, 'utf8').replace(/^\uFEFF/, '').trim()
+const registro = leerUtf8(CSV_PARTIDOS).trim()
   .split(/\r?\n/).slice(1)
   .map((linea) => {
-    const [id, siglas, nombre] = linea.split(',')
-    return { id: Number(id), siglas: siglas.trim(), nombre: nombre.trim() }
+    const [id, siglas, nombre, ambito, nuevoRegistro] = linea.split(',')
+    return {
+      id: Number(id),
+      siglas: siglas.trim(),
+      nombre: nombre.trim(),
+      ambito: ambito?.trim(),
+      nuevoRegistro: nuevoRegistro?.trim(),
+    }
   })
   .sort((a, b) => a.id - b.id)
+
+// El ámbito y el registro nuevo deciden dos reglas —el artículo 9.5 y el 23.2—,
+// así que un valor mal escrito no puede pasar en silencio hasta el dictamen.
+const AMBITOS = ['Nacional', 'Local']
+const SI_NO = { 'sí': true, 'si': true, no: false }
+for (const r of registro) {
+  if (!AMBITOS.includes(r.ambito)) {
+    throw new Error(`${r.siglas}: AMBITO debe ser ${AMBITOS.join(' o ')}; se leyó "${r.ambito ?? ''}"`)
+  }
+  if (!(r.nuevoRegistro in SI_NO)) {
+    throw new Error(`${r.siglas}: NUEVO_REGISTRO debe ser sí o no; se leyó "${r.nuevoRegistro ?? ''}"`)
+  }
+  r.nuevoRegistro = SI_NO[r.nuevoRegistro]
+}
 
 registro.forEach(({ id, siglas }, i) => {
   if (id !== i + 1) {
@@ -46,7 +86,7 @@ if (duplicadas) throw new Error('Hay siglas repetidas en el registro de partidos
 
 const idPorSiglas = new Map(registro.map((r) => [r.siglas, r.id]))
 
-const filas = fs.readFileSync(CSV, 'utf8').trim().split(/\r?\n/).slice(1)
+const filas = leerUtf8(CSV).trim().split(/\r?\n/).slice(1)
   .map((linea) => {
     const [idPartido, partido, distrito, cabecera, votos, porcentaje, origen] = linea.split(',')
     return {
@@ -113,7 +153,7 @@ const encabezado = `// ARCHIVO GENERADO — no editar a mano.
 `
 
 const lineasPartidos = registro
-  .map((r) => `  { id_partido: ${r.id}, siglas: '${r.siglas}', nombre: ${JSON.stringify(r.nombre)} },`)
+  .map((r) => `  { id_partido: ${r.id}, siglas: '${r.siglas}', nombre: ${JSON.stringify(r.nombre)}, ambito: '${r.ambito}', nuevoRegistro: ${r.nuevoRegistro} },`)
   .join(NL)
 
 const lineasAtajos = registro.map((r) => `  ${r.siglas}: ${r.id},`).join(NL)

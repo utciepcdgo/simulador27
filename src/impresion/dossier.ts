@@ -34,7 +34,11 @@ export interface TableroImpreso {
   fuera: boolean
   /** Si el siglado dice algo aquí: solo en el convenio de una alianza. */
   conSiglado: boolean
-  bloques: { bloque: Bloque; distritos: readonly DistritoEvaluado[] }[]
+  /**
+   * Los distritos agrupados. `bloque: null` es el grupo único de un ámbito al
+   * que no le aplican los bloques de competitividad, en orden ascendente.
+   */
+  bloques: { bloque: Bloque | null; distritos: readonly DistritoEvaluado[] }[]
   retirados: DistritoRetirado[]
 }
 
@@ -127,12 +131,19 @@ export function armarDossier(estado: EstadoSimulacion, criterios: Criterios): Do
         partidos: ambito.partido !== null ? [ambito.partido] : postulante.integrantes,
         fuera: ambito.fuera,
         conSiglado: ambito.partido === null,
-        bloques: BLOQUES.map((bloque) => ({
-          bloque,
-          distritos: ambito.distritos
-            .filter((d) => d.bloque === bloque)
-            .sort((a, b) => a.posicion_rentabilidad - b.posicion_rentabilidad),
-        })),
+        bloques: ambito.conBloques
+          ? BLOQUES.map((bloque) => ({
+              bloque: bloque as Bloque | null,
+              distritos: ambito.distritos
+                .filter((d) => d.bloque === bloque)
+                .sort((a, b) => a.posicion_rentabilidad - b.posicion_rentabilidad),
+            }))
+          : [
+              {
+                bloque: null,
+                distritos: [...ambito.distritos].sort((a, b) => a.id_distrito - b.id_distrito),
+              },
+            ],
         retirados: retirados.map((d) => ({
           numero_romano: d.numero_romano,
           cabecera: d.cabecera,
