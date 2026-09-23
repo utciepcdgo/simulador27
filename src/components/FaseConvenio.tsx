@@ -91,7 +91,7 @@ function Columna({
       >
         {distritos.length === 0 ? (
           <p className="text-muted-foreground col-span-full self-center py-6 text-center text-xs">
-            Arrastra distritos aquí
+            Arrastrar distritos aquí
           </p>
         ) : (
           distritos.map((distrito) => (
@@ -185,7 +185,7 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
           <CardTitle className="text-base">Sin convenio que integrar</CardTitle>
           <CardDescription>
             <EtiquetaPartido partido={integrantes[0]} tamano="sm" className="align-text-bottom" />{' '}
-            postula individualmente: los quince distritos le corresponden. El siglado solo se
+            postula individualmente. Los quince distritos le corresponden. El siglado solo se
             negocia en coalición o candidatura común.
           </CardDescription>
         </CardHeader>
@@ -205,7 +205,7 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
           Mesa de negociación
           {reparticion.sinDecidir === 0 && (
             <Badge variant={reparticion.clase === 'Insuficiente' ? 'destructive' : 'secondary'}>
-              Coalición {reparticion.clase}
+              {modalidad} {reparticion.clase}
             </Badge>
           )}
         </CardTitle>
@@ -217,8 +217,8 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
             ))}
           </span>{' '}
           · el número es la posición de rentabilidad del distrito para la alianza. Lo que queda
-          fuera del convenio lo postula cada partido por su cuenta, y al evaluarlo en la Fase 2
-          cuenta su propia competitividad, no la suma.
+          fuera del convenio lo postula cada partido por su cuenta. En la Fase 2 cuenta su propia
+          competitividad, no la suma.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -252,7 +252,7 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
             </div>
             <Columna
               titulo="Fuera del convenio"
-              descripcion={`Cada integrante postula aquí por separado: ${integrantes.length} fórmulas por distrito.`}
+              descripcion={`Cada integrante postula aquí por separado. Son ${integrantes.length} fórmulas por distrito.`}
               destino={FUERA_DEL_CONVENIO}
               distritos={enModo('fuera')}
               activo={arrastre}

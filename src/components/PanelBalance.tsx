@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { AnimatePresence, m } from 'motion/react'
 import { recuentoDe, type ParidadDeAmbito, type RecuentoGrupo } from '../domain/reglas'
+import { plural } from '../domain/texto'
 import { relevo } from '../lib/animacion'
 import { EtiquetaPartido } from './EtiquetaPartido'
 import { ROTULO_GRUPO } from '../lib/rotulos'
@@ -48,7 +49,7 @@ function TiraParidad({ fila }: { fila: ParidadDeAmbito }) {
           <span className="font-medium">{fila.siglas}</span>
         )}
         <span className="text-muted-foreground tabular-nums">
-          {fila.mujeres} de {fila.total} encabezadas por mujeres
+          Encabezadas por mujeres: {fila.mujeres} de {fila.total}
           {/* En coalición total el integrante no tiene mínimo propio: el
               artículo 20.2 lo verifica sobre el conjunto. */}
           {fila.minimo === null ? ' · sin mínimo propio' : ` · mínimo ${fila.minimo}`}
@@ -135,7 +136,8 @@ export function PanelBalance() {
           <h3 className="text-muted-foreground flex items-baseline justify-between text-[0.6875rem] font-medium tracking-wide uppercase">
             Quién encabeza la fórmula
             <span className="tabular-nums normal-case">
-              {mayoria.formulas} fórmulas · {mayoria.candidaturas} candidaturas
+              {plural(mayoria.formulas, 'fórmula', 'fórmulas')} ·{' '}
+              {plural(mayoria.candidaturas, 'candidatura', 'candidaturas')}
             </span>
           </h3>
 
@@ -143,17 +145,23 @@ export function PanelBalance() {
             <TiraParidad key={fila.ambito} fila={fila} />
           ))}
 
-          <p className="text-muted-foreground text-xs">
-            Entre las {mayoria.candidaturas} candidaturas de mayoría relativa hay{' '}
-            <span className="text-foreground tabular-nums">{mayoria.personas.Mujer}</span> mujeres,{' '}
-            <span className="text-foreground tabular-nums">{mayoria.personas.Hombre}</span> hombres
-            y{' '}
-            <span className="text-foreground tabular-nums">
-              {mayoria.personas['No Binario']}
-            </span>{' '}
-            personas no binarias. Para la paridad, las personas que se autoadscriban como no
-            binarias serán consideradas para ocupar los lugares que le correspondan al género
-            masculino.
+          <p className="text-muted-foreground space-y-1 text-xs">
+            <span className="block">
+              Candidaturas de mayoría relativa:{' '}
+              <span className="text-foreground tabular-nums">{mayoria.personas.Mujer}</span>{' '}
+              mujeres ·{' '}
+              <span className="text-foreground tabular-nums">{mayoria.personas.Hombre}</span>{' '}
+              hombres ·{' '}
+              <span className="text-foreground tabular-nums">
+                {mayoria.personas['No Binario']}
+              </span>{' '}
+              personas no binarias
+            </span>
+            {/* Artículo 53.4 de los Lineamientos. */}
+            <span className="block">
+              Para la paridad, las personas no binarias ocupan los lugares que corresponden al
+              género masculino.
+            </span>
           </p>
         </section>
 
@@ -173,7 +181,7 @@ export function PanelBalance() {
               exit="saliente"
               className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-xs"
             >
-              Aún no hay fórmulas asignadas. Al colocarlas aparecerá cuántas acreditan cada medida
+              Aún no hay fórmulas asignadas. Esta tabla cuenta cuántas acreditan cada medida
               compensatoria y cuántas personas pertenecen al grupo sin que su fórmula lo acredite.
             </m.p>
           ) : (
@@ -214,8 +222,13 @@ export function PanelBalance() {
           </AnimatePresence>
 
           <p className="text-muted-foreground border-t pt-2 text-xs tabular-nums">
-            Lista &ldquo;A&rdquo;: {proporcional.formulas} fórmulas · {proporcional.candidaturas}{' '}
-            candidaturas · {proporcional.encabezan.Mujer} encabezadas por mujeres
+            Lista &ldquo;A&rdquo;: {plural(proporcional.formulas, 'fórmula', 'fórmulas')} ·{' '}
+            {plural(proporcional.candidaturas, 'candidatura', 'candidaturas')} ·{' '}
+            {plural(
+              proporcional.encabezan.Mujer,
+              'encabezada por mujer',
+              'encabezadas por mujeres',
+            )}
           </p>
         </section>
       </CardContent>

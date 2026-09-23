@@ -17,7 +17,9 @@ import type { Genero } from '../domain/types'
 export const ROTULO_GENERO: Record<Genero, string> = {
   Mujer: 'Mujer',
   Hombre: 'Hombre',
-  // Artículo 56.1 de los Lineamientos.
+  // Artículo 53 de los Lineamientos, que nombra así a las personas en sus
+  // numerales 1 a 4. El 56.1 es otra cosa: el Distrito XV de mayor población
+  // indígena.
   'No Binario': 'No binaria',
 }
 

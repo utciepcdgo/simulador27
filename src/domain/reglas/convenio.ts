@@ -2,6 +2,7 @@ import { siglasDe } from '../catalogo/partidos'
 import { TOTAL_DISTRITOS } from '../catalogo/rentabilidad'
 import type { EstadoSimulacion, ResultadoRegla } from '../types'
 import { FUNDAMENTOS } from './fundamentos'
+import { concuerda, plural } from '../texto'
 
 /**
  * Cuántos distritos debe abarcar el convenio para cada clase de coalición.
@@ -70,7 +71,7 @@ export function integracionDelConvenio(estado: EstadoSimulacion): ResultadoRegla
       ...base,
       cumple: false,
       gravedad: 'por-completar',
-      mensaje: `Faltan ${sinDecidir} distrito(s) por decidir: cada uno va siglado a un partido del convenio o queda fuera de él, para que cada integrante lo postule por su cuenta.`,
+      mensaje: `${concuerda(sinDecidir, 'Falta', 'Faltan')} ${plural(sinDecidir, 'distrito', 'distritos')} por decidir. Cada distrito va siglado a un partido del convenio o queda fuera de él, para que cada integrante lo postule por su cuenta.`,
     }
   }
   if (clase === 'Insuficiente') {
@@ -78,12 +79,12 @@ export function integracionDelConvenio(estado: EstadoSimulacion): ResultadoRegla
       ...base,
       cumple: false,
       gravedad: 'sustitucion',
-      mensaje: `El convenio abarca ${siglados} distrito(s); una coalición flexible requiere cuando menos ${MINIMO_FLEXIBLE}. Por debajo de ese mínimo no hay coalición que registrar.`,
+      mensaje: `El convenio abarca ${plural(siglados, 'distrito', 'distritos')}. Una coalición flexible requiere cuando menos ${MINIMO_FLEXIBLE}. Por debajo de ese mínimo no hay coalición que registrar.`,
     }
   }
   return {
     ...base,
     cumple: true,
-    mensaje: `${estado.postulante.modalidad} ${clase}: ${siglados} distrito(s) en convenio y ${fuera} fuera de él, que cada integrante postula por su cuenta.`,
+    mensaje: `${estado.postulante.modalidad} ${clase}. ${plural(siglados, 'distrito', 'distritos')} en convenio y ${fuera} fuera de él, que cada integrante postula por su cuenta.`,
   }
 }
