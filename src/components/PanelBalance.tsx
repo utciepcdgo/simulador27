@@ -8,7 +8,7 @@ import { ROTULO_GRUPO } from '../lib/rotulos'
 import { cn } from '../lib/utils'
 import { useCriterios } from '../store/configuracion'
 import { estadoDe, useSimulador } from '../store/simulador'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card'
 
 const COLOR_CELDA = {
   Mujer: 'bg-fuchsia-500',
@@ -102,7 +102,7 @@ function FilaGrupo({ grupo }: { grupo: RecuentoGrupo }) {
 }
 
 /**
- * Balance de la postulación: qué hay en el tablero, no si cumple.
+ *  Balance de la postulación: qué hay en el tablero, no si cumple.
  *
  * El dictamen contesta «¿ya cumplí?» y por eso se queda corto: una fórmula que
  * combina grupos no acredita ninguna cuota y desaparece de sus casillas, aunque
@@ -232,6 +232,21 @@ export function PanelBalance() {
           </p>
         </section>
       </CardContent>
+
+      {/*
+        La cláusula de cierre del articulado. Se escribe tal cual: no es un texto
+        de interfaz que se pueda acortar ni reescribir, es una cláusula.
+
+        Sin `border-t`: `CardFooter` solo dibuja separador si se le pide, y aquí
+        basta el espacio. `text-base` es 1rem, 16 px, que son exactamente 12 pt a
+        96 ppp; en `rem` y no en `pt` para que siga la escala de tamaño de texto
+        de la configuración, que trabaja sobre la raíz.
+      */}
+      <CardFooter className="justify-center pt-2">
+        <p className="text-muted-foreground text-center text-base text-balance">
+          Lo no previsto será determinado por el Consejo General
+        </p>
+      </CardFooter>
     </Card>
   )
 }
