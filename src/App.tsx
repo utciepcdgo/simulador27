@@ -22,6 +22,7 @@ import { ConfiguracionPostulante } from './components/ConfiguracionPostulante'
 import { Consideraciones } from './components/Consideraciones'
 import { AvisoCierre } from './components/AvisoCierre'
 import { DialogoRebote } from './components/DialogoRebote'
+import { TramaProyecto } from './components/TramaProyecto'
 import { EmblemaInstituto } from './components/EmblemaInstituto'
 import { EtiquetaPartido } from './components/EtiquetaPartido'
 import { CajaDistrito, FaseConvenio } from './components/FaseConvenio'
@@ -379,6 +380,7 @@ function App() {
 
       <DialogoRebote />
       <AvisoCierre />
+      <TramaProyecto />
     </DndContext>
   )
 }

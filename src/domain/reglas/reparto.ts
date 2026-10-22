@@ -24,6 +24,13 @@ export interface Reparto {
    * exige al menos una mujer. Cuando eso ocurre se devuelve el acomodo que más
    * se acerca en lugar de no devolver nada, y se dice qué quedó fuera. El
    * simulador refleja, no impide.
+   *
+   * Los de 7 y 8 estuvieron un tiempo sin declararse: el rango de su bloque bajo
+   * se ensanchaba en vez de quedar vacío, y el reparto se daba por bueno con una
+   * mujer menos que el piso. Ya no. `holgura.ts` los detecta por su cuenta y
+   * sirve de contraste —responde si el tablero tiene solución antes de que
+   * exista, mientras esta búsqueda propone géneros sobre uno a medio llenar—, y
+   * el recorrido de los quince tamaños está en `docs/tableros-parciales.md`.
    */
   irresolubles: string[]
 }
@@ -145,6 +152,45 @@ function mujeresPorBloque(ambito: Ambito, franjas: Franja[]): Acomodo {
 }
 
 /**
+ * El reparto cuando no hay bloques que respetar.
+ *
+ * Cae aquí el tablero de un partido local o de nuevo registro, y el de cualquier
+ * ámbito sin porcentaje con el que ordenar. Queda una sola exigencia, el piso
+ * del artículo 23.1, y ninguna posición cerrada: siempre tiene solución, así que
+ * nunca devuelve requisitos irresolubles.
+ *
+ * Las mujeres se colocan en los distritos de menor número primero, que es el
+ * orden en que se presenta el tablero. Sin rentabilidad que medir, cualquier
+ * orden es igual de defendible y el ascendente es el único que no insinúa un
+ * ranking que no existe.
+ */
+function sinBloques(ambito: Ambito): Reparto {
+  const { mujeres } = conteoGenero(ambito.distritos)
+  let porColocar = minimoMujeres(ambito.distritos.length) - mujeres
+
+  const porDistrito = new Map<number, GeneroParidad>()
+  const enOrden = [...ambito.distritos].sort((a, b) => a.id_distrito - b.id_distrito)
+  for (const distrito of enOrden) {
+    if (distrito.formula_asignada) continue
+    const cabeMujer = porColocar > 0
+    porDistrito.set(distrito.id_distrito, cabeMujer ? 'Mujer' : 'Hombre')
+    if (cabeMujer) porColocar -= 1
+  }
+
+  const faltan = { Mujer: 0, Hombre: 0 }
+  for (const genero of porDistrito.values()) faltan[genero] += 1
+
+  return {
+    porDistrito,
+    faltan,
+    faltaJoven: !ambito.distritos.some(
+      (d) => d.formula_asignada?.propietario.esJoven && d.formula_asignada.suplente.esJoven,
+    ),
+    irresolubles: [],
+  }
+}
+
+/**
  * El reparto de géneros que el ámbito necesita, distrito por distrito.
  *
  * Es constructivo, no una búsqueda: dentro de cada bloque las mujeres van a las
@@ -161,6 +207,7 @@ function mujeresPorBloque(ambito: Ambito, franjas: Franja[]): Acomodo {
  * en los huecos abiertos. Lo que no cabe se dijo antes, en `irresolubles`.
  */
 export function repartoNecesario(ambito: Ambito): Reparto {
+  if (!ambito.conBloques) return sinBloques(ambito)
   const franjas = franjasDe(ambito)
   const { reparto, cumpleMayoria, cumplePiso, sinAcomodo } = mujeresPorBloque(ambito, franjas)
 

@@ -60,6 +60,7 @@ import {
   umbralRegistroRP,
   validarFormula,
   type Ambito,
+  type Criterios,
   type Reparto,
 } from './index'
 
@@ -294,9 +295,33 @@ describe('admisión en un distrito', () => {
     expect(admiteEnDistrito(formula(perfil('Hombre')), distritoEn(15))).toBeNull()
   })
 
+  it('rechaza también la suplencia mujer: el 28.2 no distingue el cargo', () => {
+    // «En ningún caso se podrán postular candidaturas del género femenino»: una
+    // suplente es una candidata registrada como tal, y `H-M` encabeza como
+    // hombre pero lleva una mujer dentro.
+    const hombreConSuplenteMujer = formula(perfil('Hombre'), perfil('Mujer'))
+    const noBinarioConSuplenteMujer = formula(perfil('No Binario'), perfil('Mujer'))
+    expect(admiteEnDistrito(hombreConSuplenteMujer, distritoEn(15))?.gravedad).toBe('sustitucion')
+    expect(admiteEnDistrito(noBinarioConSuplenteMujer, distritoEn(15))?.gravedad).toBe(
+      'sustitucion',
+    )
+    // Y fuera de las posiciones cerradas siguen siendo lícitas.
+    expect(admiteEnDistrito(hombreConSuplenteMujer, distritoEn(1))).toBeNull()
+  })
+
+  it('con la otra lectura, la suplencia mujer sí pasa', () => {
+    const soloPropietaria = { ...CRITERIOS_LEY, alcanceMenorVotacion: 'propietaria' as const }
+    const hombreConSuplenteMujer = formula(perfil('Hombre'), perfil('Mujer'))
+    expect(admiteEnDistrito(hombreConSuplenteMujer, distritoEn(15), soloPropietaria)).toBeNull()
+    // La propietaria mujer sigue rechazada en las dos lecturas.
+    expect(
+      admiteEnDistrito(formula(perfil('Mujer')), distritoEn(15), soloPropietaria),
+    ).not.toBeNull()
+  })
+
   it('no reserva el Distrito XV: admite cualquier fórmula', () => {
-    // Artículo 55.1: los partidos «procurarán» postular ahí una fórmula
-    // integrada por personas indígenas, y el 55.2 la llama optativa. No es un
+    // Artículo 56.1: los partidos «podrán» postular ahí una fórmula
+    // integrada por personas indígenas, y el 56.2 la llama optativa. No es un
     // espacio reservado, así que el arrastre no puede rebotar por ese motivo.
     const xv = distritoEn(POSICION_XV_PAN)
     expect(xv.mayoria_indigena).toBe(true)
@@ -839,6 +864,20 @@ describe('blindaje de rentabilidad baja', () => {
   it('admite perfiles no binarios ahí', () => {
     expect(blindajeBaja(ambitoDe(tablero('MMMHH MMMHH HHHNN'))).cumple).toBe(true)
   })
+
+  it('el dictamen mira lo mismo que el rebote: la suplencia también cuenta', () => {
+    // Posición 15 con `H-M`: encabeza hombre, así que la paridad la cuenta del
+    // lado de los hombres, y aun así el 28.2 la rechaza.
+    const conSuplenteMujer = ambitoDe(
+      tablero('MMMHH MMMHH HHHHH', { 15: formula(perfil('Hombre'), perfil('Mujer')) }),
+    )
+    expect(blindajeBaja(conSuplenteMujer).cumple).toBe(false)
+    expect(blindajeBaja(conSuplenteMujer).mensaje).toContain('candidaturas de mujeres')
+
+    // Con la lectura restringida a quien encabeza, el mismo tablero cumple.
+    const soloPropietaria = { ...CRITERIOS_LEY, alcanceMenorVotacion: 'propietaria' as const }
+    expect(blindajeBaja(conSuplenteMujer, soloPropietaria).cumple).toBe(true)
+  })
 })
 
 describe('cuotas', () => {
@@ -864,7 +903,7 @@ describe('cuotas', () => {
     expect(joven[0].cumple).toBe(true)
   })
 
-  it('mide la proporción del artículo 27.4 en el tablero individual', () => {
+  it('mide la proporción del artículo 27.1.V en el tablero individual', () => {
     // El convenio siempre exige una; los huérfanos, una por cada quince
     // distritos redondeada. El umbral cae en ocho.
     const conFuera = (cuantos: number) => {
@@ -1198,7 +1237,9 @@ describe('encabezado compensatorio', () => {
   it('es pendiente mientras queden distritos de MR por asignar', () => {
     const resultado = encabezadoCompensatorioRP(ambitoRP('HHHHH HHHHH MMM..', 'HMHMH'))
     expect(resultado.gravedad).toBe('por-completar')
-    expect(resultado.mensaje).toContain('subsanable')
+    // El mensaje enuncia el hecho que lo mantiene pendiente. Antes decía
+    // «todavía es subsanable», que anticipaba el desenlace en vez de informarlo.
+    expect(resultado.mensaje).toContain('Quedan distritos de mayoría relativa por asignar')
   })
 })
 
@@ -1277,7 +1318,7 @@ describe('dictamen', () => {
   })
 
   it('cierra aunque el Distrito XV no lleve fórmula indígena', () => {
-    // Antes esto bloqueaba el cierre. El artículo 55.1 dice «procurarán», así
+    // Antes esto bloqueaba el cierre. El artículo 56.1 dice «podrán», así
     // que no postular la medida no impide el registro.
     const sinIndigena = tablero('MMMHH MMMHH MMHHH', { 5: formula(JOVEN) })
     const resultados = evaluarSimulacion(simulacion(sinIndigena, [listaValida]))
@@ -1464,7 +1505,11 @@ describe('criterios de interpretación', () => {
   const alianza = coalicion(PARTIDO.PRI, PARTIDO.PAN)
 
   /** El ámbito individual de PAN con `cuantos` distritos fuera del convenio. */
-  function tableroDe(cuantos: number, formulas: Record<number, TokenFormula> = {}): Ambito {
+  function tableroDe(
+    cuantos: number,
+    formulas: Record<number, TokenFormula> = {},
+    criterios: Criterios = CRITERIOS_LEY,
+  ): Ambito {
     const primero = 15 - cuantos + 1
     const base = repartir(tablero('...............', {}, alianza), (p) =>
       p >= primero ? 'fuera' : PARTIDO.PRI,
@@ -1483,7 +1528,7 @@ describe('criterios de interpretación', () => {
         ? { ...d, postulacion: { modo: 'fuera' as const, formulas: { [PARTIDO.PAN]: formula } } }
         : d
     })
-    return ambitosDe(simulacion(distritos, [], alianza)).find(
+    return ambitosDe(simulacion(distritos, [], alianza), criterios).find(
       (a) => a.etiqueta === 'PAN · postulaciones en lo individual',
     )!
   }
@@ -1531,7 +1576,7 @@ describe('criterios de interpretación', () => {
     })
   })
 
-  describe('requisito imposible por geometría (artículos 27.4, 28.2 y 28.5)', () => {
+  describe('requisito imposible por geometría (artículos 27.1.V, 28.2 y 28.5)', () => {
     // Cinco distritos: bloques 2-2-1. El único impar es el bajo, y su único
     // distrito está prohibido a las mujeres. Once da 4-4-3 con el mismo choque.
     const IMPOSIBLES = [5, 11]
@@ -1544,7 +1589,7 @@ describe('criterios de interpretación', () => {
       }
     })
 
-    it('la lectura del 27.4 lo tiene por no exigible, sin callarlo', () => {
+    it('la lectura del 27.1.V lo tiene por no exigible, sin callarlo', () => {
       for (const cuantos of IMPOSIBLES) {
         const r = mayoriaBloqueImpar(tableroDe(cuantos), {
           ...CRITERIOS_LEY,
@@ -1552,7 +1597,7 @@ describe('criterios de interpretación', () => {
         })
         expect(r.cumple, `${cuantos} distritos`).toBe(true)
         expect(r.mensaje).toContain('No aplicable')
-        expect(r.mensaje).toContain('artículo 27.4')
+        expect(r.mensaje).toContain('artículo 27, numeral 1, punto V')
       }
     })
 
@@ -1567,13 +1612,187 @@ describe('criterios de interpretación', () => {
     })
   })
 
+  describe('blindaje proporcional (artículos 27.1.V y 28.2)', () => {
+    const PROPORCIONAL: Criterios = {
+      ...CRITERIOS_LEY,
+      aritmeticaImposible: 'blindajeProporcional',
+    }
+
+    it('abre la posición que hacía falta en los ámbitos sin solución', () => {
+      // Los cuatro tamaños donde la lectura literal no admite ninguna
+      // composición. Bajo la proporcional cada uno recupera una posición.
+      for (const [cuantos, cerradas] of [
+        [5, 0],
+        [7, 1],
+        [8, 1],
+        [11, 1],
+      ]) {
+        const literal = tableroDe(cuantos).distritos.filter((d) => d.esBlindada)
+        const graduado = tableroDe(cuantos, {}, PROPORCIONAL).distritos.filter(
+          (d) => d.esBlindada,
+        )
+        expect(graduado, `${cuantos} distritos`).toHaveLength(cerradas)
+        expect(literal.length, `${cuantos} distritos`).toBeGreaterThan(cerradas)
+      }
+    })
+
+    it('no toca los ámbitos que ya tenían solución', () => {
+      for (const cuantos of [3, 4, 6, 9, 10, 12, 15]) {
+        const literal = tableroDe(cuantos).distritos.filter((d) => d.esBlindada)
+        const graduado = tableroDe(cuantos, {}, PROPORCIONAL).distritos.filter(
+          (d) => d.esBlindada,
+        )
+        expect(
+          graduado.map((d) => d.posicion_rentabilidad),
+          `${cuantos} distritos`,
+        ).toEqual(literal.map((d) => d.posicion_rentabilidad))
+      }
+    })
+
+    it('deshace el choque que el criterio anterior solo podía dispensar', () => {
+      // Es la diferencia entre las dos lecturas del mismo punto V: `inaplicable`
+      // perdona la regla del 28.5, y ésta evita que llegue a colisionar. En los
+      // dos casos el ámbito deja de estar condenado, pero solo aquí la mayoría
+      // femenina del bloque bajo sigue siendo exigible.
+      for (const cuantos of [5, 11]) {
+        const r = mayoriaBloqueImpar(tableroDe(cuantos, {}, PROPORCIONAL), PROPORCIONAL)
+        expect(r.cumple, `${cuantos} distritos`).toBe(false)
+        expect(r.mensaje, `${cuantos} distritos`).not.toContain('No aplicable')
+        expect(r.mensaje, `${cuantos} distritos`).not.toContain('Ningún acomodo lo satisface')
+      }
+    })
+
+    it('el reparto sugerido deja de declarar requisitos irresolubles', () => {
+      // Bajo la ley, 5 y 11 declaran lo que no pueden satisfacer. Los de 7 y 8
+      // no llegan aquí porque `repartoNecesario` los da por resueltos aunque se
+      // quede una mujer corto: el rango de su bloque bajo se ensancha en vez de
+      // declararse vacío. Es un defecto propio de `reparto.ts`, anterior a este
+      // criterio y sin relación con él.
+      for (const cuantos of [5, 11]) {
+        expect(
+          repartoNecesario(tableroDe(cuantos)).irresolubles,
+          `${cuantos} distritos bajo la ley`,
+        ).not.toEqual([])
+      }
+      for (const cuantos of [5, 7, 8, 11]) {
+        const reparto = repartoNecesario(tableroDe(cuantos, {}, PROPORCIONAL))
+        expect(reparto.irresolubles, `${cuantos} distritos graduados`).toEqual([])
+        // Y llega al piso de verdad, no por ensanchamiento del rango.
+        const mujeres = [...reparto.porDistrito.values()].filter((g) => g === 'Mujer').length
+        expect(mujeres, `${cuantos} distritos graduados`).toBeGreaterThanOrEqual(
+          Math.ceil(cuantos / 2),
+        )
+      }
+    })
+
+    it('el rebote del arrastre respeta la posición que se abrió', () => {
+      // La puerta del artículo 28.2 en `token.ts` lee `esBlindada`, así que una
+      // lectura que abre la posición tiene que abrir también el arrastre. Si no,
+      // el dictamen daría por válido un tablero que el tablero no deja construir.
+      const enCinco = (criterios: Criterios) =>
+        tableroDe(5, {}, criterios).distritos.find((d) => d.posicion_rentabilidad === 5)!
+      const mujer = formula(perfil('Mujer'), perfil('Mujer'))
+      expect(admiteEnDistrito(mujer, enCinco(CRITERIOS_LEY), CRITERIOS_LEY)).not.toBeNull()
+      expect(admiteEnDistrito(mujer, enCinco(PROPORCIONAL), PROPORCIONAL)).toBeNull()
+    })
+
+    it('no dice que el bloque Baja esté vacío cuando solo se graduó a cero', () => {
+      // Con cinco distritos el bloque Baja tiene uno y la prohibición se reduce
+      // a ninguna posición. El mensaje anterior afirmaba que el bloque estaba
+      // vacío, que es falso y además invita a colocar ahí sin reparo.
+      const r = blindajeBaja(tableroDe(5, {}, PROPORCIONAL), PROPORCIONAL)
+      expect(r.cumple).toBe(true)
+      expect(r.mensaje).not.toContain('está vacío')
+      expect(r.mensaje).toContain('artículo 27, numeral 1, punto V')
+    })
+  })
+
   it('señala qué criterios quedaron fuera de la ley', () => {
     expect(criteriosFueraDeLey({ ...CRITERIOS_LEY, denominadorParidad: 'registradas' })).toEqual([
       'denominadorParidad',
     ])
     expect(
-      criteriosFueraDeLey({ denominadorParidad: 'registradas', aritmeticaImposible: 'inaplicable' }),
-    ).toHaveLength(2)
+      criteriosFueraDeLey({
+        denominadorParidad: 'registradas',
+        aritmeticaImposible: 'blindajeProporcional',
+        alcanceMenorVotacion: 'propietaria',
+      }),
+    ).toHaveLength(3)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Exención de bloques (artículos 23.2 y 29.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ámbitos sin bloques de competitividad', () => {
+  const pesd = ambitoDe(tablero('...............', {}, individual(PARTIDO.PESD)), individual(PARTIDO.PESD))
+  const pan = ambitoDe(tablero('...............'))
+
+  it('el partido local no lleva bloques y el nacional sí', () => {
+    expect(pesd.conBloques).toBe(false)
+    expect(pan.conBloques).toBe(true)
+  })
+
+  it('sus distritos van en orden ascendente, sin bloque ni porcentaje', () => {
+    expect(pesd.distritos.map((d) => d.id_distrito)).toEqual(
+      Array.from({ length: 15 }, (_, i) => i + 1),
+    )
+    expect(pesd.distritos.every((d) => d.bloque === null)).toBe(true)
+    expect(pesd.distritos.every((d) => d.porcentaje === null)).toBe(true)
+  })
+
+  it('ninguna posición queda cerrada por el artículo 28.2', () => {
+    // La prohibición vive en el capítulo de los bloques. Sin bloques no tiene
+    // dónde operar, y el rebote del arrastre tiene que abrir esas casillas.
+    expect(pesd.distritos.some((d) => d.esBlindada)).toBe(false)
+    const mujer = formula(perfil('Mujer'), perfil('Mujer'))
+    const ultimo = pesd.distritos[14]
+    expect(admiteEnDistrito(mujer, ultimo, CRITERIOS_LEY)).toBeNull()
+  })
+
+  it('el dictamen cambia cuatro reglas de bloque por una que lo explica', () => {
+    const reglas = (ambito: Ambito) => evaluarMR(ambito, CRITERIOS_LEY).map((r) => r.regla)
+    expect(reglas(pan)).toEqual(
+      expect.arrayContaining([
+        'Paridad del bloque Alta',
+        'Mayoría de fórmulas encabezadas por mujeres en bloques impares',
+        'Prohibición en distritos de menor porcentaje de votación',
+      ]),
+    )
+    expect(reglas(pesd)).toEqual([
+      'Bloques de competitividad',
+      'Medida compensatoria de personas jóvenes',
+      'Medida compensatoria de personas indígenas',
+    ])
+    const exencion = regla(evaluarMR(pesd, CRITERIOS_LEY), 'Bloques de competitividad')
+    expect(exencion.cumple).toBe(true)
+    expect(exencion.mensaje).toContain('PESD')
+    expect(exencion.fundamento_legal).toContain('23')
+  })
+
+  it('el reparto sugerido llega al piso sin declarar nada irresoluble', () => {
+    const propuesta = repartoNecesario(pesd)
+    expect(propuesta.irresolubles).toEqual([])
+    expect(propuesta.faltan.Mujer).toBe(8)
+    expect(propuesta.faltan.Hombre).toBe(7)
+  })
+
+  it('una alianza conserva los bloques aunque incluya a un partido local', () => {
+    // El artículo 23.2 exime a los partidos, y una coalición no es ninguno de
+    // los tres supuestos que enumera. La suma ignora el nulo del local.
+    const alianza = coalicion(PARTIDO.PAN, PARTIDO.PESD)
+    const convenio = ambitoDe(tablero('...............', {}, alianza), alianza)
+    expect(convenio.conBloques).toBe(true)
+    expect(convenio.distritos.every((d) => d.porcentaje !== null)).toBe(true)
+  })
+
+  it('una alianza de dos locales no tiene con qué ordenar', () => {
+    const alianza = coalicion(PARTIDO.PESD, PARTIDO.PV)
+    const convenio = ambitoDe(tablero('...............', {}, alianza), alianza)
+    expect(convenio.conBloques).toBe(false)
+    const exencion = regla(evaluarMR(convenio, CRITERIOS_LEY), 'Bloques de competitividad')
+    expect(exencion.mensaje).toContain('Ningún integrante de este ámbito compitió')
   })
 })
 
@@ -1629,7 +1848,7 @@ describe('postulación parcial', () => {
 
   it('mide las demás reglas sobre el ámbito reducido', () => {
     // El piso del cincuenta por ciento baja de ocho a seis, y la medida de
-    // personas jóvenes sigue la proporción del 27.4.
+    // personas jóvenes sigue la proporción del 27.1.V.
     const registro = ambitosDe(
       simulacion(sinPostularEn(tablero('...............'), RETIRADOS)),
     ).find((a) => a.tipo === 'consolidado')!

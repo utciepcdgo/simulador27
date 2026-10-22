@@ -1,9 +1,17 @@
 # Simulador de Postulaciones Electorales — PEL 2026-2027, Durango
 
 SPA para simular y validar jurídicamente la postulación de candidaturas: 15 distritos de
-Mayoría Relativa y 5 posiciones de Representación Proporcional. Especificación completa en
-[docs/technical-brief-v2.md](docs/technical-brief-v2.md); las decisiones que el brief dejaba
-abiertas están resueltas en [docs/decisiones.md](docs/decisiones.md).
+Mayoría Relativa y 5 posiciones de Representación Proporcional.
+
+**Qué evalúa el motor, regla por regla:** [docs/reglas.md](docs/reglas.md). Se **genera** desde
+`src/domain/reglas/inventario.ts` con `pnpm reglas:generar`, y la suite falla si se queda atrás;
+no editarlo a mano. Las decisiones de interpretación están en
+[docs/decisiones.md](docs/decisiones.md), y las que siguen abiertas en
+[docs/pendientes-juridicos.md](docs/pendientes-juridicos.md).
+
+[docs/technical-brief-v2.md](docs/technical-brief-v2.md) es el brief de origen y se conserva como
+**documento histórico**: su matriz de reglas ya no describe al motor y en un punto afirma lo
+contrario de la norma. No usarlo como especificación.
 
 ## Restricción absoluta
 
@@ -65,15 +73,23 @@ Dos CSV alimentan `src/domain/catalogo/`, que se **genera** con `pnpm catalogo:g
 edita a mano:
 
 - `data/partidos-PEL-2026-2027.csv` — el registro vigente: 11 partidos con su orden de registro,
-  siglas y nombre. El `id_partido` **es** ese orden y es la identidad del partido en el sistema.
+  siglas, nombre, **ámbito** (Nacional o Local) y si son **de nuevo registro**. El `id_partido`
+  **es** ese orden y es la identidad del partido en el sistema. Los dos últimos campos deciden dos
+  reglas —el artículo 9.5 cierra la coalición a los nacionales de nuevo registro, y el 23.2 exime
+  de los bloques a esos y a los locales—, y se leen por
+  [`elegibilidad.ts`](src/domain/reglas/elegibilidad.ts). **El archivo debe guardarse en UTF-8**:
+  Excel lo pasa a ANSI si no se elige «CSV UTF-8», y el generador ya falla en voz alta si ocurre.
 - `data/sirc-bloques-diputaciones-PEL-2026-2027.csv` — porcentaje de votación individual del PEL
   2023-2024, solo para los 6 partidos que compitieron.
 
 Las dos fuentes se cruzan **por siglas, nunca por número**: el CSV de votación numera al PT como
 3 y al PVEM como 4, y el registro los invierte. El generador avisa de la discrepancia.
 
-Un partido de registro nuevo no tiene historial, y su porcentaje se toma como cero en los quince
-distritos.
+Un partido de registro nuevo o local no tiene historial, y su porcentaje es **`null`, no cero**:
+cero afirmaría que esa fue su votación válida emitida. Al sumar una alianza el `null` se ignora,
+como `SUM`. Sin porcentaje no hay rentabilidad que ordenar, así que su tablero va en orden
+ascendente de distrito y sin bloques. Ojo: «sin historial» y «local o de nuevo registro» no son lo
+mismo, aunque hoy coincidan los mismos cinco partidos.
 
 `bloque` no se almacena: se deriva de la posición de rentabilidad. Almacenar ambos garantiza
 que algún día queden inconsistentes. Las siglas tampoco son llave: son etiqueta de presentación,

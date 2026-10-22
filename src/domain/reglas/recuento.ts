@@ -141,7 +141,7 @@ export function recuentoDe(
   estado: EstadoSimulacion,
   criterios: Criterios = CRITERIOS_LEY,
 ): RecuentoPostulacion {
-  const paridad = ambitosDe(estado)
+  const paridad = ambitosDe(estado, criterios)
     .filter(
       (ambito) =>
         ambito.tipo === 'consolidado' || (ambito.tipo === 'tablero' && ambito.paridadPropia),

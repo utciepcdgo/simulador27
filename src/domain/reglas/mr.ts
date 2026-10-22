@@ -7,8 +7,9 @@ import {
 } from '../catalogo/rentabilidad'
 import { esMujer } from '../genero'
 import type { IdPartido, ResultadoRegla } from '../types'
-import type { Ambito } from './base'
+import { alcanzaProhibicion, type Ambito } from './base'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
+import { aplicanBloques } from './elegibilidad'
 import {
   acreditaIndigena,
   conteoGenero,
@@ -292,7 +293,7 @@ export function mayoriaBloqueImpar(
     return {
       ...base,
       cumple: true,
-      mensaje: `No aplicable, conforme al artículo 27.4: en un ámbito de ${ambito.distritos.length} distritos la prohibición del artículo 28.2 ocupa las posiciones que harían falta para la mayoría exigida, así que ningún acomodo la satisface.`,
+      mensaje: `No aplicable, conforme al artículo 27, numeral 1, punto V: en un ámbito de ${ambito.distritos.length} distritos la prohibición del artículo 28.2 ocupa las posiciones que harían falta para la mayoría exigida, así que ningún acomodo la satisface.`,
     }
   }
   const exigencia = impares
@@ -317,23 +318,32 @@ export function mayoriaBloqueImpar(
  * ámbito** no admiten fórmulas encabezadas por mujeres. Los perfiles no binarios
  * sí caben, porque para paridad cuentan como hombres.
  */
-export function blindajeBaja(ambito: Ambito): ResultadoRegla {
+export function blindajeBaja(
+  ambito: Ambito,
+  criterios: Criterios = CRITERIOS_LEY,
+): ResultadoRegla {
+  const alcanzaSuplencia = criterios.alcanceMenorVotacion === 'candidatura'
+  const cargo = alcanzaSuplencia ? 'candidaturas de mujeres' : 'fórmulas encabezadas por mujeres'
   const blindadas = ambito.distritos.filter((d) => d.esBlindada)
   const infractores = blindadas.filter(
-    (d) => d.formula_asignada && esMujer(d.formula_asignada.propietario),
+    (d) => d.formula_asignada && alcanzaProhibicion(d.formula_asignada, criterios),
   )
   const cumple = infractores.length === 0
   const posiciones = blindadas.map((d) => d.posicion_rentabilidad).join(' y ')
   let mensaje: string
   if (!cumple) {
-    mensaje = `Distrito ${infractores.map((d) => d.numero_romano).join(', ')}: ${ubicacionProhibida(blindadas.length)} y no admite fórmula encabezada por mujer.`
+    mensaje = `Distrito ${infractores.map((d) => d.numero_romano).join(', ')}: ${ubicacionProhibida(blindadas.length)} y en ningún caso admite ${cargo}.`
+  } else if (blindadas.length === 0 && tamanosDeBloque(ambito.distritos.length).Baja === 0) {
+    mensaje = `El bloque Baja de este ámbito está vacío, así que la prohibición es inoperante: admite ${cargo} en cualquiera de sus posiciones.`
   } else if (blindadas.length === 0) {
-    mensaje =
-      'El bloque Baja de este ámbito está vacío, así que la prohibición es inoperante: admite fórmulas encabezadas por mujeres en cualquiera de sus posiciones.'
+    // El bloque Baja sí existe: la prohibición se graduó a cero. Decir aquí que
+    // el bloque está vacío sería falso, y dejaría al dictamen afirmando que no
+    // hay nada que proteger justo donde se decidió no proteger nada.
+    mensaje = `En un ámbito de ${ambito.distritos.length} distritos la prohibición no alcanza a ninguna posición: aplicarla dejaría al bloque Baja sin composición posible, y el artículo 27, numeral 1, punto V manda cumplir estos criterios «en proporción al número de distritos que integre cada bloque, y en lo que resulte aplicable».`
   } else if (blindadas.length === 1) {
-    mensaje = `La posición de rentabilidad ${posiciones} no lleva fórmula encabezada por mujer.`
+    mensaje = `La posición de rentabilidad ${posiciones} no lleva ${alcanzaSuplencia ? 'ninguna candidatura de mujer' : 'fórmula encabezada por mujer'}.`
   } else {
-    mensaje = `Las posiciones de rentabilidad ${posiciones} no llevan fórmulas encabezadas por mujeres.`
+    mensaje = `Las posiciones de rentabilidad ${posiciones} no llevan ${cargo}.`
   }
   return {
     regla: REGLA_PROHIBICION_MENOR_VOTACION,
@@ -356,7 +366,7 @@ export function blindajeBaja(ambito: Ambito): ResultadoRegla {
  * integrantes en ese tablero. Es el contraste deliberado con el artículo 54, que
  * para la Lista "A" exige a los partidos «de manera individual».
  *
- * **Fuera del convenio, la proporción.** El artículo 27.4 pide cumplir la medida
+ * **Fuera del convenio, la proporción.** El artículo 27.1.V pide cumplir la medida
  * «en proporción al número de distritos que integre cada bloque, y en lo que
  * resulte aplicable». Una fórmula por cada quince distritos, redondeada: el
  * umbral cae en ocho, más de la mitad. Por debajo de eso la cuota es
@@ -390,7 +400,7 @@ export function cuotaJoven(ambito: Ambito): ResultadoRegla {
     return {
       ...base,
       cumple: true,
-      mensaje: `No aplicable: ${ambito.distritos.length} de 15 distritos no alcanzan la proporción de una fórmula, conforme al artículo 27.4.`,
+      mensaje: `No aplicable: ${ambito.distritos.length} de 15 distritos no alcanzan la proporción de una fórmula, conforme al artículo 27, numeral 1, punto V.`,
     }
   }
 
@@ -422,8 +432,8 @@ export function cuotaJoven(ambito: Ambito): ResultadoRegla {
 /**
  * Medida compensatoria de personas indígenas en el Distrito XV: **optativa**.
  *
- * El artículo 55.1 dice que los partidos «procurarán» postular ahí una fórmula
- * integrada por personas de origen étnico, y el 55.2 la califica de «optativa
+ * El artículo 56.1 dice que los partidos «podrán» postular ahí una fórmula
+ * integrada por personas de origen étnico, y el 56.2 la califica de «optativa
  * más no limitativa». No es un espacio reservado ni un requisito, así que esta
  * regla **nunca incumple**: informa si la medida se tomó y no la exige.
  *
@@ -632,6 +642,29 @@ export function umbralRegistroRP(
  * El umbral de RP no está aquí: no se mide sobre lo siglado sino sobre la huella
  * de participación del partido. Ver `umbralRegistroRP`.
  */
+/**
+ * Por qué este tablero no lleva bloques de competitividad.
+ *
+ * Aparece en el dictamen en lugar de las cuatro reglas que no corren. Una regla
+ * que se esfuma sin decirlo dejaría a quien lee el dictamen sin saber si el
+ * simulador la verificó y pasó, o si ni siquiera la miró.
+ */
+function exencionDeBloques(ambito: Ambito): ResultadoRegla {
+  const suyo = ambito.partido !== null ? siglasDe(ambito.partido) : null
+  const porDerecho = suyo !== null && !aplicanBloques(ambito.partido!)
+  return {
+    regla: 'Bloques de competitividad',
+    ambito: 'MR',
+    alcance: ambito.etiqueta,
+    cumple: true,
+    mensaje: porDerecho
+      ? `Los bloques de competitividad no le aplican a ${suyo}, así que sus ${ambito.distritos.length} distritos se presentan en orden ascendente y no se le evalúan la paridad por bloque, el liderazgo de bloque, la mayoría en bloques impares ni la prohibición en distritos de menor votación.`
+      : `Ningún integrante de este ámbito compitió en el Proceso Electoral Local 2023-2024, así que no hay porcentaje de votación con el que ordenar los distritos. Se presentan en orden ascendente y no se evalúan las reglas que dependen de los bloques.`,
+    fundamento_legal: FUNDAMENTOS.bloquesInaplicables,
+    implicados: ambito.distritos.map((d) => d.id_distrito),
+  }
+}
+
 export function evaluarMR(
   ambito: Ambito,
   criterios: Criterios = CRITERIOS_LEY,
@@ -654,6 +687,18 @@ export function evaluarMR(
       },
     ]
   }
+  // Sin bloques caen las cuatro reglas que cuelgan de la geometría del tablero.
+  // No desaparecen en silencio: `exencionDeBloques` ocupa su sitio y explica por
+  // qué, que es la misma decisión que se tomó con la paridad de los integrantes
+  // de una coalición total.
+  if (!ambito.conBloques) {
+    return [
+      ...(ambito.paridadPropia ? [paridadGeneral(ambito, criterios)] : []),
+      exencionDeBloques(ambito),
+      cuotaJoven(ambito),
+      cuotaIndigena(ambito),
+    ]
+  }
   // El 28.1 se condiciona a que los tres bloques se conformen con los quince
   // distritos del Estado; el 28.4 y el 28.5 no, así que corren siempre. En el
   // tablero completo se acumulan las dos exigencias.
@@ -666,7 +711,7 @@ export function evaluarMR(
     ...paridadBloques(ambito),
     mayoriaBloqueImpar(ambito, criterios),
     ...(completo ? [liderazgoBloque(ambito)] : []),
-    blindajeBaja(ambito),
+    blindajeBaja(ambito, criterios),
     cuotaJoven(ambito),
     cuotaIndigena(ambito),
   ]

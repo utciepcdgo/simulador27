@@ -20,10 +20,10 @@ export interface Distrito {
    * El Distrito XV: el que se conforma con los municipios de mayor porcentaje
    * de población indígena (artículo 6.2).
    *
-   * Nombra un hecho del distrito, **no una obligación**. El artículo 55.1 dice
-   * que los partidos «procurarán» postular ahí una fórmula integrada por
-   * personas de origen étnico, y el 55.2 la califica de «optativa más no
-   * limitativa». No es un espacio reservado: cualquier fórmula cabe.
+   * Nombra un hecho del distrito, **no una obligación**. El artículo 56.1 dice
+   * que los partidos «podrán» postular ahí una fórmula integrada por personas de
+   * origen étnico, y el 56.2 la califica de «optativa más no limitativa». No es
+   * un espacio reservado: cualquier fórmula cabe.
    */
   mayoria_indigena: boolean
 }
@@ -49,9 +49,30 @@ export type Bloque = 'Alta' | 'Media' | 'Baja'
  */
 export interface Competitividad {
   id_distrito: number
-  porcentaje: number
+  /**
+   * Porcentaje de la votación válida emitida del PEL 2023-2024, o `null`.
+   *
+   * `null` **no es cero**: cero afirmaría que esa fue su votación válida
+   * emitida, y lo que ocurrió es que no hubo elección en la que participar. Los
+   * partidos locales y los de registro nuevo llevan `null` en los quince
+   * distritos, y al sumar una alianza el `null` no aporta ni resta.
+   */
+  porcentaje: number | null
+  /**
+   * Orden del distrito dentro de su ámbito, de 1 en adelante.
+   *
+   * Con bloques es la posición de rentabilidad, de mayor a menor porcentaje. Sin
+   * ellos no hay rentabilidad que ordenar y es el orden ascendente por número de
+   * distrito: I, II, III… Quien lo imprima debe mirar `bloque` antes de
+   * rotularlo como posición de rentabilidad.
+   */
   posicion_rentabilidad: number
-  bloque: Bloque
+  /**
+   * `null` cuando al ámbito no le aplican los bloques de competitividad: por el
+   * artículo 23.2 —partidos locales y nacionales de nuevo registro— o porque
+   * ningún integrante tiene porcentaje con el que ordenar.
+   */
+  bloque: Bloque | null
 }
 
 /**

@@ -13,6 +13,18 @@
  * postulación es peor que uno ausente.
  *
  * Auditoría rápida de lo que falta: `grep -c PENDIENTE fundamentos.ts`
+ *
+ * **Procedencia.** Las catorce citas de este archivo se verificaron una por una
+ * contra el documento aprobado de los Lineamientos PEL 2026-2027, el 13 de
+ * septiembre de 2026. Antes de esa revisión tres estaban desplazadas: las formas
+ * de acreditación se citaban como artículo 56 cuando son del 57, la proporción
+ * de las medidas como 27.4 cuando está en el 27, numeral 1, punto V, y el plazo
+ * para subsanar como 57.1.b cuando es el 58, numeral 1, punto V, con el 64 para
+ * paridad y medidas.
+ *
+ * Ante una revisión nueva del documento, verificar este archivo **antes** que
+ * cualquier otra cosa: es lo único que el dictamen imprime como fundamento, y
+ * una cita falsa es peor que una ausente.
  */
 
 export const FUNDAMENTOS = {
@@ -21,6 +33,10 @@ export const FUNDAMENTOS = {
   acreditacionCuota: `Artículo 5 fracción XV de los Lineamientos. Para que una fórmula cuente como postulada por una medida compensatoria, la persona propietaria y la suplente deben pertenecer a la misma, de modo que la sustitución no la vacíe. La fórmula que combina grupos distintos conserva plena validez y se registra sin medida compensatoria; lo único que no hace es acreditarla.`,
 
   convenio: `Artículo 9, numeral 1 de los Lineamientos. La coalición es total cuando abarca la totalidad de las candidaturas de mayoría relativa, parcial cuando abarca al menos el cincuenta por ciento y flexible cuando abarca al menos el veinticinco por ciento. Artículo 9, numeral 3: si el cálculo de ese porcentaje resulta en un número fraccionado, siempre se toma como cifra válida el número entero siguiente. En los distritos que el convenio no abarca, cada integrante realiza su postulación en lo individual y responde de ella con su propia competitividad.`,
+
+  coalicionNuevoRegistro: `Artículo 9, numeral 5 de los Lineamientos. Los partidos políticos nacionales de nuevo registro con acreditación ante el Instituto, no podrán suscribir convenio de coalición con otro partido político durante el Proceso Electoral Local 2026 – 2027, en términos de lo dispuesto por el artículo 85, numeral 4, de la Ley General de Partidos Políticos.`,
+
+  bloquesInaplicables: `Artículo 23, numeral 2 de los Lineamientos. Los bloques de competitividad no aplicarán a las candidaturas independientes, a los partidos políticos nacionales de nuevo registro con acreditación ante el Instituto, ni a los partidos políticos locales. Artículo 29, numeral 2: los criterios establecidos para la integración de los bloques de competitividad (paridad transversal) no resultan aplicables a los partidos políticos locales, por tratarse del primer Proceso Electoral Local de diputaciones en que participan.`,
 
   paridadGeneral: `Artículo 23, numeral 1 de los Lineamientos: se deberán postular candidaturas considerando por lo menos 50% de fórmulas del género femenino. Artículo 20, numeral 2, fracción I y II: en coalición total la paridad se verifica exclusivamente sobre el conjunto de la coalición y los partidos distribuyen los géneros libremente en los distritos que siglan; en coalición parcial o flexible el convenio debe ser paritario y, además, cada integrante garantiza su propia paridad global sumando lo que sigla más sus registros individuales. Artículo 20.3: la candidatura común exige las dos, la del convenio y la de cada partido.`,
 
@@ -32,7 +48,7 @@ export const FUNDAMENTOS = {
 
   blindajeBaja: `Artículo 28, numeral 2 de los Lineamientos. En el tercer bloque de competitividad, en ningún caso se podrán postular candidaturas del género femenino en los dos últimos distritos de menor porcentaje de votación. Artículo 28, numeral 7: cuando los bloques se integren por dos distritos cada uno, la prohibición alcanza al último distrito del último bloque. Artículo 21, numeral 1: en ningún caso se admitirá postular candidaturas de forma exclusiva de mujeres en los distritos de menor votación, obligación que corresponde a cada partido en lo individual aun cuando compita en coalición o candidatura común.`,
 
-  cuotaJoven: `Artículo 54, numeral 1 de los Lineamientos. Los partidos políticos, coaliciones o candidaturas comunes deberán presentar cuando menos una fórmula de mayoría relativa en la que tanto la persona propietaria como la suplente cuenten hasta con treinta años cumplidos al día de la elección. Al enlistar a las coaliciones y candidaturas comunes como sujetos obligados, una sola fórmula satisface la medida de toda la alianza dentro del convenio. Artículo 27, numeral 4, fracción V: en los distritos que cada partido postula en lo individual, la medida se cumple en proporción al número de distritos que integre cada bloque, y en lo que resulte aplicable.`,
+  cuotaJoven: `Artículo 54, numeral 1 de los Lineamientos. Los partidos políticos, coaliciones o candidaturas comunes deberán presentar cuando menos una fórmula de mayoría relativa en la que tanto la persona propietaria como la suplente cuenten hasta con treinta años cumplidos al día de la elección. Artículo 54, numeral 2: establece cuándo una fórmula postulada dentro del convenio satisface la obligación de todos sus integrantes, y qué ocurre si la alianza no la postula. Artículo 27, numeral 1, punto V: en los distritos que cada partido postula en lo individual, la medida se cumple en proporción al número de distritos que integre cada bloque, y en lo que resulte aplicable.`,
 
   cuotaIndigena: `Artículo 56, numeral 1 de los Lineamientos: en el caso del distrito con mayor población indígena (Distrito XV), los partidos políticos **podrán** postular a una fórmula integrada por personas de origen étnico. Artículo 56, numeral 2: la postulación de fórmulas integradas por personas de origen étnico en distritos distintos al XV es igualmente optativa más no limitativa. No es un espacio reservado: el Distrito XV admite cualquier fórmula, y no postular ahí la medida no constituye incumplimiento.`,
 
@@ -40,7 +56,7 @@ export const FUNDAMENTOS = {
 
   alternanciaRP: `Artículo 53, numeral 5 de los Lineamientos. La Lista "A" se integra de forma alternada entre ambos géneros, en orden de prelación y de manera sucesiva. Artículo 19.2: para efectos del cumplimiento de la regla de alternancia se considerará el género de la persona propietaria de la fórmula.`,
 
-  encabezadoCompensatorioRP: `Artículos 53, numerales 6 y 7 de los Lineamientos. Si más del cincuenta por ciento de las postulaciones de mayoría relativa corresponde a hombres, la primera candidatura de representación proporcional deberá ser para una mujer, la segunda para un hombre, y así sucesivamente; si más del cincuenta por ciento corresponde a mujeres, la primera deberá ser para un hombre. En caso de equivalencia exacta del cincuenta por ciento para cada género, el partido determina libremente el género que encabeza su Lista "A".`,
+  encabezadoCompensatorioRP: `Artículos 53, numerales 6 y 7 de los Lineamientos. Si más del cincuenta por ciento de las postulaciones de mayoría relativa corresponde a hombres, la primera candidatura de representación proporcional deberá ser para una mujer, la segunda para un hombre, y así sucesivamente; si más del cincuenta por ciento corresponde a mujeres, la primera deberá ser para un hombre. En caso de equivalencia exacta del cincuenta por ciento para cada género, el partido determina libremente el género que encabeza su Lista "A", debiendo alternar las siguientes posiciones, conforme al artículo 75, numeral 1, fracción II.`,
 
-  accionAfirmativaRP: `Artículo 55, numeral 1 de los Lineamientos. Los partidos políticos de manera individual deberán presentar al menos una fórmula dentro de los primeros tres lugares de su Lista "A" que corresponda a personas con discapacidad permanente, de la diversidad sexual, adultas mayores o migrantes, en la que tanto la persona propietaria como la suplente pertenezcan al mismo grupo. Artículo 56: formas de acreditación de cada grupo o sector social en desventaja.`,
+  accionAfirmativaRP: `Artículo 55, numeral 1 de los Lineamientos. Los partidos políticos de manera individual deberán presentar al menos una fórmula dentro de los primeros tres lugares de su Lista "A" que corresponda a personas con discapacidad permanente, de la diversidad sexual, adultas mayores o migrantes, en la que tanto la persona propietaria como la suplente pertenezcan al mismo grupo. Artículo 57: formas de acreditación de cada grupo o sector social en desventaja.`,
 } as const

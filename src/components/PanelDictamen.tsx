@@ -6,7 +6,7 @@ import {
   IconCircleCheck,
   IconProgressCheck,
 } from '@tabler/icons-react'
-import { criteriosFueraDeLey } from '../domain/reglas'
+import { criteriosFueraDeLey, NOMBRE_CRITERIO } from '../domain/reglas'
 import { DescargarDictamen } from './DescargarDictamen'
 import { EmblemasDe } from './EtiquetaPartido'
 import type { ResultadoRegla } from '../domain/types'
@@ -42,8 +42,9 @@ function claveDeEstado(resultado: ResultadoRegla): string {
 /**
  * Cómo se nombra el incumplimiento.
  *
- * Los dos son subsanables —el artículo 57.1.b de los Lineamientos prevé plazo
- * para subsanar los requisitos omitidos—, así que lo que la insignia distingue
+ * Los dos son subsanables —el artículo 58.1.V de los Lineamientos prevé la etapa
+ * de requerimiento y cumplimiento, y el 64 la desarrolla para paridad y medidas
+ * compensatorias—, así que lo que la insignia distingue
  * no es la gravedad sino la **vía**: completar lo que falta, o reemplazar lo que
  * ya está puesto.
  */
@@ -184,9 +185,11 @@ export function PanelDictamen() {
           {alterados.length > 0 && (
             <Badge
               variant="destructive"
-              title={`Criterio de interpretación fuera de su valor de origen: ${alterados.join(', ')}`}
+              title={`Este dictamen no corre con la lectura de la ley en: ${alterados
+                .map((clave) => NOMBRE_CRITERIO[clave])
+                .join(', ')}.`}
             >
-              Criterio alterado
+              {alterados.length === 1 ? 'Criterio alterado' : 'Criterios alterados'}
             </Badge>
           )}
         </CardTitle>

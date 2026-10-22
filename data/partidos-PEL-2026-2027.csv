@@ -1,12 +1,12 @@
-ID_PARTIDO,SIGLAS,NOMBRE
-1,PAN,Partido Acción Nacional
-2,PRI,Partido Revolucionario Institucional
-3,PVEM,Partido Verde Ecologista de México
-4,PT,Partido del Trabajo
-5,MC,Movimiento Ciudadano
-6,MORENA,morena
-7,PESD,Partido Encuentro Solidario Durango
-8,PV,Partido Villista
-9,PER,Partido Estatal Renovación
-10,PAZ,Partido PAZ
-11,SOMOS,Somos México
+ID_PARTIDO,SIGLAS,NOMBRE,AMBITO,NUEVO_REGISTRO
+1,PAN,Partido Acción Nacional,Nacional,no
+2,PRI,Partido Revolucionario Institucional,Nacional,no
+3,PVEM,Partido Verde Ecologista de México,Nacional,no
+4,PT,Partido del Trabajo,Nacional,no
+5,MC,Movimiento Ciudadano,Nacional,no
+6,MORENA,Morena,Nacional,no
+7,PESD,Partido Encuentro Solidario Durango,Local,no
+8,PV,Partido Villista,Local,no
+9,PER,Partido Estatal Renovación,Local,no
+10,PAZ,Partido PAZ,Nacional,sí
+11,SOMOS,SOMOS,Nacional,sí

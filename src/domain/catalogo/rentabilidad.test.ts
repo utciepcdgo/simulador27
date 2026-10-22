@@ -46,14 +46,28 @@ describe('integridad del catálogo', () => {
     expect(PARTIDO.PT).toBe(4)
   })
 
-  it('da cero a los partidos sin historial en vez de dejarlos fuera', () => {
+  it('deja en nulo a los partidos sin historial, no en cero', () => {
+    // Cero afirmaría que esa fue su votación válida emitida, y lo que ocurrió
+    // es que no hubo elección en la que participar.
     expect(tieneHistorial(PARTIDO.MORENA)).toBe(true)
     expect(tieneHistorial(PARTIDO.SOMOS)).toBe(false)
     const nuevo = porcentajesDe([PARTIDO.SOMOS])
     expect(nuevo).toHaveLength(15)
-    expect(nuevo.every((p) => p.porcentaje === 0)).toBe(true)
+    expect(nuevo.every((p) => p.porcentaje === null)).toBe(true)
     // Y su tablero sigue teniendo los quince distritos, no queda vacío.
     expect(competitividad(individual(PARTIDO.SOMOS))).toHaveLength(15)
+  })
+
+  it('la suma de una alianza ignora el nulo, como SUM', () => {
+    // PESD no compitió; PAN sí. El convenio vale lo que aporta quien compitió,
+    // ni más ni menos: el nulo no suma ni resta.
+    const [soloPan] = porcentajesDe([PARTIDO.PAN], [1])
+    const [conLocal] = porcentajesDe([PARTIDO.PAN, PARTIDO.PESD], [1])
+    expect(soloPan.porcentaje).not.toBeNull()
+    expect(conLocal.porcentaje).toBe(soloPan.porcentaje)
+    // Y si ninguno compitió, sigue siendo nulo.
+    const [ninguno] = porcentajesDe([PARTIDO.PESD, PARTIDO.PV], [1])
+    expect(ninguno.porcentaje).toBeNull()
   })
 })
 
@@ -77,13 +91,14 @@ describe('integración parcial de bloques', () => {
 
   it('ordena de mayor a menor porcentaje', () => {
     const porcentajes = integrarBloques(porcentajesDe([PARTIDO.PAN], SIETE)).map((c) => c.porcentaje)
-    expect([...porcentajes].sort((a, b) => b - a)).toEqual(porcentajes)
+    expect(porcentajes.every((p) => p !== null)).toBe(true)
+    expect([...porcentajes].sort((a, b) => b! - a!)).toEqual(porcentajes)
   })
 
   it('suma los porcentajes de la alianza también en un subconjunto', () => {
     const [solo] = integrarBloques(porcentajesDe([PARTIDO.PAN], [1]))
     const [aliados] = integrarBloques(porcentajesDe([PARTIDO.PAN, PARTIDO.PRI], [1]))
-    expect(aliados.porcentaje).toBeGreaterThan(solo.porcentaje)
+    expect(aliados.porcentaje!).toBeGreaterThan(solo.porcentaje!)
   })
 
   it('blinda las dos últimas del bloque Bajo, no las 14 y 15 absolutas', () => {
@@ -162,9 +177,20 @@ describe('competitividad individual', () => {
         Array.from({ length: 15 }, (_, i) => i + 1),
       )
       expect(new Set(tabla.map((c) => c.id_distrito)).size).toBe(15)
+      if (!tieneHistorial(id_partido)) continue
       const porcentajes = tabla.map((c) => c.porcentaje)
-      expect([...porcentajes].sort((a, b) => b - a)).toEqual(porcentajes)
+      expect(porcentajes.every((p) => p !== null)).toBe(true)
+      expect([...porcentajes].sort((a, b) => b! - a!)).toEqual(porcentajes)
     }
+  })
+
+  it('sin historial ordena por número de distrito, no por votación', () => {
+    // No hay porcentaje con el que construir un ranking, así que el orden es el
+    // ascendente: I, II, III… y ningún distrito queda en un bloque.
+    const tabla = competitividad(individual(PARTIDO.PESD))
+    expect(tabla.map((c) => c.id_distrito)).toEqual(Array.from({ length: 15 }, (_, i) => i + 1))
+    expect(tabla.every((c) => c.bloque === null)).toBe(true)
+    expect(tabla.every((c) => c.porcentaje === null)).toBe(true)
   })
 
   it('usa el porcentaje individual tal cual lo aprobó el Consejo General', () => {

@@ -1,10 +1,9 @@
 import { siglasDe } from '../catalogo/partidos'
-import {
-  integrarBloques,
-  porcentajesDe,
-  posicionesBlindadas,
-} from '../catalogo/rentabilidad'
+import { integrarBloques, porcentajesDe } from '../catalogo/rentabilidad'
 import { accionAfirmativaEfectiva, esMujer } from '../genero'
+import { CRITERIOS_LEY, type Criterios } from './criterios'
+import { aplicanBloques } from './elegibilidad'
+import { posicionesBlindadasSegun } from './holgura'
 import type {
   AccionAfirmativa,
   DistritoActivo,
@@ -101,6 +100,17 @@ export interface Ambito {
    * sus fórmulas se cuentan dentro del consolidado del partido.
    */
   paridadPropia: boolean
+  /**
+   * Si a este ámbito le aplican los bloques de competitividad.
+   *
+   * Falso por dos motivos distintos que conviene no confundir. Por derecho: el
+   * artículo 23.2 exime a los partidos locales y a los nacionales de nuevo
+   * registro, y el 29.2 lo repite para los locales. Por aritmética: ningún
+   * integrante compitió en 2023-2024, así que no hay porcentaje con el que
+   * ordenar. En los dos casos el tablero se presenta en orden ascendente de
+   * distrito y no corren las cuatro reglas que cuelgan de la geometría.
+   */
+  conBloques: boolean
   distritos: readonly DistritoEvaluado[]
 }
 
@@ -111,17 +121,31 @@ export interface Ambito {
  * Es el artículo 27. Un partido que se queda con siete distritos fuera del
  * convenio no los evalúa en las posiciones 9 a 15 de su ranking de quince: los
  * renumera del 1 al 7 y los reparte en tres bloques de 3, 2 y 2.
+ *
+ * Aquí entran los criterios, y es el único sitio donde lo hacen: qué posiciones
+ * cierra el artículo 28.2 depende de cómo se lea el punto V del artículo 27, y
+ * de esa marca cuelgan después el rebote del arrastre y cuatro reglas.
  */
 function proyectarTablero(
   distritos: readonly DistritoActivo[],
   integrantes: readonly IdPartido[],
   formulaDe: (distrito: DistritoActivo) => TokenFormula | null,
+  criterios: Criterios,
 ): DistritoEvaluado[] {
   const porId = new Map(distritos.map((d) => [d.id_distrito, d]))
+  // La exención del 23.2 es de cada partido. Una alianza no es ninguno de los
+  // tres supuestos que enumera, así que su convenio conserva los bloques aunque
+  // incluya a un partido exento; lo que decide entonces es si queda algún
+  // porcentaje con el que ordenar, y de eso se encarga `integrarBloques`.
+  const exento = integrantes.length === 1 && !aplicanBloques(integrantes[0])
   const competitividades = integrarBloques(
     porcentajesDe(integrantes, [...porId.keys()]),
+    !exento,
   )
-  const blindadas = new Set(posicionesBlindadas(competitividades.length))
+  const sinBloques = competitividades.every((c) => c.bloque === null)
+  const blindadas = sinBloques
+    ? new Set<number>()
+    : new Set(posicionesBlindadasSegun(competitividades.length, criterios))
 
   return competitividades.map((comp) => {
     const distrito = porId.get(comp.id_distrito)!
@@ -138,6 +162,11 @@ function proyectarTablero(
       formula_asignada: formulaDe(distrito),
     }
   })
+}
+
+/** Si la proyección llegó a repartir bloques. Ver `Ambito.conBloques`. */
+function conBloques(distritos: readonly DistritoEvaluado[]): boolean {
+  return distritos.some((d) => d.bloque !== null)
 }
 
 function enConvenio(distritos: readonly DistritoActivo[], partido?: IdPartido): DistritoActivo[] {
@@ -188,8 +217,17 @@ function etiquetaAlianza(estado: EstadoSimulacion): string {
  * separación parece redundante ahí, pero es la misma que en coalición y evita
  * que el dictamen mezcle "dónde están colocadas las mujeres" con "cuántas se
  * registraron", que son preguntas distintas.
+ *
+ * Los criterios llegan aquí con la lectura de la ley por omisión, como en toda
+ * regla del motor. Quien ya los tenga en la mano debe pasarlos: dos proyecciones
+ * del mismo tablero con criterios distintos marcarían distintas las posiciones
+ * que el artículo 28.2 cierra, y la pantalla acabaría pintando cerrado un
+ * distrito que el dictamen tiene por abierto.
  */
-export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
+export function ambitosDe(
+  estado: EstadoSimulacion,
+  criterios: Criterios = CRITERIOS_LEY,
+): Ambito[] {
   const { postulante, distritos } = estado
   const solo = postulante.integrantes.length === 1
   const alianza = etiquetaAlianza(estado)
@@ -202,6 +240,13 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
   const coalicionTotal =
     !solo && postulante.modalidad === 'Coalición' && huerfanos.length === 0
 
+  const tableroDelConvenio = proyectarTablero(
+    enConvenio(distritos),
+    postulante.integrantes,
+    formulaEnConvenio,
+    criterios,
+  )
+
   const ambitos: Ambito[] = [
     {
       etiqueta: solo ? `${alianza} · tablero` : `${alianza} · convenio`,
@@ -209,11 +254,8 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
       partido: solo ? postulante.integrantes[0] : null,
       fuera: false,
       paridadPropia: !solo,
-      distritos: proyectarTablero(
-        enConvenio(distritos),
-        postulante.integrantes,
-        formulaEnConvenio,
-      ),
+      conBloques: conBloques(tableroDelConvenio),
+      distritos: tableroDelConvenio,
     },
   ]
 
@@ -223,7 +265,7 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
     // Los suyos, no los de la coalición: los que este integrante no declinó.
     const suyos = fueraDelConvenio(distritos, partido)
     const propio = suyos.length
-      ? proyectarTablero(suyos, [partido], formulaIndividual(partido))
+      ? proyectarTablero(suyos, [partido], formulaIndividual(partido), criterios)
       : []
     if (propio.length > 0) {
       ambitos.push({
@@ -232,6 +274,7 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
         partido,
         fuera: true,
         paridadPropia: false,
+        conBloques: conBloques(propio),
         distritos: propio,
       })
     }
@@ -240,6 +283,7 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
       enConvenio(distritos, partido),
       postulante.integrantes,
       formulaEnConvenio,
+      criterios,
     )
     ambitos.push({
       etiqueta: `${siglasDe(partido)} · paridad global`,
@@ -247,6 +291,7 @@ export function ambitosDe(estado: EstadoSimulacion): Ambito[] {
       partido,
       fuera: false,
       paridadPropia: !coalicionTotal,
+      conBloques: false,
       distritos: [...siglados, ...propio],
     })
   }
@@ -296,6 +341,25 @@ export function distritoEnPosicion(
 
 // ─── Predicados de fórmula ──────────────────────────────────────────────────
 
+/**
+ * ¿Alcanza a esta fórmula la prohibición del artículo 28.2?
+ *
+ * Bajo la lectura de la ley basta con que **haya una mujer** en la fórmula, sea
+ * propietaria o suplente: el 28.2 prohíbe «candidaturas del género femenino» sin
+ * distinguir el cargo, y una suplente es una candidata registrada como tal.
+ *
+ * Es lo único que este criterio cambia. Los conteos de paridad siguen mirando a
+ * quien encabeza, aquí y en todas las demás reglas.
+ *
+ * Vive con los demás predicados de fórmula y no junto a la regla que lo usa
+ * porque lo consultan las dos puertas —el rebote del arrastre en `token.ts` y el
+ * dictamen en `mr.ts`—, y esos dos módulos ya se importan en un sentido.
+ */
+export function alcanzaProhibicion(formula: TokenFormula, criterios: Criterios): boolean {
+  if (esMujer(formula.propietario)) return true
+  return criterios.alcanceMenorVotacion === 'candidatura' && esMujer(formula.suplente)
+}
+
 /** Ambos integrantes de hasta 30 años cumplidos al día de la elección. */
 export function esFormulaJoven(formula: TokenFormula): boolean {
   return formula.propietario.esJoven && formula.suplente.esJoven
@@ -319,7 +383,13 @@ export function acreditaIndigena(formula: TokenFormula): boolean {
   return accionAfirmativaAcreditada(formula) === 'Indígena'
 }
 
-/** Mínimo de fórmulas encabezadas por mujeres para alcanzar el 50%. */
-export function minimoMujeres(total: number): number {
-  return Math.ceil(total / 2)
-}
+/**
+ * Mínimo de fórmulas encabezadas por mujeres para alcanzar el 50%.
+ *
+ * Vive en `holgura.ts`, junto al cálculo de cuántas caben, y se reexporta aquí
+ * porque es donde el resto del motor lo ha buscado siempre. Ahí tiene que estar
+ * para que `holgura` no dependa de este archivo: la proyección de ámbitos va a
+ * preguntarle qué posiciones cierra el artículo 28.2, y la dependencia solo
+ * puede correr en un sentido.
+ */
+export { minimoMujeres } from './holgura'

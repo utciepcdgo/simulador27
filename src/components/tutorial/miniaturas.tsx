@@ -86,7 +86,7 @@ export function LaFormula() {
           )}
         </m.p>
       </AnimatePresence>
-      <Pruebalo>Cambia el ejemplo</Pruebalo>
+      <Pruebalo>Cambiar el ejemplo</Pruebalo>
       <div className="flex gap-1.5">
         {EJEMPLOS.map((ejemplo, j) => (
           <Button
@@ -107,7 +107,7 @@ export function LaFormula() {
 // ─── 3 · Las tres fases ──────────────────────────────────────────────────────
 
 const FASES = [
-  { valor: 'convenio', rotulo: '1 · Convenio', dice: 'Con quién postulas y qué distrito es de quién.' },
+  { valor: 'convenio', rotulo: '1 · Convenio', dice: 'Con quién se postula y qué distrito es de quién.' },
   { valor: 'mayoria', rotulo: '2 · Mayoría relativa', dice: 'Los quince distritos, repartidos en tres bloques.' },
   { valor: 'proporcional', rotulo: '3 · Lista "A"', dice: 'Las cinco posiciones de representación proporcional.' },
 ]
@@ -132,7 +132,7 @@ export function Fases() {
           </TabsContent>
         ))}
       </Tabs>
-      <Pruebalo>Cambia de fase</Pruebalo>
+      <Pruebalo>Cambiar de fase</Pruebalo>
     </Escenario>
   )
 }
@@ -177,7 +177,7 @@ function Casilla({
       >
         {contenido ?? (
           <p className="text-muted-foreground py-1 text-center text-[0.625rem]">
-            {cerrada ? 'Posición de menor votación' : 'Suelta una fórmula'}
+            {cerrada ? 'Posición de menor votación' : 'Soltar una fórmula'}
           </p>
         )}
       </div>
@@ -238,12 +238,12 @@ export function Arrastre() {
             className="text-destructive overflow-hidden text-center text-xs leading-snug"
             role="alert"
           >
-            Rechazada: en los distritos de menor porcentaje de votación no se admiten fórmulas
-            encabezadas por mujeres.
+            Rechazada: los distritos de menor porcentaje de votación no admiten candidaturas
+            de mujeres, ni como propietaria ni como suplente.
           </m.p>
         )}
       </AnimatePresence>
-      {!colocada && <Pruebalo>Arrastra la fórmula a un distrito</Pruebalo>}
+      {!colocada && <Pruebalo>Arrastrar la fórmula a un distrito</Pruebalo>}
     </Escenario>
   )
 }
@@ -323,7 +323,7 @@ export function NoPostular() {
           Devolverlos a la postulación
         </Button>
       )}
-      {retirados.length === 0 && <Pruebalo>Retira un distrito</Pruebalo>}
+      {retirados.length === 0 && <Pruebalo>Retirar un distrito</Pruebalo>}
     </Escenario>
   )
 }
@@ -331,10 +331,10 @@ export function NoPostular() {
 // ─── 6 · Configuración ───────────────────────────────────────────────────────
 
 const AJUSTES = [
-  'Mostrar el porcentaje de votación de cada distrito',
-  'Mostrar a qué partido se sigló cada distrito',
-  'Modificar una fórmula con un clic',
-  'Atajos para plantear un escenario deprisa',
+  'Mostrar el porcentaje de votación',
+  'Mostrar el siglado de cada distrito',
+  'Editar las fórmulas del tablero',
+  'Mostrar los controles de llenado rápido',
 ]
 
 export function Configuracion() {
@@ -395,7 +395,7 @@ export function Balance() {
       <p className={cn('text-xs font-medium', cumple ? 'text-emerald-600' : 'text-muted-foreground')}>
         {cumple ? 'Cruzó el mínimo' : 'Todavía por debajo del mínimo'}
       </p>
-      <Pruebalo>Mueve el conteo</Pruebalo>
+      <Pruebalo>Mover el conteo</Pruebalo>
       <div className="flex gap-1.5">
         <Button size="xs" variant="outline" onClick={() => setMujeres((n) => Math.max(0, n - 1))}>
           Una menos
@@ -448,7 +448,7 @@ export function Revision() {
           <Regla key={i} estado={todo ? 'cumple' : estado} />
         ))}
       </ul>
-      <Pruebalo>{todo ? 'Todas cumplen' : 'Resuelve lo pendiente'}</Pruebalo>
+      <Pruebalo>{todo ? 'Todas cumplen' : 'Resolver lo pendiente'}</Pruebalo>
       <Button size="xs" variant="outline" onClick={() => setTodo((v) => !v)}>
         {todo ? 'Volver a lo pendiente' : 'Resolver todo'}
       </Button>
@@ -477,11 +477,11 @@ export function Descarga() {
           >
             {listo
               ? 'La postulación cumple todas las reglas: el documento ya se puede emitir.'
-              : 'El documento se emite cuando la postulación cumple todas las reglas. Faltan 2 requisitos.'}
+              : 'El documento se emite solo con todas las reglas cumplidas. Faltan 2 requisitos.'}
           </m.p>
         </AnimatePresence>
       </div>
-      <Pruebalo>Prueba los dos estados</Pruebalo>
+      <Pruebalo>Probar los dos estados</Pruebalo>
       <Button size="xs" variant="outline" onClick={() => setListo((v) => !v)}>
         {listo ? 'Dejar requisitos pendientes' : 'Cumplir todas las reglas'}
       </Button>

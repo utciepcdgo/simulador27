@@ -33,8 +33,10 @@ export {
 export {
   CRITERIOS_LEY,
   criteriosFueraDeLey,
+  NOMBRE_CRITERIO,
   type Criterios,
 } from './criterios'
+export { aplicanBloques, puedeCoaligarse, sinDerechoACoalicion } from './elegibilidad'
 export { FUNDAMENTOS } from './fundamentos'
 export { declinaPostular, formulaIndividualDe, formulasEnDistrito } from './base'
 export { repartoNecesario, type Reparto } from './reparto'
@@ -144,7 +146,7 @@ export function evaluarSimulacion(
   criterios: Criterios = CRITERIOS_LEY,
 ): ResultadoRegla[] {
   const convenio = integracionDelConvenio(estado)
-  const ambitos = ambitosDe(estado)
+  const ambitos = ambitosDe(estado, criterios)
   const todos = estado.postulante.integrantes
   // De qué partidos habla cada resultado. Se marca aquí, en un solo lugar, y no
   // en cada regla: ninguna de ellas necesita saberlo para calcular.
@@ -172,7 +174,7 @@ export function evaluarSimulacion(
         ),
       ),
     ),
-    ...ambitosRP(estado).flatMap((ambito) =>
+    ...ambitosRP(estado, criterios).flatMap((ambito) =>
       evaluarListaRP(ambito).map(de([ambito.partido])),
     ),
   ]

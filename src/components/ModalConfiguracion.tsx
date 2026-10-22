@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { IconSettings } from '@tabler/icons-react'
-import { CRITERIOS_LEY, type Criterios } from '../domain/reglas'
+import { CRITERIOS_LEY, NOMBRE_CRITERIO, type Criterios } from '../domain/reglas'
 import { siglasDe } from '../domain/catalogo'
 import type { Postulante } from '../domain/types'
 import { MODO_DESARROLLO, useConfiguracion, type Opciones } from '../store/configuracion'
@@ -32,37 +32,37 @@ interface Opcion {
 const CATALOGO: Opcion[] = [
   {
     clave: 'mostrarRentabilidad',
-    titulo: 'Mostrar rentabilidad',
+    titulo: 'Mostrar el porcentaje de votación',
     detalle:
-      'Añade a cada distrito de la Fase 2 el porcentaje de votación del PEL 2023-2024 que sustenta su posición: la suma de la alianza en el tablero del convenio, y el porcentaje propio del partido en el suyo. Un partido de registro nuevo aparece con 0% en los quince distritos.',
+      'Añade a cada distrito de la Fase 2 el porcentaje del PEL 2023-2024 que sustenta su posición de rentabilidad.',
   },
   {
     clave: 'mostrarSiglado',
-    titulo: 'Mostrar siglado',
+    titulo: 'Mostrar el siglado de cada distrito',
     detalle:
-      'Marca cada distrito del tablero del convenio con las siglas del partido al que se le atribuyó en la Fase 1. Solo aplica a coalición y candidatura común, que es donde el siglado se negocia; los tableros de distritos fuera del convenio no lo llevan, porque ahí la pestaña ya dice de quién son.',
+      'Marca cada distrito del convenio con las siglas del partido al que se atribuyó en la Fase 1. Solo aplica a Coalición y Candidatura Común.',
     inaplicable: (postulante) =>
       postulante && postulante.integrantes.length === 1
-        ? `Sin efecto en esta postulación: ${siglasDe(postulante.integrantes[0])} compite de forma individual y los quince distritos son suyos.`
+        ? `Sin efecto en esta postulación · ${siglasDe(postulante.integrantes[0])} compite de forma individual con los quince distritos.`
         : null,
   },
   {
     clave: 'mostrarEditorFormulas',
-    titulo: 'Modificar fórmulas con un clic',
+    titulo: 'Editar las fórmulas del tablero',
     detalle:
-      'Pulsar una fórmula abre sus atributos para cambiar el género, la medida compensatoria o la edad, sin devolverla a la bandeja. Funciona en el tablero, en la Lista «A» y en la bandeja. El cambio atraviesa las mismas reglas que un arrastre. Sin la opción, la ficha solo se arrastra.',
+      'Abre una ventana sobre la fórmula para cambiar su género y su medida compensatoria.',
   },
   {
     clave: 'sonidos',
-    titulo: 'Sonidos de la interfaz',
+    titulo: 'Activar los sonidos de la interfaz',
     detalle:
-      'Dos avisos breves: uno cuando una regla no admite lo que acabas de hacer, por ejemplo al dar a una fórmula encabezada por mujer una suplencia de hombre, y otro cuando la postulación pasa a cumplirlas todas. Acompañan al mensaje, no lo sustituyen: lo que explica el motivo y cita el artículo sigue siendo el texto en pantalla.',
+      'Emite un sonido en el rechazo de un movimiento y en el cierre de la revisión preliminar.',
   },
   {
     clave: 'mostrarLlenadoRapido',
-    titulo: 'Mostrar controles de llenado rápido',
+    titulo: 'Mostrar los controles de llenado rápido',
     detalle:
-      'Añade sobre la bandeja cuatro atajos para plantear un escenario deprisa: crear fórmulas al azar, crear las que le faltan al tablero abierto, repartirlas en sus distritos y devolverlas todas a la bandeja. Los tres últimos escriben sobre lo que ya esté puesto.',
+      'Añade sobre la bandeja cuatro botones: crear fórmulas al azar, crear las que faltan, distribuirlas en el tablero y vaciarlo.',
   },
 ]
 
@@ -74,7 +74,6 @@ interface Lectura<K extends keyof Criterios> {
 
 interface Criterio<K extends keyof Criterios = keyof Criterios> {
   clave: K
-  titulo: string
   /** El artículo que se interpreta. Es lo que permite defender la elección. */
   articulo: string
   lecturas: Lectura<K>[]
@@ -90,39 +89,61 @@ interface Criterio<K extends keyof Criterios = keyof Criterios> {
 const CRITERIOS: Criterio[] = [
   {
     clave: 'denominadorParidad',
-    titulo: 'Universo de la paridad global',
     articulo: 'Artículo 20.2 de los Lineamientos',
     lecturas: [
       {
         valor: 'ambito',
-        titulo: 'Todos los distritos del ámbito',
+        titulo: 'Cuenta todos los distritos del ámbito',
         detalle:
-          'El mínimo se fija desde el primer movimiento y no se mueve. Cuenta también los distritos fuera del convenio en los que el partido podría no contender.',
+          'Fija el mínimo desde el primer movimiento. Cuenta también los distritos fuera del convenio en los que el partido podría no contender.',
       },
       {
         valor: 'registradas',
-        titulo: 'Solo las candidaturas registradas',
+        titulo: 'Cuenta solo las candidaturas registradas',
         detalle:
-          'Lo que dicen las palabras del artículo: «sumando las candidaturas… más sus registros». Equivale a exigir que las mujeres no sean menos que los hombres, y el mínimo se mueve mientras se arma el tablero.',
+          'Recoge las palabras del artículo: «sumando las candidaturas… más sus registros». Exige que las mujeres no sean menos que los hombres. El mínimo se mueve con cada fórmula que se coloca.',
+      },
+    ],
+  },
+  {
+    clave: 'alcanceMenorVotacion',
+    articulo: 'Artículo 28.2 de los Lineamientos',
+    lecturas: [
+      {
+        valor: 'candidatura',
+        titulo: 'Alcanza a cualquier mujer de la fórmula',
+        detalle:
+          'Recoge las palabras del artículo: «en ningún caso se podrán postular candidaturas del género femenino», sin distinguir el cargo. Cierra esas posiciones también a las fórmulas de hombre o persona no binaria con suplencia mujer.',
+      },
+      {
+        valor: 'propietaria',
+        titulo: 'Alcanza solo a quien encabeza la fórmula',
+        detalle:
+          'Se apoya en el artículo 21.1, que describe el daño como postular «de forma exclusiva de mujeres en los distritos de menor votación». La suplente no compite, sustituye. El artículo 53.1 autoriza propietario hombre con suplencia mujer.',
       },
     ],
   },
   {
     clave: 'aritmeticaImposible',
-    titulo: 'Requisito imposible por la geometría del ámbito',
-    articulo: 'Artículos 27.4, 28.2 y 28.5 de los Lineamientos',
+    articulo: 'Artículos 27.1.V, 28.2 y 28.5 de los Lineamientos',
     lecturas: [
       {
         valor: 'reportar',
-        titulo: 'Se reporta como incumplimiento',
+        titulo: 'Reporta el incumplimiento',
         detalle:
-          'En ámbitos de 5 y 11 distritos, el 28.5 exige mayoría femenina en el bloque bajo y el 28.2 cierra las posiciones que harían falta. El motor lo reporta aunque ningún acomodo lo resuelva.',
+          'Marca la regla como incumplida aunque ningún acomodo la resuelva. En los ámbitos de 5, 7, 8 y 11 distritos ninguna composición satisface las cuatro reglas a la vez.',
       },
       {
         valor: 'inaplicable',
-        titulo: 'No resulta aplicable',
+        titulo: 'Tiene la regla por no exigible',
         detalle:
-          'Se apoya en el «y en lo que resulte aplicable» del 27.4. La regla sigue apareciendo en el dictamen con la explicación: no desaparece en silencio.',
+          'Se apoya en el «y en lo que resulte aplicable» del artículo 27, numeral 1, punto V. La regla sigue apareciendo en el dictamen con la explicación.',
+      },
+      {
+        valor: 'blindajeProporcional',
+        titulo: 'Gradúa la prohibición, no la regla',
+        detalle:
+          'Se apoya en el «en proporción al número de distritos que integre cada bloque» del mismo punto V. Aplica la prohibición del 28.2 con la mayor extensión que quepa sin dejar al ámbito sin composición posible. Solo se aparta de la lectura literal en los ámbitos de 5, 7, 8 y 11 distritos. Nunca cierra una posición que la lectura literal deje abierta.',
       },
     ],
   },
@@ -157,8 +178,7 @@ export function ModalConfiguracion() {
           <DialogHeader>
             <DialogTitle>Configuración</DialogTitle>
             <DialogDescription>
-              Estas preferencias se recuerdan en este navegador. El escenario que plantees en el
-              tablero no.
+              Guarda estas preferencias en este navegador. No guarda el escenario del tablero.
             </DialogDescription>
           </DialogHeader>
 
@@ -175,10 +195,10 @@ export function ModalConfiguracion() {
           <div className="space-y-4 pb-1">
           <section className="space-y-2">
             <header className="space-y-0.5">
-              <h3 className="text-sm font-medium">Tamaño del texto</h3>
+              <h3 className="text-sm font-medium">Escalar el texto de la herramienta</h3>
               <p className="text-muted-foreground text-xs leading-snug">
-                Se aplica a toda la herramienta. «Seguir al sistema» respeta el tamaño que ya
-                tengas configurado en el navegador, y los demás lo escalan a partir de ahí.
+                «Seguir al sistema» toma el tamaño configurado en el navegador. Las demás opciones
+                lo escalan a partir de ahí.
               </p>
             </header>
             <SelectorTamanoTexto />
@@ -228,13 +248,15 @@ export function ModalConfiguracion() {
                 <p className="text-muted-foreground text-xs leading-snug">
                   Estas lecturas <strong className="text-foreground">modifican el dictamen</strong>,
                   no la presentación. En producción el simulador corre siempre con la lectura de la
-                  ley y esta sección no existe.
+                  ley.
                 </p>
               </header>
 
               {CRITERIOS.map((criterio) => (
                 <fieldset key={criterio.clave} className="space-y-1.5 rounded-md border p-3">
-                  <legend className="px-1 text-xs font-medium">{criterio.titulo}</legend>
+                  <legend className="px-1 text-xs font-medium">
+                    {NOMBRE_CRITERIO[criterio.clave]}
+                  </legend>
                   <p className="text-muted-foreground text-[0.6875rem]">{criterio.articulo}</p>
                   {criterio.lecturas.map((lectura) => (
                     <label

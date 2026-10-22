@@ -1,3 +1,29 @@
+> [!WARNING]
+> **Documento histórico. No es la especificación vigente.**
+>
+> Es el brief con el que arrancó el proyecto, y se conserva por su valor de origen: el modelo de
+> datos, el catálogo y los flujos de la interfaz nacieron aquí. Pero su **«Matriz de Reglas a
+> Evaluar» (§6) ya no describe al motor** y en al menos un punto afirma lo contrario de lo que la
+> norma dice.
+>
+> El error más importante: la matriz exige «al menos 1 fórmula Indígena en el Distrito XV». El
+> artículo 56.1 dice que los partidos **podrán** postularla y el 56.2 la llama «optativa más no
+> limitativa». El motor lo corrigió y hoy esa medida **no puede incumplir**; tratarla como
+> obligatoria impedía una postulación lícita, que es el peor error que esta herramienta puede
+> cometer. Está registrado en [decisiones.md §4-bis](decisiones.md).
+>
+> Arrastra otras tres: describe el blindaje como «posición 14 o 15», cuando depende del tamaño
+> del tablero y el artículo 28.7 lo reduce a una sola casilla en el reparto 2-2-2; da los bloques
+> como «3-2 o 2-3», que solo vale para bloques de cinco; y no conoce nada de lo posterior —los
+> ámbitos individuales de una coalición, la paridad global del 20.2, el umbral del 75.1, la
+> medida compensatoria de la Lista «A» ni el artículo 27—.
+>
+> **Lo vigente está en [reglas.md](reglas.md)**, que se genera desde el propio motor y que la
+> suite de pruebas compara en cada corrida. Para las decisiones de interpretación,
+> [decisiones.md](decisiones.md).
+
+---
+
 Tienes toda la razón. Una disculpa por la omisión. Al abstraer, dejé fuera las estructuras de datos estáticas (el catálogo) y el modelo de estado dinámico que acordamos para las coaliciones, los cuales son el verdadero "motor" de esta herramienta.
 
 Aquí tienes la **versión 2.0 y definitiva del Technical Brief (PRD)**, exhaustiva y con todas las interfaces, configuraciones de bloques y modelos de estado exactamente como los definimos. Este documento está listo para ser el *prompt* maestro de cualquier agente de desarrollo.

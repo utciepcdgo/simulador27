@@ -1,29 +1,70 @@
 import { useState } from 'react'
-import { nombreDe, ordenarPorRegistro, PARTIDOS, tieneHistorial } from '../domain/catalogo'
+import { IconArrowsJoin, IconUser, IconUsersGroup, type Icon } from '@tabler/icons-react'
+import { nombreDe, ordenarPorRegistro, PARTIDOS, siglasDe, tieneHistorial } from '../domain/catalogo'
+import { FUNDAMENTOS, sinDerechoACoalicion } from '../domain/reglas'
 import type { IdPartido, Postulante } from '../domain/types'
 import { cn } from '../lib/utils'
 import { useSimulador } from '../store/simulador'
 import { EmblemaPartido } from './EmblemaPartido'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { RadioGroup, RadioGroupItem } from './ui/radio-group'
 
 type Modalidad = Postulante['modalidad']
 
-const MODALIDADES: Modalidad[] = ['Individual', 'Coalición', 'Candidatura Común']
+/**
+ * Las tres maneras de postular, cada una con un icono que dice qué es.
+ *
+ * Las dos alianzas agrupan partidos, así que los dos iconos tienen que leerse
+ * como grupo y aun así no confundirse entre sí:
+ *
+ * - **Coalición** — un grupo que actúa como un solo bloque: un convenio, una
+ *   plataforma, y los distritos repartidos —siglados— entre sus integrantes.
+ * - **Candidatura común** — caminos distintos que llegan a la misma candidatura:
+ *   cada partido conserva su identidad y postula a la misma fórmula.
+ */
+const MODALIDADES: readonly { valor: Modalidad; Icono: Icon }[] = [
+  { valor: 'Individual', Icono: IconUser },
+  { valor: 'Coalición', Icono: IconUsersGroup },
+  { valor: 'Candidatura Común', Icono: IconArrowsJoin },
+]
 
-function invalidez(modalidad: Modalidad | null, integrantes: IdPartido[]): string | null {
-  if (!modalidad) return 'Selecciona un modo de postulación.'
+/**
+ * Por qué no se puede crear este postulante, si es que no se puede.
+ *
+ * Las tres primeras son de forma y se explican solas. La cuarta es una
+ * prohibición legal, y por eso lleva fundamento: quien se topa con ella tiene
+ * que poder citar el artículo ante un tercero, igual que en el rebote.
+ */
+function invalidez(
+  modalidad: Modalidad | null,
+  integrantes: IdPartido[],
+): { mensaje: string; fundamento?: string } | null {
+  if (!modalidad) return { mensaje: 'Falta elegir un modo de postulación.' }
   if (integrantes.length === 0) {
-    return modalidad === 'Individual'
-      ? 'Selecciona el partido que postula.'
-      : `Selecciona los partidos que integran la ${modalidad.toLowerCase()}.`
+    return {
+      mensaje:
+        modalidad === 'Individual'
+          ? 'Falta elegir el partido que postula.'
+          : `Faltan los partidos que integran la ${modalidad.toLowerCase()}.`,
+    }
   }
   if (modalidad === 'Individual' && integrantes.length > 1) {
-    return 'La modalidad Individual admite un solo partido.'
+    return { mensaje: 'La modalidad Individual admite un solo partido.' }
   }
   if (modalidad !== 'Individual' && integrantes.length < 2) {
-    return `La modalidad ${modalidad} requiere cuando menos dos partidos.`
+    return { mensaje: `La modalidad ${modalidad} requiere cuando menos dos partidos.` }
+  }
+  // Solo la coalición. El artículo 9.5 no menciona la candidatura común, y
+  // cerrarla aquí impediría una postulación que la norma no prohíbe.
+  if (modalidad === 'Coalición') {
+    const vetados = sinDerechoACoalicion(integrantes)
+    if (vetados.length > 0) {
+      return {
+        mensaje: `${vetados.map(siglasDe).join(' y ')} no puede suscribir convenio de coalición. La candidatura común y la postulación individual siguen disponibles.`,
+        fundamento: FUNDAMENTOS.coalicionNuevoRegistro,
+      }
+    }
   }
   return null
 }
@@ -90,26 +131,57 @@ export function ConfiguracionPostulante({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Select
-          items={MODALIDADES.map((m) => ({ label: m, value: m }))}
+        {/*
+          La misma gramática visual que la rejilla de partidos de abajo: la
+          tarjeta entera es la opción, y el radio de Base UI sigue ahí, solo que
+          oculto a la vista. Así las flechas del teclado recorren las tres
+          opciones, el foco y los lectores de pantalla se comportan como en
+          cualquier grupo de radios, y no hay que reimplementar nada.
+
+          Sin valor por omisión, por la misma razón que el postulante: precargar
+          una modalidad sería sugerir una.
+        */}
+        <RadioGroup
+          aria-label="Modo de postulación"
+          className="grid-cols-3 gap-1.5"
           value={modalidad}
           onValueChange={(valor) => {
-            const nueva = valor as Modalidad | null
+            const nueva = valor as Modalidad
             setModalidad(nueva)
             if (nueva === 'Individual') setIntegrantes((p) => p.slice(0, 1))
           }}
         >
-          <SelectTrigger className="w-full" aria-label="Modo de postulación">
-            <SelectValue placeholder="Seleccione un modo" />
-          </SelectTrigger>
-          <SelectContent>
-            {MODALIDADES.map((m) => (
-              <SelectItem key={m} value={m}>
-                {m}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {MODALIDADES.map(({ valor, Icono }) => {
+            const elegida = modalidad === valor
+            return (
+              <label
+                key={valor}
+                className={cn(
+                  'flex cursor-pointer flex-col items-center gap-1.5 rounded-md border p-2.5 text-center transition-colors',
+                  'focus-within:ring-ring focus-within:ring-[3px]',
+                  elegida ? 'border-primary bg-primary/5' : 'hover:bg-muted',
+                )}
+              >
+                {/*
+                  Oculto con un envoltorio y no con `sr-only` sobre el radio: el
+                  componente trae `relative` y `size-4`, que van después en la
+                  hoja de estilos y le ganarían, y el radio se vería entero.
+                */}
+                <span className="sr-only">
+                  <RadioGroupItem value={valor} />
+                </span>
+                <Icono
+                  aria-hidden
+                  className={cn(
+                    'size-5 transition-colors',
+                    elegida ? 'text-primary' : 'text-muted-foreground',
+                  )}
+                />
+                <span className="text-xs leading-tight font-medium text-balance">{valor}</span>
+              </label>
+            )
+          })}
+        </RadioGroup>
 
         {/*
           El emblema es la casilla. Debajo sigue habiendo un `input` de verdad,
@@ -152,13 +224,22 @@ export function ConfiguracionPostulante({
 
         {sinHistorial.length > 0 && (
           <p className="text-xs text-amber-700 dark:text-amber-500">
-            {sinHistorial.map(nombreDe).join(', ')} no compitió en el PEL 2023-2024, así que su
-            porcentaje es cero en los quince distritos y su competitividad propia queda sin
-            criterio de orden.
+            {sinHistorial.map(nombreDe).join(', ')}{' '}
+            {sinHistorial.length === 1 ? 'no compitió' : 'no compitieron'} en el PEL 2023-2024. Su
+            porcentaje de votación queda sin dato, no en cero.
           </p>
         )}
 
-        {error && <p className="text-muted-foreground text-xs">{error}</p>}
+        {error && (
+          <div className="space-y-1.5">
+            <p className="text-muted-foreground text-xs">{error.mensaje}</p>
+            {error.fundamento && (
+              <blockquote className="text-muted-foreground border-l-2 pl-3 text-xs leading-relaxed whitespace-pre-line">
+                {error.fundamento}
+              </blockquote>
+            )}
+          </div>
+        )}
 
         <Button
           className="w-full"
