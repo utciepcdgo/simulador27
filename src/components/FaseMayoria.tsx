@@ -370,7 +370,20 @@ function Tablero({
                 .sort((a, b) => a.posicion_rentabilidad - b.posicion_rentabilidad)
               const rango = rangoDeBloque(bloque, ambito.distritos.length)
               return (
-                <section key={bloque} className="min-w-0 space-y-1.5">
+                /*
+                  La columna se delimita por superficie y no por línea. Un marco
+                  sería la tercera caja de la misma vista —la tarjeta del tablero
+                  contiene la columna, y la columna contiene distritos que ya son
+                  `bg-card border shadow-xs`—, y un borde discontinuo como el de
+                  la Fase 1 prometería una zona de arrastre que aquí no existe:
+                  en esta fase se suelta sobre cada distrito, nunca sobre el
+                  bloque. La banda tenue agrupa sin añadir un nivel de encierro, y
+                  las fichas flotan encima porque su fondo es el de la tarjeta.
+                */
+                <section
+                  key={bloque}
+                  className={cn('min-w-0 overflow-hidden rounded-md', ACENTO_BLOQUE[bloque].fondo)}
+                >
                   {/*
                     La regla superior corona la columna y la agrupa de un vistazo;
                     el rango de posiciones dice cuál es cuál sin depender del
@@ -383,7 +396,6 @@ function Tablero({
                     className={cn(
                       'flex items-baseline gap-2 border-t-2 px-2 py-1.5 text-sm font-medium',
                       ACENTO_BLOQUE[bloque].regla,
-                      ACENTO_BLOQUE[bloque].fondo,
                     )}
                   >
                     Bloque {bloque}
@@ -400,8 +412,11 @@ function Tablero({
                       {delBloque.length}
                     </Badge>
                   </h3>
+                  <div className="min-h-24 p-2">
                   {delBloque.length === 0 ? (
-                    <p className="text-muted-foreground rounded-md border border-dashed py-4 text-center text-[0.625rem]">
+                    // Sobre la banda, `muted-foreground` se queda en 4.4:1 y
+                    // este texto es de 10 px. Se atenúa desde el color de texto.
+                    <p className="text-foreground/70 py-6 text-center text-[0.625rem]">
                       Sin distritos
                     </p>
                   ) : (
@@ -418,6 +433,7 @@ function Tablero({
                       ))}
                     </ul>
                   )}
+                  </div>
                 </section>
               )
             })}
