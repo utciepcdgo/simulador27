@@ -142,7 +142,7 @@ export function FaseProporcional({ arrastre }: { arrastre: boolean }) {
                       ? `${siglasDe(lista.partido)} no postula en ningún distrito de mayoría relativa`
                       : `${siglasDe(lista.partido)} postula en ${plural(abarcados, 'distrito', 'distritos')} de mayoría relativa`}{' '}
                     y el acceso a representación proporcional exige {MINIMO_DISTRITOS_PARA_RP}.
-                    Esta lista se puede armar para ver cómo quedaría, pero no es registrable.
+                    Sin embargo puede continuar con la simulación.
                   </span>
                 ) : (
                   <>
