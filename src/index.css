@@ -91,12 +91,27 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
-    --bloque-alta: oklch(0.52 0.14 152);
-    --bloque-alta-suave: oklch(0.95 0.04 152);
-    --bloque-media: oklch(0.62 0.13 82);
-    --bloque-media-suave: oklch(0.96 0.05 92);
-    --bloque-baja: oklch(0.55 0.19 27);
-    --bloque-baja-suave: oklch(0.95 0.03 27);
+    /*
+      Los bloques son un orden, no un juicio: Alta, Media y Baja nombran tramos
+      de un ranking de votación, y un tablero puede estar perfectamente mal en el
+      bloque Alto. Por eso el acento es una escala por luminosidad y no un
+      semáforo —el verde felicitaba y el rojo reprendía a datos que no lo piden—.
+
+      Además el rojo ya tiene dueño en este sistema. La versión anterior daba al
+      bloque Bajo `oklch(0.55 0.19 27)` y `--destructive` es
+      `oklch(0.577 0.245 27.325)`: el mismo tono y la misma luminosidad. Habría
+      sido indistinguible de una infracción justo en el bloque donde vive la
+      prohibición del artículo 28.2.
+
+      Al ir por luminosidad el acento sobrevive a cualquier daltonismo, que es lo
+      que un semáforo verde-rojo nunca consigue.
+    */
+    --bloque-alta: oklch(0.3 0 0);
+    --bloque-alta-suave: oklch(0.925 0 0);
+    --bloque-media: oklch(0.5 0 0);
+    --bloque-media-suave: oklch(0.952 0 0);
+    --bloque-baja: oklch(0.68 0 0);
+    --bloque-baja-suave: oklch(0.975 0 0);
 }
 
 .dark {
@@ -132,12 +147,14 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
 
-    --bloque-alta: oklch(0.72 0.15 152);
-    --bloque-alta-suave: oklch(0.28 0.05 152);
-    --bloque-media: oklch(0.79 0.14 87);
-    --bloque-media-suave: oklch(0.3 0.05 87);
-    --bloque-baja: oklch(0.7 0.18 25);
-    --bloque-baja-suave: oklch(0.29 0.06 25);
+    /* La escala se invierte: sobre fondo oscuro, «denso» es claro. No es el
+       tema claro reflejado, sino compuesto sobre `--card` en 0.205. */
+    --bloque-alta: oklch(0.92 0 0);
+    --bloque-alta-suave: oklch(0.32 0 0);
+    --bloque-media: oklch(0.72 0 0);
+    --bloque-media-suave: oklch(0.27 0 0);
+    --bloque-baja: oklch(0.52 0 0);
+    --bloque-baja-suave: oklch(0.235 0 0);
 }
 
 @layer base {

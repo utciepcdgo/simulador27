@@ -2,10 +2,11 @@ import { useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { AnimatePresence, m } from 'motion/react'
 import { IconArrowBackUp, IconFeather, IconLock, IconMapPinOff } from '@tabler/icons-react'
-import { nombreDe, siglasDe } from '@/domain/catalogo'
+import { nombreDe, rangoDeBloque, siglasDe } from '@/domain/catalogo'
 import { ambitosDe, declinaPostular, type Ambito } from '@/domain/reglas'
 import type { Bloque, DistritoActivo, DistritoEvaluado, IdPartido } from '../domain/types'
 import { aparicion, ficha } from '../lib/animacion'
+import { ACENTO_BLOQUE, rotuloRango } from '../lib/bloques'
 import { descripcion } from '../lib/formula'
 import { cn } from '../lib/utils'
 import { useConfiguracion, useCriterios } from '../store/configuracion'
@@ -22,12 +23,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 const BLOQUES: readonly Bloque[] = ['Alta', 'Media', 'Baja']
-
-const COLOR_BLOQUE: Record<Bloque, string> = {
-  Alta: 'bg-emerald-500',
-  Media: 'bg-amber-500',
-  Baja: 'bg-rose-500',
-}
 
 const SIN_FORMULA = 'sin-formula'
 
@@ -373,14 +368,34 @@ function Tablero({
               const delBloque = ambito.distritos
                 .filter((d) => d.bloque === bloque)
                 .sort((a, b) => a.posicion_rentabilidad - b.posicion_rentabilidad)
+              const rango = rangoDeBloque(bloque, ambito.distritos.length)
               return (
                 <section key={bloque} className="min-w-0 space-y-1.5">
-                  <h3 className="flex items-center gap-2 text-sm font-medium">
-                    <span
-                      className={cn('size-2.5 rounded-full', COLOR_BLOQUE[bloque])}
-                      aria-hidden
-                    />
+                  {/*
+                    La regla superior corona la columna y la agrupa de un vistazo;
+                    el rango de posiciones dice cuál es cuál sin depender del
+                    color, que es lo que pide el criterio 1.4.1. En un tablero
+                    parcial ese rango deja de ser el tercio esperado —once
+                    distritos reparten 4-4-3— y contarlo a mano era la única
+                    forma de saberlo.
+                  */}
+                  <h3
+                    className={cn(
+                      'flex items-baseline gap-2 border-t-2 px-2 py-1.5 text-sm font-medium',
+                      ACENTO_BLOQUE[bloque].regla,
+                      ACENTO_BLOQUE[bloque].fondo,
+                    )}
+                  >
                     Bloque {bloque}
+                    {rango && (
+                      // `muted-foreground` no llega a 4.5:1 sobre estos fondos
+                      // —3.8:1 en el bloque Alto—, así que el rango se atenúa
+                      // desde el propio color de texto y no con el gris de la
+                      // interfaz.
+                      <span className="text-foreground/75 text-xs font-normal tabular-nums">
+                        {rotuloRango(rango)}
+                      </span>
+                    )}
                     <Badge variant="secondary" className="ml-auto">
                       {delBloque.length}
                     </Badge>

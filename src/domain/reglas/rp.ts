@@ -9,6 +9,7 @@ import type {
   ResultadoRegla,
   TokenFormula,
 } from '../types'
+import { plural } from '../texto'
 import { accionAfirmativaAcreditada, ambitosDe, conteoGenero } from './base'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
 import { accesoRP, MINIMO_DISTRITOS_PARA_RP, type AccesoRP } from './mr'
@@ -319,7 +320,11 @@ function exencionListaRP(ambito: AmbitoRP): ResultadoRegla {
     ambito: 'RP',
     alcance: ambito.etiqueta,
     cumple: true,
-    mensaje: `No se evalúan: ${siglas} postula en ${abarcados} distritos de mayoría relativa y el acceso a representación proporcional exige ${MINIMO_DISTRITOS_PARA_RP}. La alternancia, el encabezado compensatorio y la acción afirmativa se revisarán en cuanto la postulación alcance ese mínimo.`,
+    mensaje: `No se evalúan: ${
+      abarcados === 0
+        ? `${siglas} no postula en ningún distrito de mayoría relativa`
+        : `${siglas} postula en ${plural(abarcados, 'distrito', 'distritos')} de mayoría relativa`
+    } y el acceso a representación proporcional exige ${MINIMO_DISTRITOS_PARA_RP}. La alternancia, el encabezado compensatorio y la acción afirmativa se revisarán en cuanto la postulación alcance ese mínimo.`,
     fundamento_legal: FUNDAMENTOS.umbralRegistroRP,
   }
 }

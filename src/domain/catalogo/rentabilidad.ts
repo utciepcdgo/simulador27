@@ -32,6 +32,24 @@ export function bloqueDePosicion(posicion: number, total: number = TOTAL_DISTRIT
   return 'Baja'
 }
 
+/**
+ * Las posiciones de rentabilidad que abarca un bloque, o `null` si está vacío.
+ *
+ * En el tablero completo son los tercios de siempre —1-5, 6-10 y 11-15—, pero en
+ * uno parcial dejan de serlo: once distritos se reparten 4-4-3, así que el
+ * bloque Bajo empieza en la novena posición y no en la undécima. Quien mira la
+ * pantalla no tiene por qué recalcularlo contando tarjetas.
+ */
+export function rangoDeBloque(bloque: Bloque, total: number): [number, number] | null {
+  const tamanos = tamanosDeBloque(total)
+  if (tamanos[bloque] === 0) return null
+  const anteriores = BLOQUES.slice(0, BLOQUES.indexOf(bloque)).reduce(
+    (suma, previo) => suma + tamanos[previo],
+    0,
+  )
+  return [anteriores + 1, anteriores + tamanos[bloque]]
+}
+
 /** Primera posición de cada bloque: las que mira el liderazgo de bloque. */
 export function posicionesCabezaDeBloque(total: number): number[] {
   const { Alta, Media } = tamanosDeBloque(total)

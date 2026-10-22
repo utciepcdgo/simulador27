@@ -3,6 +3,7 @@ import {
   coalicion,
   individual,
   PARTIDO,
+  rangoDeBloque,
   siglasDe,
   tableroInicial,
   TOTAL_DISTRITOS,
@@ -1065,7 +1066,8 @@ describe('umbral de registro para RP', () => {
     const resultado = umbralRegistroRP(ambitos, PARTIDO.PAN)
     expect(resultado.cumple).toBe(false)
     expect(resultado.gravedad).toBe('por-completar')
-    expect(resultado.mensaje).toContain('faltan 1')
+    // «falta 1», no «faltan 1»: la concordancia se resuelve siempre (T-05).
+    expect(resultado.mensaje).toContain('falta 1 para el mínimo')
   })
 
   // ── Postular en menos de once es una decisión, no un hueco ───────────────
@@ -1119,7 +1121,7 @@ describe('umbral de registro para RP', () => {
     const resultado = umbralRegistroRP(ambitosDe(postulaEn(10)), PARTIDO.PAN, 2)
     expect(resultado.cumple).toBe(false)
     expect(resultado.gravedad).toBe('sustitucion')
-    expect(resultado.mensaje).toContain('2 fórmula(s) en su Lista')
+    expect(resultado.mensaje).toContain('2 fórmulas en su Lista')
   })
 
   it('un tablero de diez sin Lista "A" es cerrable de punta a punta', () => {
@@ -1862,6 +1864,40 @@ describe('postulación parcial', () => {
     expect(ambito.distritos).toHaveLength(15)
     expect(ambito.distritos.filter((d) => d.esBlindada).map((d) => d.posicion_rentabilidad))
       .toEqual([14, 15])
+  })
+})
+
+describe('rangoDeBloque', () => {
+  it('parte los quince en los tercios de siempre', () => {
+    expect(rangoDeBloque('Alta', 15)).toEqual([1, 5])
+    expect(rangoDeBloque('Media', 15)).toEqual([6, 10])
+    expect(rangoDeBloque('Baja', 15)).toEqual([11, 15])
+  })
+
+  it('sigue al reparto parcial del artículo 27', () => {
+    // Once van 4-4-3: el bloque Bajo empieza en la novena posición, no en la
+    // undécima. Es lo que nadie debería tener que contar a mano.
+    expect(rangoDeBloque('Alta', 11)).toEqual([1, 4])
+    expect(rangoDeBloque('Media', 11)).toEqual([5, 8])
+    expect(rangoDeBloque('Baja', 11)).toEqual([9, 11])
+  })
+
+  it('no inventa rango para un bloque vacío', () => {
+    // Con dos distritos el reparto es 1-1-0 y el bloque Bajo no existe.
+    expect(rangoDeBloque('Baja', 2)).toBeNull()
+    expect(rangoDeBloque('Alta', 2)).toEqual([1, 1])
+  })
+
+  it('cubre el ámbito entero y sin solaparse, en los quince tamaños', () => {
+    for (let total = 1; total <= TOTAL_DISTRITOS; total += 1) {
+      const posiciones = (['Alta', 'Media', 'Baja'] as const)
+        .map((bloque) => rangoDeBloque(bloque, total))
+        .filter((r): r is [number, number] => r !== null)
+        .flatMap(([desde, hasta]) =>
+          Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i),
+        )
+      expect(posiciones).toEqual(Array.from({ length: total }, (_, i) => i + 1))
+    }
   })
 })
 

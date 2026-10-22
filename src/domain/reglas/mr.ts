@@ -6,6 +6,7 @@ import {
   TOTAL_DISTRITOS,
 } from '../catalogo/rentabilidad'
 import { esMujer } from '../genero'
+import { plural } from '../texto'
 import type { IdPartido, ResultadoRegla } from '../types'
 import { alcanzaProhibicion, type Ambito } from './base'
 import { CRITERIOS_LEY, type Criterios } from './criterios'
@@ -604,25 +605,36 @@ export function umbralRegistroRP(
 
   if (acceso.estado === 'sin-derecho') {
     const cumple = formulasEnLista === 0
+    // El alcance puede ser cero, y «0 distritos» no es una frase: quien no
+    // postula en ninguno no postula «en cero», sencillamente no postula.
+    const alcance =
+      abarcados === 0
+        ? 'no postula en ningún distrito de mayoría relativa'
+        : `postula en ${plural(abarcados, 'distrito', 'distritos')} de mayoría relativa, por debajo de los ${MINIMO_DISTRITOS_PARA_RP} que exige el acceso a representación proporcional`
     return {
       ...base,
       cumple,
       gravedad: cumple ? undefined : 'sustitucion',
       mensaje: cumple
-        ? `${nombrePartido} postula en ${abarcados} distritos, por debajo de los ${MINIMO_DISTRITOS_PARA_RP} que exige el acceso a representación proporcional: su postulación de mayoría relativa es válida, pero no tiene derecho a Lista "A". Postular en once o más distritos no es un requisito de registro, sino la condición de ese acceso.`
-        : `${nombrePartido} tiene ${formulasEnLista} fórmula(s) en su Lista "A", pero postula en ${abarcados} distritos de mayoría relativa y el acceso a representación proporcional exige ${MINIMO_DISTRITOS_PARA_RP}. Se corrige ampliando la postulación de mayoría relativa o retirando esas fórmulas de la lista.`,
+        ? `${nombrePartido} ${alcance}: su postulación de mayoría relativa es válida, pero no tiene derecho a Lista "A". Postular en once o más distritos no es un requisito de registro, sino la condición de ese acceso.`
+        : `${nombrePartido} tiene ${plural(formulasEnLista, 'fórmula', 'fórmulas')} en su Lista "A", pero ${alcance}. Se corrige ampliando la postulación de mayoría relativa o retirando esas fórmulas de la lista.`,
     }
   }
 
   const cumple = acceso.estado === 'acreditado'
+  const faltan = MINIMO_DISTRITOS_PARA_RP - registradas
+  const colocadas =
+    registradas === 0
+      ? `${nombrePartido} todavía no ha colocado ninguna fórmula de mayoría relativa`
+      : `${nombrePartido} postula en ${plural(registradas, 'distrito', 'distritos')}${desglose}`
   return {
     ...base,
     cumple,
     gravedad: cumple ? undefined : 'por-completar',
     mensaje:
       (cumple
-        ? `${nombrePartido} postula en ${registradas} distritos${desglose}; el mínimo para RP es ${MINIMO_DISTRITOS_PARA_RP}.`
-        : `${nombrePartido} postula en ${registradas} distritos${desglose}; faltan ${MINIMO_DISTRITOS_PARA_RP - registradas} para el mínimo de ${MINIMO_DISTRITOS_PARA_RP}.`) +
+        ? `${colocadas}; el mínimo para RP es ${MINIMO_DISTRITOS_PARA_RP}.`
+        : `${colocadas}; ${faltan === 1 ? 'falta 1' : `faltan ${faltan}`} para el mínimo de ${MINIMO_DISTRITOS_PARA_RP}.`) +
       siglado,
   }
 }

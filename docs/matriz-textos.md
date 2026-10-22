@@ -306,14 +306,14 @@ Salen del campo `alcance` de cada regla. `src/domain/reglas/base.ts` y `convenio
 | D-58a | `{PARTIDO} postula en {n} distritos; el mínimo para RP es 11.` | **Rama de postulación individual.** Sin desglose y sin la frase del siglado: quien compite solo no tiene convenio ni sigla nada, y hablarle de ambos describía una figura que no es la suya | — |
 | D-59a | `{PARTIDO} postula en {n} distritos; faltan {n} para el mínimo de 11.` | Igual | — |
 | D-58b | `{PARTIDO} postula en {n} distritos, por debajo de los 11 que exige el acceso a representación proporcional: su postulación de mayoría relativa es válida, pero no tiene derecho a Lista "A". Postular en once o más distritos no es un requisito de registro, sino la condición de ese acceso.` | Es un resultado que **cumple**. La segunda frase existe para que no se lea como un reproche | — |
-| D-59b | `{PARTIDO} tiene {n} fórmula(s) en su Lista "A", pero postula en {n} distritos de mayoría relativa y el acceso a representación proporcional exige 11. Se corrige ampliando la postulación de mayoría relativa o retirando esas fórmulas de la lista.` | T-05 en `fórmula(s)` | — |
+| D-59b | `{PARTIDO} tiene {1 fórmula\|n fórmulas} en su Lista "A", pero {no postula en ningún distrito de mayoría relativa\|postula en {n} distritos de mayoría relativa, por debajo de los 11 que exige el acceso a representación proporcional}. Se corrige ampliando la postulación de mayoría relativa o retirando esas fórmulas de la lista.` | Concordancia resuelta con `plural()` ✓ | — |
 
 #### Lista "A" sin derecho a la asignación — `rp.ts`, `FaseConvenio.tsx`, `FaseProporcional.tsx`
 
 | Id | Texto actual | Observación | Redacción propuesta |
 |---|---|---|---|
 | D-59c | `No se evalúan: {SIGLAS} postula en {n} distritos de mayoría relativa y el acceso a representación proporcional exige 11. La alternancia, el encabezado compensatorio y la acción afirmativa se revisarán en cuanto la postulación alcance ese mínimo.` | Sustituye a las tres reglas de la Lista "A". Cumple, no reprocha | — |
-| D-59d | `Sin derecho a la asignación: {SIGLAS} postula en {n} distrito(s) de mayoría relativa y el acceso a representación proporcional exige 11. Puedes armar la lista para ver cómo quedaría, pero no sería registrable.` | Tarjeta de la Fase 3. T-05 en `distrito(s)`. Tutea, como el resto de la interfaz | — |
+| D-59d | `Sin derecho a la asignación: {SIGLAS} {no postula en ningún distrito de mayoría relativa\|postula en {n} distritos de mayoría relativa} y el acceso a representación proporcional exige 11. Esta lista se puede armar para ver cómo quedaría, pero no es registrable.` | Tarjeta de la Fase 3. Concordancia resuelta con `plural()`, y el caso cero redactado aparte: quien no postula en ninguno «no postula en ningún distrito», no «en 0» ✓ | — |
 | D-59e | `{SIGLAS} {postula\|postulan} en menos de 11 distritos, así que con este reparto {no tendría\|no tendrían} derecho a la asignación de representación proporcional. La postulación de mayoría relativa sigue siendo válida: once no es un mínimo de registro, sino la condición de ese acceso.` | Aviso de la Fase 1, donde se decide el alcance. Rama singular/plural escrita de verdad | — |
 
 #### Encabezado compensatorio de RP — `rp.ts`

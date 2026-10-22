@@ -4,6 +4,7 @@ import { EmblemasDe } from './EtiquetaPartido'
 import { ambitosRP, generoSubrepresentado, MINIMO_DISTRITOS_PARA_RP } from '../domain/reglas'
 import type { IdPartido, ListaRP } from '../domain/types'
 import { cn } from '../lib/utils'
+import { plural } from '../domain/texto'
 import { descripcion } from '../lib/formula'
 import { estadoDe, useSimulador } from '../store/simulador'
 import { idCasillaRP } from './arrastre'
@@ -122,6 +123,7 @@ export function FaseProporcional({ arrastre }: { arrastre: boolean }) {
         // simulador refleja la consecuencia, no impide el movimiento, y quien
         // quiera ver cómo quedaría puede armarla igual.
         const sinDerecho = ambito?.acceso.estado === 'sin-derecho'
+        const abarcados = ambito?.acceso.abarcados ?? 0
         return (
           <Card
             key={lista.partido}
@@ -135,14 +137,17 @@ export function FaseProporcional({ arrastre }: { arrastre: boolean }) {
               <CardDescription>
                 {sinDerecho ? (
                   <span className="text-destructive block">
-                    Sin derecho a la asignación: {siglasDe(lista.partido)} postula en{' '}
-                    {ambito?.acceso.abarcados} distrito(s) de mayoría relativa y el acceso a
-                    representación proporcional exige {MINIMO_DISTRITOS_PARA_RP}. Puedes armar la
-                    lista para ver cómo quedaría, pero no sería registrable.
+                    Sin derecho a la asignación:{' '}
+                    {abarcados === 0
+                      ? `${siglasDe(lista.partido)} no postula en ningún distrito de mayoría relativa`
+                      : `${siglasDe(lista.partido)} postula en ${plural(abarcados, 'distrito', 'distritos')} de mayoría relativa`}{' '}
+                    y el acceso a representación proporcional exige {MINIMO_DISTRITOS_PARA_RP}.
+                    Esta lista se puede armar para ver cómo quedaría, pero no es registrable.
                   </span>
                 ) : (
                   <>
-                    {propios.length} distrito(s) de MR registrados.{' '}
+                    {plural(propios.length, 'distrito', 'distritos')} de mayoría relativa
+                    con fórmula asignada.{' '}
                     {exigido
                       ? `Debe encabezarla ${exigido === 'Mujer' ? 'una mujer' : 'un hombre'}.`
                       : 'MR en equivalencia: el encabezado es de libre determinación.'}

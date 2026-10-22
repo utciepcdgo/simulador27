@@ -13,6 +13,7 @@ import {
 import { DISTRITOS, tamanosDeBloque } from '../../domain/catalogo'
 import type { Bloque } from '../../domain/types'
 import { RAPIDO, SUAVE } from '../../lib/animacion'
+import { ACENTO_BLOQUE } from '../../lib/bloques'
 import { cuotasAcreditadas } from '../../lib/formula'
 import { cn } from '../../lib/utils'
 import { FichaFormula } from '../FichaFormula'
@@ -251,11 +252,6 @@ export function Arrastre() {
 // ─── 5 · No postular en un distrito ──────────────────────────────────────────
 
 const BLOQUES: readonly Bloque[] = ['Alta', 'Media', 'Baja']
-const COLOR_BLOQUE: Record<Bloque, string> = {
-  Alta: 'bg-emerald-500',
-  Media: 'bg-amber-500',
-  Baja: 'bg-rose-500',
-}
 
 /** Seis distritos reales del catálogo, suficientes para ver rehacerse los bloques. */
 const MUESTRA = DISTRITOS.slice(0, 6)
@@ -282,7 +278,7 @@ export function NoPostular() {
         {porBloque.map(({ bloque, distritos }) => (
           <div key={bloque} className="min-w-0 space-y-1.5">
             <p className="flex items-center gap-1.5 text-[0.6875rem] font-medium">
-              <span className={cn('size-2 rounded-full', COLOR_BLOQUE[bloque])} aria-hidden />
+              <span className={cn('size-2 rounded-full', ACENTO_BLOQUE[bloque].punto)} aria-hidden />
               {bloque}
               <Badge variant="secondary" className="ml-auto">
                 {distritos.length}

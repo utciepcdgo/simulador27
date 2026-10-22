@@ -21,6 +21,7 @@ export {
   porcentajesDe,
   posicionesBlindadas,
   posicionesCabezaDeBloque,
+  rangoDeBloque,
   tableroInicial,
   tamanosDeBloque,
   tieneHistorial,
