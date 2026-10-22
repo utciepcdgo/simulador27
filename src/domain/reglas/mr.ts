@@ -467,52 +467,153 @@ export function cuotaIndigena(ambito: Ambito): ResultadoRegla {
 }
 
 /**
- * Umbral de registro para RP: hay que registrar candidaturas de mayoría relativa
- * en cuando menos once distritos para tener derecho a la asignación de
- * representación proporcional.
+ * Estado de un partido frente al acceso a representación proporcional.
  *
- * Se mide sobre la **huella de participación** del partido, no sobre lo que
- * sigló. Postular y siglar son cosas distintas: quien firma un convenio postula
- * en todos los distritos que el convenio abarca, y el siglado solo decide a
- * quién se atribuyen los votos, el financiamiento y la Lista "B". Un partido que
- * sigló seis dentro de un convenio de doce y postula tres por su cuenta acredita
- * quince, no nueve.
+ * Separa dos cantidades que conviene no confundir, porque responden a momentos
+ * distintos de la captura:
+ *
+ * - **`abarcados`** — en cuántos distritos el partido *va a* postular, se haya
+ *   colocado la fórmula o no. Se decide en la Fase 1, al repartir el convenio y
+ *   al declinar fuera de él.
+ * - **`registradas`** — cuántas fórmulas lleva efectivamente colocadas.
+ *
+ * De ahí los tres estados. `sin-derecho` no es un tablero a medio llenar: es un
+ * partido que no alcanzará el mínimo por más fórmulas que coloque, y por tanto
+ * una decisión ya tomada, no un pendiente.
+ */
+export type EstadoAccesoRP = 'acreditado' | 'pendiente' | 'sin-derecho'
+
+export interface AccesoRP {
+  estado: EstadoAccesoRP
+  /** Distritos que el partido postula, con fórmula o sin ella. */
+  abarcados: number
+  /** Fórmulas efectivamente colocadas. */
+  registradas: number
+  enConvenio: number
+  individuales: number
+  /** Si el partido tiene tablero propio fuera del convenio. */
+  postulaPorSuCuenta: boolean
+  /**
+   * Si el tablero de origen es el convenio de una alianza.
+   *
+   * En postulación individual no hay convenio ni siglado, así que el dictamen no
+   * debe hablar de ninguno de los dos: quien compite solo no «postula 11 por
+   * convenio», postula once y ya.
+   */
+  hayConvenio: boolean
+}
+
+/**
+ * Las dos cuentas se miden sobre la **huella de participación** del partido, no
+ * sobre lo que sigló. Postular y siglar son cosas distintas: quien firma un
+ * convenio postula en todos los distritos que el convenio abarca, y el siglado
+ * solo decide a quién se atribuyen los votos, el financiamiento y la Lista "B".
+ * Un partido que sigló seis dentro de un convenio de doce y postula tres por su
+ * cuenta acredita quince, no nueve.
  *
  * Medirlo sobre lo siglado hacía la regla insatisfacible —ningún integrante de
  * una coalición repartida llega solo a once— y bloqueaba el dictamen para
  * siempre.
  */
-export function umbralRegistroRP(
-  ambitos: readonly Ambito[],
-  partido: IdPartido,
-): ResultadoRegla {
-  const conFormula = (ambito?: Ambito) =>
-    ambito ? ambito.distritos.filter((d) => d.formula_asignada).length : 0
-
-  const siglas = siglasDe(partido)
-  const nombrePartido = nombreDe(partido)
+export function accesoRP(ambitos: readonly Ambito[], partido: IdPartido): AccesoRP {
   const convenio = ambitos.find((a) => a.tipo === 'tablero' && !a.fuera)
   const propios = ambitos.find((a) => a.tipo === 'tablero' && a.fuera && a.partido === partido)
+  const conFormula = (ambito?: Ambito) =>
+    ambito ? ambito.distritos.filter((d) => d.formula_asignada).length : 0
+  const cuantos = (ambito?: Ambito) => ambito?.distritos.length ?? 0
+
   const enConvenio = conFormula(convenio)
   const individuales = conFormula(propios)
   const registradas = enConvenio + individuales
-  const cumple = registradas >= MINIMO_DISTRITOS_PARA_RP
-  const desglose = propios
-    ? `${enConvenio} por convenio y ${individuales} por su cuenta`
-    : `${enConvenio} por convenio`
+  const abarcados = cuantos(convenio) + cuantos(propios)
+
+  const estado: EstadoAccesoRP =
+    abarcados < MINIMO_DISTRITOS_PARA_RP
+      ? 'sin-derecho'
+      : registradas >= MINIMO_DISTRITOS_PARA_RP
+        ? 'acreditado'
+        : 'pendiente'
 
   return {
-    regla: 'Registro en once distritos para acceder a RP',
-    ambito: 'RP',
+    estado,
+    abarcados,
+    registradas,
+    enConvenio,
+    individuales,
+    postulaPorSuCuenta: propios !== undefined,
+    hayConvenio: convenio?.partido === null,
+  }
+}
+
+/**
+ * Derecho a la asignación de RP: hay que registrar candidaturas de mayoría
+ * relativa en cuando menos once distritos para tener derecho a la asignación de
+ * representación proporcional.
+ *
+ * **Once no es un mínimo de registro.** Nada obliga a postular en once
+ * distritos, ni en ningún número: es la condición de acceso a un principio, no
+ * un requisito de la postulación de mayoría relativa. De ahí que un partido que
+ * postula en diez distritos **cumpla** esta regla: su postulación es válida y no
+ * hay nada que reparar en ella. Lo que no tiene es Lista "A".
+ *
+ * Lo que sí es un defecto —y por eso impide cerrar— es la contradicción: tener
+ * fórmulas en una Lista "A" a la que no se tiene derecho. Se repara ampliando la
+ * postulación de mayoría relativa o retirando esas fórmulas.
+ *
+ * Tratar el umbral como un pendiente de llenado, que es lo que hacía antes,
+ * dejaba sin cerrar una postulación perfectamente legal: el motor le reprochaba
+ * un hueco a quien había tomado una decisión.
+ */
+export function umbralRegistroRP(
+  ambitos: readonly Ambito[],
+  partido: IdPartido,
+  /** Fórmulas colocadas en la Lista "A" de este partido. */
+  formulasEnLista = 0,
+): ResultadoRegla {
+  const acceso = accesoRP(ambitos, partido)
+  const { abarcados, registradas, enConvenio, individuales } = acceso
+  const siglas = siglasDe(partido)
+  const nombrePartido = nombreDe(partido)
+  // Las dos aclaraciones hablan del convenio, así que solo caben cuando lo hay.
+  // Un partido que compite solo no sigla nada: todo lo que postula es suyo.
+  const desglose = !acceso.hayConvenio
+    ? ''
+    : acceso.postulaPorSuCuenta
+      ? ` (${enConvenio} por convenio y ${individuales} por su cuenta)`
+      : ` (${enConvenio} por convenio)`
+  const siglado = acceso.hayConvenio
+    ? ' Se cuentan todos los distritos que abarca el convenio, con independencia del siglado.'
+    : ''
+
+  const base = {
+    regla: 'Derecho a la asignación de RP',
+    ambito: 'RP' as const,
     alcance: `${siglas} · Lista "A"`,
+    fundamento_legal: FUNDAMENTOS.umbralRegistroRP,
+  }
+
+  if (acceso.estado === 'sin-derecho') {
+    const cumple = formulasEnLista === 0
+    return {
+      ...base,
+      cumple,
+      gravedad: cumple ? undefined : 'sustitucion',
+      mensaje: cumple
+        ? `${nombrePartido} postula en ${abarcados} distritos, por debajo de los ${MINIMO_DISTRITOS_PARA_RP} que exige el acceso a representación proporcional: su postulación de mayoría relativa es válida, pero no tiene derecho a Lista "A". Postular en once o más distritos no es un requisito de registro, sino la condición de ese acceso.`
+        : `${nombrePartido} tiene ${formulasEnLista} fórmula(s) en su Lista "A", pero postula en ${abarcados} distritos de mayoría relativa y el acceso a representación proporcional exige ${MINIMO_DISTRITOS_PARA_RP}. Se corrige ampliando la postulación de mayoría relativa o retirando esas fórmulas de la lista.`,
+    }
+  }
+
+  const cumple = acceso.estado === 'acreditado'
+  return {
+    ...base,
     cumple,
     gravedad: cumple ? undefined : 'por-completar',
     mensaje:
       (cumple
-        ? `${nombrePartido} postula en ${registradas} distritos (${desglose}); el mínimo para RP es ${MINIMO_DISTRITOS_PARA_RP}.`
-        : `${nombrePartido} postula en ${registradas} distritos (${desglose}); faltan ${MINIMO_DISTRITOS_PARA_RP - registradas} para el mínimo de ${MINIMO_DISTRITOS_PARA_RP}.`) +
-      ' Se cuentan todos los distritos que abarca el convenio, con independencia del siglado.',
-    fundamento_legal: FUNDAMENTOS.umbralRegistroRP,
+        ? `${nombrePartido} postula en ${registradas} distritos${desglose}; el mínimo para RP es ${MINIMO_DISTRITOS_PARA_RP}.`
+        : `${nombrePartido} postula en ${registradas} distritos${desglose}; faltan ${MINIMO_DISTRITOS_PARA_RP - registradas} para el mínimo de ${MINIMO_DISTRITOS_PARA_RP}.`) +
+      siglado,
   }
 }
 

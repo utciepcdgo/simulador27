@@ -256,7 +256,7 @@ cosas distintas:
 | | Qué contiene | Para qué sirve |
 |---|---|---|
 | **Candidaturas propias** | Lo que el partido **sigló** + lo que postula por su cuenta | Paridad general y cuota joven (art. 20.2) |
-| **Huella de participación** | **Todo** el convenio + lo que postula por su cuenta | Umbral de once distritos para RP (art. 74.1.a) |
+| **Huella de participación** | **Todo** el convenio + lo que postula por su cuenta | Umbral de once distritos para RP (art. 75.1.I) |
 
 Firmar un convenio es postular en **todos** los distritos que abarca, con independencia de a
 quién se siglen. El siglado tiene efectos precisos y acotados —reparto de votos, financiamiento y
@@ -269,6 +269,42 @@ quedaba insatisfacible y bloqueaba el dictamen para siempre. Con la huella, el P
 solo por el convenio, y quince si además postula en los tres huérfanos.
 
 La regla se agrupa en el dictamen bajo la Lista "A" del partido, que es lo que habilita.
+
+### Once no es un mínimo de registro
+
+El artículo 75, numeral 1, fracción I no obliga a postular en once distritos: fija la condición
+para tener **derecho a la asignación** de representación proporcional. Nada en los Lineamientos
+ni en la Ley Local impone un mínimo de candidaturas de mayoría relativa.
+
+El motor lo trataba como un pendiente de llenado —`gravedad: 'por-completar'`— y, como
+`esCerrable` exige que todas las reglas cumplan, **una postulación perfectamente legal no podía
+cerrarse**: a quien postulaba en diez distritos el dictamen le reprochaba «faltan 1», como si
+tuviera un hueco, cuando lo que tenía era una decisión.
+
+La regla pasa a llamarse `Derecho a la asignación de RP` y reparte así sus veredictos:
+
+| Distritos que abarca | Lista "A" | Veredicto |
+|---|---|---|
+| ≥ 11 | cualquiera | acreditado; o pendiente mientras falten fórmulas por colocar |
+| < 11 | vacía | **cumple**: la MR es válida y no hay nada que reparar. Cierra |
+| < 11 | con fórmulas | **incumple · sustitución**: se postula una lista sin derecho a ella |
+
+De ahí la distinción entre dos cantidades que el motor no separaba, y que `accesoRP` ahora
+devuelve juntas:
+
+- **Abarcados** — en cuántos distritos el partido *va a* postular, se haya colocado la fórmula o
+  no. Es lo que se decide en la Fase 1.
+- **Registradas** — cuántas fórmulas lleva colocadas.
+
+Medir el acceso sobre las registradas haría parpadear el veredicto durante la captura: el
+partido perdería el derecho a RP cada vez que retirara una fórmula del distrito once.
+
+**No se bloquea la captura de la Lista "A".** Es la línea de siempre —el simulador refleja, no
+impide—: la lista de un partido sin derecho se marca en pantalla y se puede armar igual, para ver
+cómo quedaría. Lo que no se puede es cerrar la postulación con ella llena, porque ese escenario
+no existe jurídicamente. Y a ese partido no se le reprochan la alternancia ni el encabezado
+compensatorio de una lista que no va a registrar: `evaluarListaRP` sustituye las tres reglas por
+una que dice por qué no se evalúan.
 
 ### La cuota joven es de la alianza; la de la Lista "A", de cada partido
 

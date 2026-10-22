@@ -10,6 +10,7 @@ import type {
   TokenFormula,
 } from '../types'
 import { accionAfirmativaAcreditada, ambitosDe, conteoGenero } from './base'
+import { accesoRP, MINIMO_DISTRITOS_PARA_RP, type AccesoRP } from './mr'
 import { FUNDAMENTOS } from './fundamentos'
 
 /** Posiciones de la Lista "A". */
@@ -31,20 +32,30 @@ export interface AmbitoRP {
   posiciones: readonly (TokenFormula | null)[]
   /** Consolidado de MR del partido: lo que registra dentro y fuera del convenio. */
   distritosMR: readonly DistritoEvaluado[]
+  /**
+   * Si el partido tiene derecho a esta lista. Se mide sobre su huella de
+   * participación, no sobre el consolidado: ver `accesoRP`.
+   */
+  acceso: AccesoRP
 }
 
 export function ambitosRP(estado: EstadoSimulacion): AmbitoRP[] {
+  const ambitos = ambitosDe(estado)
   const consolidados = new Map(
-    ambitosDe(estado)
-      .filter((a) => a.tipo === 'consolidado')
-      .map((a) => [a.partido, a.distritos]),
+    ambitos.filter((a) => a.tipo === 'consolidado').map((a) => [a.partido, a.distritos]),
   )
   return estado.listasRP.map((lista) => ({
     partido: lista.partido,
     etiqueta: `${siglasDe(lista.partido)} · Lista "A"`,
     posiciones: lista.posiciones,
     distritosMR: consolidados.get(lista.partido) ?? [],
+    acceso: accesoRP(ambitos, lista.partido),
   }))
+}
+
+/** Cuántas posiciones de la lista llevan fórmula. */
+export function ocupadasEnLista(ambito: AmbitoRP): number {
+  return ambito.posiciones.filter((f) => f !== null).length
 }
 
 function generoDe(formula: TokenFormula): GeneroParidad {
@@ -265,12 +276,40 @@ export function accionAfirmativaRP(ambito: AmbitoRP): ResultadoRegla {
   }
 }
 
+/**
+ * Las tres reglas de la Lista "A" presuponen que hay lista que registrar.
+ *
+ * A un partido sin derecho a la asignación no se le reprocha la alternancia de
+ * una lista que no va a existir: sería ruido, y además señalaría como defecto lo
+ * que es una consecuencia. Pero tampoco se callan tres reglas sin más —una regla
+ * que se esfuma en silencio es peor que una que se contradice—, así que se
+ * sustituyen por un resultado que dice por qué no se evalúan.
+ *
+ * El incumplimiento, si lo hay, vive en un solo sitio: `umbralRegistroRP` es
+ * quien marca la contradicción de tener fórmulas en una lista sin derecho.
+ */
 export function evaluarListaRP(ambito: AmbitoRP): ResultadoRegla[] {
+  if (ambito.acceso.estado === 'sin-derecho') {
+    return [exencionListaRP(ambito)]
+  }
   return [
     encabezadoCompensatorioRP(ambito),
     alternanciaRP(ambito),
     accionAfirmativaRP(ambito),
   ]
+}
+
+function exencionListaRP(ambito: AmbitoRP): ResultadoRegla {
+  const siglas = siglasDe(ambito.partido)
+  const { abarcados } = ambito.acceso
+  return {
+    regla: 'Reglas de integración de la Lista "A"',
+    ambito: 'RP',
+    alcance: ambito.etiqueta,
+    cumple: true,
+    mensaje: `No se evalúan: ${siglas} postula en ${abarcados} distritos de mayoría relativa y el acceso a representación proporcional exige ${MINIMO_DISTRITOS_PARA_RP}. La alternancia, el encabezado compensatorio y la acción afirmativa se revisarán en cuanto la postulación alcance ese mínimo.`,
+    fundamento_legal: FUNDAMENTOS.umbralRegistroRP,
+  }
 }
 
 export function evaluarRP(estado: EstadoSimulacion): ResultadoRegla[] {

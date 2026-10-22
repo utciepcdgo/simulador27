@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { siglasDe } from '../domain/catalogo'
 import { EmblemasDe } from './EtiquetaPartido'
-import { ambitosRP, generoSubrepresentado } from '../domain/reglas'
+import { ambitosRP, generoSubrepresentado, MINIMO_DISTRITOS_PARA_RP } from '../domain/reglas'
 import type { IdPartido, ListaRP } from '../domain/types'
 import { cn } from '../lib/utils'
 import { descripcion } from '../lib/formula'
@@ -115,20 +115,39 @@ export function FaseProporcional({ arrastre }: { arrastre: boolean }) {
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {listasRP.map((lista) => {
-        const propios = ambitos.find((a) => a.partido === lista.partido)?.distritosMR ?? []
+        const ambito = ambitos.find((a) => a.partido === lista.partido)
+        const propios = ambito?.distritosMR ?? []
         const exigido = generoSubrepresentado(propios)
+        // Sin derecho a la asignación la lista no se bloquea: se marca. El
+        // simulador refleja la consecuencia, no impide el movimiento, y quien
+        // quiera ver cómo quedaría puede armarla igual.
+        const sinDerecho = ambito?.acceso.estado === 'sin-derecho'
         return (
-          <Card key={lista.partido} className="gap-3">
+          <Card
+            key={lista.partido}
+            className={cn('gap-3', sinDerecho && 'border-destructive/40 bg-destructive/[0.02]')}
+          >
             <CardHeader>
               <CardTitle className="text-base">
                 <EmblemasDe partidos={[lista.partido]} tamano="sm" />
                 {siglasDe(lista.partido)} · Lista &ldquo;A&rdquo;
               </CardTitle>
               <CardDescription>
-                {propios.length} distrito(s) de MR registrados.{' '}
-                {exigido
-                  ? `Debe encabezarla ${exigido === 'Mujer' ? 'una mujer' : 'un hombre'}.`
-                  : 'MR en equivalencia: el encabezado es de libre determinación.'}
+                {sinDerecho ? (
+                  <span className="text-destructive block">
+                    Sin derecho a la asignación: {siglasDe(lista.partido)} postula en{' '}
+                    {ambito?.acceso.abarcados} distrito(s) de mayoría relativa y el acceso a
+                    representación proporcional exige {MINIMO_DISTRITOS_PARA_RP}. Puedes armar la
+                    lista para ver cómo quedaría, pero no sería registrable.
+                  </span>
+                ) : (
+                  <>
+                    {propios.length} distrito(s) de MR registrados.{' '}
+                    {exigido
+                      ? `Debe encabezarla ${exigido === 'Mujer' ? 'una mujer' : 'un hombre'}.`
+                      : 'MR en equivalencia: el encabezado es de libre determinación.'}
+                  </>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>

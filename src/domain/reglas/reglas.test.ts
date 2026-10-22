@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { coalicion, individual, PARTIDO, siglasDe, tableroInicial } from '../catalogo'
+import {
+  coalicion,
+  individual,
+  PARTIDO,
+  siglasDe,
+  tableroInicial,
+  TOTAL_DISTRITOS,
+} from '../catalogo'
 import type {
   DistritoActivo,
   DistritoEvaluado,
@@ -13,6 +20,7 @@ import type {
   TokenFormula,
 } from '../types'
 import {
+  accesoRP,
   accionAfirmativaAcreditada,
   CRITERIOS_LEY,
   criteriosFueraDeLey,
@@ -32,6 +40,7 @@ import {
   formulasEnDistrito,
   esFormulaJoven,
   evaluarMR,
+  evaluarListaRP,
   evaluarSimulacion,
   evaluarTokens,
   generoSubrepresentado,
@@ -41,6 +50,7 @@ import {
   liderazgoBloque,
   mayoriaBloqueImpar,
   minimoJovenes,
+  minimoMujeres,
   paridadBloques,
   paridadGeneral,
   requierenSustitucion,
@@ -995,7 +1005,20 @@ describe('umbral de registro para RP', () => {
     const ambitos = ambitosDe(simulacion(tablero('HHHHH HHHHH H....')))
     const resultado = umbralRegistroRP(ambitos, PARTIDO.PAN)
     expect(resultado.cumple).toBe(true)
-    expect(resultado.mensaje).toContain('11 por convenio')
+    expect(resultado.mensaje).toContain('postula en 11 distritos')
+  })
+
+  it('no habla de convenio ni de siglado a quien no tiene convenio', () => {
+    // Quien compite solo no sigla nada: todo lo que postula es suyo. El desglose
+    // «11 por convenio» y la aclaración del siglado solo caben en una alianza.
+    const solo = umbralRegistroRP(ambitosDe(simulacion(tablero('HHHHH HHHHH H....'))), PARTIDO.PAN)
+    expect(solo.mensaje).not.toContain('convenio')
+    expect(solo.mensaje).not.toContain('siglado')
+
+    // En coalición sí, que es donde la distinción postular/siglar hace falta.
+    const enAlianza = umbralRegistroRP(conHuella(12, { convenio: true }), PARTIDO.PAN)
+    expect(enAlianza.mensaje).toContain('12 por convenio y 0 por su cuenta')
+    expect(enAlianza.mensaje).toContain('con independencia del siglado')
   })
 
   it('es pendiente mientras falten distritos por llenar, nunca infracción', () => {
@@ -1004,6 +1027,103 @@ describe('umbral de registro para RP', () => {
     expect(resultado.cumple).toBe(false)
     expect(resultado.gravedad).toBe('por-completar')
     expect(resultado.mensaje).toContain('faltan 1')
+  })
+
+  // ── Postular en menos de once es una decisión, no un hueco ───────────────
+
+  /** Un partido que compite solo y postula únicamente en `cuantos` distritos. */
+  function postulaEn(cuantos: number, posicionesRP: (TokenFormula | null)[] = []) {
+    const distritos = retirar(
+      tablero('H'.repeat(cuantos) + '.'.repeat(TOTAL_DISTRITOS - cuantos)),
+      Array.from({ length: TOTAL_DISTRITOS - cuantos }, (_, i) => TOTAL_DISTRITOS - i),
+    )
+    const listas = posicionesRP.length
+      ? [{ partido: PARTIDO.PAN, posiciones: posicionesRP }]
+      : []
+    return simulacion(distritos, listas)
+  }
+
+  it('distingue el alcance de la postulación del llenado del tablero', () => {
+    // Diez distritos llenos y diez a medio llenar dan el mismo veredicto: lo que
+    // decide el acceso es dónde se postula, no cuánto se ha capturado.
+    const lleno = accesoRP(ambitosDe(postulaEn(10)), PARTIDO.PAN)
+    expect(lleno).toMatchObject({ estado: 'sin-derecho', abarcados: 10, registradas: 10 })
+
+    const vacio = accesoRP(
+      ambitosDe(simulacion(retirar(tablero('...............'), [11, 12, 13, 14, 15]))),
+      PARTIDO.PAN,
+    )
+    expect(vacio).toMatchObject({ estado: 'sin-derecho', abarcados: 10, registradas: 0 })
+  })
+
+  it('los tres estados dependen de abarcados primero y de registradas después', () => {
+    const estadoDe_ = (n: number) => accesoRP(ambitosDe(postulaEn(n)), PARTIDO.PAN).estado
+    expect(estadoDe_(10)).toBe('sin-derecho')
+    expect(estadoDe_(11)).toBe('acreditado')
+
+    // Alcance de sobra, tablero a medias: pendiente, no sin-derecho.
+    const aMedias = ambitosDe(simulacion(tablero('HHHHH HHHHH .....')))
+    expect(accesoRP(aMedias, PARTIDO.PAN).estado).toBe('pendiente')
+  })
+
+  it('postular en menos de once cumple: la MR es válida y no hay nada que reparar', () => {
+    // Once no es un mínimo de registro. Quien postula en diez distritos tomó una
+    // decisión, y el dictamen no tiene por qué impedirle cerrar.
+    const resultado = umbralRegistroRP(ambitosDe(postulaEn(10)), PARTIDO.PAN, 0)
+    expect(resultado.cumple).toBe(true)
+    expect(resultado.gravedad).toBeUndefined()
+    expect(resultado.mensaje).toContain('no tiene derecho a Lista')
+    expect(resultado.mensaje).toContain('no es un requisito de registro')
+  })
+
+  it('no deja cerrar una Lista "A" a la que no se tiene derecho', () => {
+    const resultado = umbralRegistroRP(ambitosDe(postulaEn(10)), PARTIDO.PAN, 2)
+    expect(resultado.cumple).toBe(false)
+    expect(resultado.gravedad).toBe('sustitucion')
+    expect(resultado.mensaje).toContain('2 fórmula(s) en su Lista')
+  })
+
+  it('un tablero de diez sin Lista "A" es cerrable de punta a punta', () => {
+    // La prueba de fondo: antes el umbral bloqueaba el cierre de una postulación
+    // perfectamente legal. Diez distritos se reparten 4-3-3 y admiten un acomodo
+    // que cumple todo lo demás, así que lo único que podía estorbar era esto.
+    const distritos = retirar(tablero('...............'), [11, 12, 13, 14, 15])
+    const conReparto = aplicar(distritos, repartoNecesario(ambitoDe(distritos)))
+    const resultados = evaluarSimulacion(simulacion(conReparto))
+
+    expect(resultados.filter((r) => !r.cumple).map((r) => r.regla)).toEqual([])
+    expect(esCerrable(resultados)).toBe(true)
+  })
+
+  it('sustituye las reglas de la Lista "A" por una que dice por qué no se evalúan', () => {
+    const conLista = postulaEn(10, [null, null, null, null, null])
+    const reglas = ambitosRP(conLista).flatMap((a) => evaluarListaRP(a))
+
+    expect(reglas.map((r) => r.regla)).toEqual(['Reglas de integración de la Lista "A"'])
+    expect(reglas[0].cumple).toBe(true)
+    expect(reglas[0].mensaje).toContain('No se evalúan')
+
+    // Con derecho vuelven las tres de siempre.
+    const conDerecho = simulacion(tablero('HHHHH HHHHH HHHHH'), [
+      { partido: PARTIDO.PAN, posiciones: [null, null, null, null, null] },
+    ])
+    expect(ambitosRP(conDerecho).flatMap((a) => evaluarListaRP(a))).toHaveLength(3)
+  })
+
+  it('en coalición el acceso se mide por la huella, no por lo siglado', () => {
+    // El PAN sigla 6 de un convenio de 12: sigue teniendo derecho a Lista "A".
+    const ambito = ambitosRP(
+      simulacion(
+        repartir(tablero('...............', {}, alianza), (p) =>
+          p > 12 ? 'fuera' : p % 2 === 1 ? PARTIDO.PRI : PARTIDO.PAN,
+        ),
+        [{ partido: PARTIDO.PAN, posiciones: [null, null, null, null, null] }],
+        alianza,
+      ),
+    )[0]
+
+    expect(ambito.acceso.abarcados).toBe(15)
+    expect(ambito.acceso.estado).not.toBe('sin-derecho')
   })
 })
 
@@ -1537,6 +1657,12 @@ function retirar(distritos: DistritoActivo[], posiciones: number[]): DistritoAct
   )
 }
 
+/** Un tablero vacío de `n` distritos, el que deja el artículo 27 al retirar el resto. */
+function tableroParcial(n: number): DistritoActivo[] {
+  const sobran = Array.from({ length: TOTAL_DISTRITOS - n }, (_, i) => TOTAL_DISTRITOS - i)
+  return retirar(tablero('...............'), sobran)
+}
+
 /** Coloca el reparto propuesto, con la fórmula joven que pida. */
 function aplicar(distritos: DistritoActivo[], reparto: Reparto): DistritoActivo[] {
   let falta = reparto.faltaJoven
@@ -1618,6 +1744,80 @@ describe('repartoNecesario', () => {
     expect(reparto.irresolubles.length).toBeGreaterThan(0)
     // Se coloca el reparto más cercano: reporta, no se planta.
     expect(reparto.faltan.Mujer + reparto.faltan.Hombre).toBe(11)
+  })
+
+  // Los cuatro tamaños en que la prohibición del 28.2 aprieta de verdad. En 5 y
+  // 11 deja sin mayoría al bloque bajo; en 7 y 8 lo cierra entero, y el bloque
+  // se queda sin sitio para la mujer que su propio tope le exige.
+  const APRETADOS = [5, 7, 8, 11]
+
+  /** Las reglas de género que el reparto debería saber anticipar. */
+  const DE_GENERO = [
+    'Paridad general de MR',
+    'Paridad del bloque Alta',
+    'Paridad del bloque Media',
+    'Paridad del bloque Baja',
+    'Mayoría de fórmulas encabezadas por mujeres en bloques impares',
+  ]
+
+  it.each(APRETADOS)('en un tablero de %i propone tantas mujeres como pueda colocar', (n) => {
+    const ambito = ambitoDe(tableroParcial(n))
+    const reparto = repartoNecesario(ambito)
+
+    // Nada se descarta por el camino: lo propuesto cabe distrito a distrito.
+    expect(reparto.porDistrito.size).toBe(n)
+    expect(reparto.faltan.Mujer + reparto.faltan.Hombre).toBe(n)
+    for (const distrito of ambito.distritos) {
+      if (!distrito.esBlindada) continue
+      expect(reparto.porDistrito.get(distrito.id_distrito)).toBe('Hombre')
+    }
+  })
+
+  it.each(APRETADOS)('en un tablero de %i alcanza el piso del 23.1 o dice que no puede', (n) => {
+    const reparto = repartoNecesario(ambitoDe(tableroParcial(n)))
+
+    if (reparto.faltan.Mujer < minimoMujeres(n)) {
+      expect(reparto.irresolubles).toContain('Paridad general de MR')
+    }
+  })
+
+  it.each(APRETADOS)('en un tablero de %i no deja incumplimientos sin anunciar', (n) => {
+    // El contrato del llenado rápido: lo que el dictamen vaya a reprochar
+    // después tiene que estar dicho antes, no aparecer por sorpresa.
+    const distritos = tableroParcial(n)
+    const reparto = repartoNecesario(ambitoDe(distritos))
+    const sorpresas = incumplidas(aplicar(distritos, reparto)).filter(
+      (regla) => DE_GENERO.includes(regla) && !reparto.irresolubles.includes(regla),
+    )
+
+    expect(sorpresas).toEqual([])
+  })
+
+  it('en 7 y 8 distritos nombra el bloque que el 28.2 dejó sin acomodo', () => {
+    // El bloque bajo son dos distritos y los dos están cerrados, así que no cabe
+    // ninguna mujer donde su tope de género exige una. Antes el rango se
+    // ensanchaba y el reparto se declaraba resuelto con una mujer de menos.
+    for (const n of [7, 8]) {
+      const reparto = repartoNecesario(ambitoDe(tableroParcial(n)))
+      expect(reparto.irresolubles).toContain('Paridad del bloque Baja')
+    }
+
+    // En ocho el resto sí se acomoda: dos mujeres por bloque impar bastan para
+    // el piso de cuatro, de modo que la única imposible es la del bloque bajo.
+    const ocho = repartoNecesario(ambitoDe(tableroParcial(8)))
+    expect(ocho.faltan.Mujer).toBe(minimoMujeres(8))
+    expect(ocho.irresolubles).toEqual(['Paridad del bloque Baja'])
+  })
+
+  it('no sacrifica la paridad de un bloque que sí tenía acomodo para llegar al piso', () => {
+    // En once el techo del ámbito son cinco mujeres y el piso pide seis. Llegar
+    // a seis obligaría a meter tres en un bloque de cuatro, cuyo tope es dos:
+    // sería cambiar un incumplimiento por otro, y en el bloque más rentable.
+    const reparto = repartoNecesario(ambitoDe(tableroParcial(11)))
+
+    expect(reparto.faltan.Mujer).toBe(5)
+    expect(reparto.irresolubles).toContain('Paridad general de MR')
+    expect(reparto.irresolubles).not.toContain('Paridad del bloque Alta')
   })
 
   it('cuadra el conteo por género con la propuesta distrito a distrito', () => {

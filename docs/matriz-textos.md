@@ -171,7 +171,7 @@ descriptivo que no pretende ser un término de arte:
 |---|---|
 | Blindaje de rentabilidad baja | Prohibición en distritos de menor rentabilidad ⚠ |
 | Liderazgo de bloque | Bloque encabezado por fórmula de mujeres ⚠ |
-| Umbral de registro para RP | Registro en once distritos para acceder a RP ⚠ |
+| Umbral de registro para RP | Derecho a la asignación de RP ✓ |
 | Vía ordinaria | Sin acción afirmativa ⚠ |
 | Tablero (en `Integración del tablero`) | Ámbito de competitividad |
 
@@ -297,12 +297,24 @@ Salen del campo `alcance` de cada regla. `src/domain/reglas/base.ts` y `convenio
 | D-56 | `Distrito {N}: falta asignar la fórmula indígena.` | T-04 | — |
 | D-57 | ` Además está en posición de rentabilidad blindada, por lo que tampoco admite fórmula encabezada por mujer.` | T-06. Se concatena a D-55 y D-56 | ⚠ |
 
-#### Registro en once distritos para acceder a RP — `mr.ts`
+#### Derecho a la asignación de RP — `mr.ts`
 
 | Id | Texto actual | Observación | Redacción propuesta |
 |---|---|---|---|
-| D-58 | `{SIGLAS} postula en {n} distritos ({n} por convenio y {n} por su cuenta); el mínimo para RP es 11.` | La distinción postular/siglar que sostiene este cálculo no se explica aquí, y es contraintuitiva | Añadir: «Se cuentan todos los distritos que abarca el convenio, con independencia del siglado.» ⚠ |
-| D-59 | `{SIGLAS} postula en {n} distritos ({n} por convenio); faltan {n} para el mínimo de 11.` | Igual | ⚠ |
+| D-58 | `{PARTIDO} postula en {n} distritos ({n} por convenio y {n} por su cuenta); el mínimo para RP es 11.` + `Se cuentan todos los distritos que abarca el convenio, con independencia del siglado.` | La distinción postular/siglar que sostiene este cálculo no se explica aquí, y es contraintuitiva | Resuelto: se añadió la segunda frase ✓ |
+| D-59 | `{PARTIDO} postula en {n} distritos ({n} por convenio); faltan {n} para el mínimo de 11.` + la misma frase | Igual | ✓ |
+| D-58a | `{PARTIDO} postula en {n} distritos; el mínimo para RP es 11.` | **Rama de postulación individual.** Sin desglose y sin la frase del siglado: quien compite solo no tiene convenio ni sigla nada, y hablarle de ambos describía una figura que no es la suya | — |
+| D-59a | `{PARTIDO} postula en {n} distritos; faltan {n} para el mínimo de 11.` | Igual | — |
+| D-58b | `{PARTIDO} postula en {n} distritos, por debajo de los 11 que exige el acceso a representación proporcional: su postulación de mayoría relativa es válida, pero no tiene derecho a Lista "A". Postular en once o más distritos no es un requisito de registro, sino la condición de ese acceso.` | Es un resultado que **cumple**. La segunda frase existe para que no se lea como un reproche | — |
+| D-59b | `{PARTIDO} tiene {n} fórmula(s) en su Lista "A", pero postula en {n} distritos de mayoría relativa y el acceso a representación proporcional exige 11. Se corrige ampliando la postulación de mayoría relativa o retirando esas fórmulas de la lista.` | T-05 en `fórmula(s)` | — |
+
+#### Lista "A" sin derecho a la asignación — `rp.ts`, `FaseConvenio.tsx`, `FaseProporcional.tsx`
+
+| Id | Texto actual | Observación | Redacción propuesta |
+|---|---|---|---|
+| D-59c | `No se evalúan: {SIGLAS} postula en {n} distritos de mayoría relativa y el acceso a representación proporcional exige 11. La alternancia, el encabezado compensatorio y la acción afirmativa se revisarán en cuanto la postulación alcance ese mínimo.` | Sustituye a las tres reglas de la Lista "A". Cumple, no reprocha | — |
+| D-59d | `Sin derecho a la asignación: {SIGLAS} postula en {n} distrito(s) de mayoría relativa y el acceso a representación proporcional exige 11. Puedes armar la lista para ver cómo quedaría, pero no sería registrable.` | Tarjeta de la Fase 3. T-05 en `distrito(s)`. Tutea, como el resto de la interfaz | — |
+| D-59e | `{SIGLAS} {postula\|postulan} en menos de 11 distritos, así que con este reparto {no tendría\|no tendrían} derecho a la asignación de representación proporcional. La postulación de mayoría relativa sigue siendo válida: once no es un mínimo de registro, sino la condición de ese acceso.` | Aviso de la Fase 1, donde se decide el alcance. Rama singular/plural escrita de verdad | — |
 
 #### Encabezado compensatorio de RP — `rp.ts`
 

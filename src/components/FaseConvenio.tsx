@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { repartirConvenio } from '../domain/reglas'
-import type { DistritoActivo } from '../domain/types'
+import {
+  accesoRP,
+  ambitosDe,
+  MINIMO_DISTRITOS_PARA_RP,
+  repartirConvenio,
+} from '../domain/reglas'
+import type { DistritoActivo, EstadoSimulacion } from '../domain/types'
 import { cn } from '../lib/utils'
 import { estadoDe, useSimulador, type DestinoSiglado } from '../store/simulador'
 import {
@@ -261,7 +266,44 @@ export function FaseConvenio({ arrastre }: { arrastre: boolean }) {
         ) : (
           <ListaConSelects distritos={porOrden} />
         )}
+        <AvisoAccesoRP estado={estado} mostrar={reparticion.sinDecidir === 0} />
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Quién se queda sin representación proporcional por el reparto que acaba de
+ * hacerse.
+ *
+ * El alcance de la postulación se decide aquí, pero hasta ahora la consecuencia
+ * solo aparecía dos pantallas más adelante, en la Lista "A". No impide nada:
+ * postular en menos de once distritos es legítimo —no hay mínimo de registro—,
+ * y lo único que se pierde es el derecho a la asignación.
+ *
+ * Espera a que no quede ningún distrito sin decidir. Antes de eso el alcance
+ * todavía no existe, y avisar sobre un reparto a medias sería alarmar por nada.
+ */
+function AvisoAccesoRP({ estado, mostrar }: { estado: EstadoSimulacion; mostrar: boolean }) {
+  if (!mostrar) return null
+  const ambitos = ambitosDe(estado)
+  const sinDerecho = estado.postulante.integrantes.filter(
+    (partido) => accesoRP(ambitos, partido).estado === 'sin-derecho',
+  )
+  if (sinDerecho.length === 0) return null
+
+  return (
+    <p className="text-muted-foreground mt-4 text-xs leading-snug">
+      <span className="inline-flex flex-wrap items-center gap-1.5 align-text-bottom">
+        {sinDerecho.map((partido) => (
+          <EtiquetaPartido key={partido} partido={partido} tamano="sm" />
+        ))}
+      </span>{' '}
+      {sinDerecho.length === 1 ? 'postula' : 'postulan'} en menos de{' '}
+      {MINIMO_DISTRITOS_PARA_RP} distritos, así que con este reparto{' '}
+      {sinDerecho.length === 1 ? 'no tendría' : 'no tendrían'} derecho a la asignación de
+      representación proporcional. La postulación de mayoría relativa sigue siendo válida: once
+      no es un mínimo de registro, sino la condición de ese acceso.
+    </p>
   )
 }

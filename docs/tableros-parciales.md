@@ -9,8 +9,9 @@ recorre los quince tamaños posibles y contesta, para cada uno, tres preguntas:
 - ¿Coinciden?
 
 No es un ejercicio teórico. Un partido que quiera derecho a representación proporcional y nada
-más registrará en **once** distritos, que es el mínimo del artículo 74.1. Y cada integrante de una
-coalición flexible en el mínimo se queda con un tablero individual de once.
+más registrará en **once** distritos, que es el mínimo del artículo 75, numeral 1,
+fracción I. Y cada integrante de una coalición flexible en el mínimo se queda con un
+tablero individual de once.
 
 ## Cómo se produjo
 
@@ -129,9 +130,11 @@ produce un escalón: **quien postula en siete distritos no debe ninguna fórmula
 postula en ocho debe una.**
 **Tamaños afectados:** todos los menores de 8.
 
-**6. ¿Existe un mínimo de registro en mayoría relativa?** Nada de lo revisado en los Lineamientos
-lo impide. El 74.1 fija once para tener derecho a representación proporcional, pero no como
-requisito de registro. Habría que confirmarlo contra la Ley Local.
+**6. ¿Existe un mínimo de registro en mayoría relativa?** **No.** Confirmado contra la Ley Local:
+el 75.1.I fija once para tener derecho a representación proporcional, y ese es el único mínimo.
+No hay un número de distritos por debajo del cual la postulación de mayoría relativa deje de ser
+registrable. El motor lo refleja desde que `Derecho a la asignación de RP` dejó de tratar el
+umbral como un pendiente de llenado; ver [decisiones.md](decisiones.md#once-no-es-un-mínimo-de-registro).
 
 ## Por qué conviene resolverlo antes del proceso
 
@@ -143,7 +146,7 @@ postular de más, y es el tablero individual de cada socio de una coalición fle
 convenio abarca ocho.
 
 Es decir: los dos tamaños que el reglamento no puede resolver son, precisamente, los dos que la
-propia estructura de incentivos del artículo 9 y del 74.1 vuelve más probables.
+propia estructura de incentivos del artículo 9 y del 75.1.I vuelve más probables.
 
 ## Qué haría con esto
 

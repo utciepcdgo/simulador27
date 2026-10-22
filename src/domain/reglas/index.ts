@@ -52,6 +52,7 @@ export {
   blindajeBaja,
   cuotaIndigena,
   cuotaJoven,
+  accesoRP,
   evaluarMR,
   liderazgoBloque,
   mayoriaBloqueImpar,
@@ -60,6 +61,8 @@ export {
   paridadBloques,
   paridadGeneral,
   umbralRegistroRP,
+  type AccesoRP,
+  type EstadoAccesoRP,
 } from './mr'
 export {
   accionAfirmativaRP,
@@ -71,6 +74,7 @@ export {
   evaluarListaRP,
   evaluarRP,
   generoSubrepresentado,
+  ocupadasEnLista,
   POSICIONES_CON_ACCION_AFIRMATIVA,
   POSICIONES_RP,
   type AmbitoRP,
@@ -154,8 +158,20 @@ export function evaluarSimulacion(
       evaluarMR(ambito, criterios).map(de(ambito.partido !== null ? [ambito.partido] : todos)),
     ),
     // El umbral abre —o no— la Lista "A" de cada partido, así que se agrupa con
-    // el resto de las reglas de RP y no con las de mayoría relativa.
-    ...todos.map((partido) => de([partido])(umbralRegistroRP(ambitos, partido))),
+    // el resto de las reglas de RP y no con las de mayoría relativa. Necesita
+    // saber cuántas fórmulas hay en esa lista: sin derecho a ella, tenerlas es
+    // lo único que esta regla reprocha.
+    ...todos.map((partido) =>
+      de([partido])(
+        umbralRegistroRP(
+          ambitos,
+          partido,
+          estado.listasRP
+            .find((l) => l.partido === partido)
+            ?.posiciones.filter((f) => f !== null).length ?? 0,
+        ),
+      ),
+    ),
     ...ambitosRP(estado).flatMap((ambito) =>
       evaluarListaRP(ambito).map(de([ambito.partido])),
     ),
