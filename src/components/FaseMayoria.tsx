@@ -478,16 +478,13 @@ function Tablero({
                       Sin distritos
                     </p>
                   ) : (
-                    // Apilado, el bloque dispone del ancho entero: una sola
-                    // columna de quince fichas obligaría a un recorrido largo
-                    // para ver lo que antes cabía de una vez.
-                    <ul
-                      className={
-                        apilado
-                          ? 'grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                          : 'space-y-2'
-                      }
-                    >
+                    // Los distritos van siempre en una sola lista vertical, en
+                    // orden de rentabilidad, como los enlista el Anexo. Lo que
+                    // el conmutador decide es dónde se colocan los bloques
+                    // —lado a lado o uno debajo de otro—, no cómo se ordena su
+                    // contenido: repartir las fichas en varias columnas rompía
+                    // la lectura de arriba abajo que da sentido al orden.
+                    <ul className="space-y-2">
                       {delBloque.map((distrito) => (
                         <TarjetaDistrito
                           key={distrito.id_distrito}
