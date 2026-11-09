@@ -67,6 +67,22 @@ export interface Opciones {
    * encenderlos.
    */
   sonidos: boolean
+  /**
+   * Apila los tres bloques de competitividad en vez de ponerlos en columnas.
+   *
+   * No es una preferencia estética: en columnas cada distrito dispone de un
+   * tercio del ancho y la cabecera se trunca, mientras que apilados ocupan la
+   * fila entera y se leen como la lista por bloque que pide el Anexo de los
+   * Lineamientos. A cambio hay que bajar por la página para ver los quince.
+   *
+   * Solo manda de `lg` hacia arriba. Por debajo el tablero se apila de todos
+   * modos, porque tres columnas en un teléfono no son una vista.
+   *
+   * Va en `opciones` para que sobreviva a la recarga, pero no tiene casilla en
+   * el diálogo: se cambia con el botón del propio tablero, que es donde se nota
+   * el efecto. Una preferencia de trabajo se ajusta mirando lo que ajusta.
+   */
+  tableroApilado: boolean
 }
 
 const INICIALES: Opciones = {
@@ -75,6 +91,7 @@ const INICIALES: Opciones = {
   mostrarLlenadoRapido: false,
   mostrarEditorFormulas: true,
   sonidos: true,
+  tableroApilado: false,
 }
 
 interface Configuracion {

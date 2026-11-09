@@ -1,10 +1,18 @@
 import { useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { AnimatePresence, m } from 'motion/react'
-import { IconArrowBackUp, IconFeather, IconLock, IconMapPinOff } from '@tabler/icons-react'
+import {
+  IconArrowBackUp,
+  IconFeather,
+  IconLayoutColumns,
+  IconLayoutRows,
+  IconLock,
+  IconMapPinOff,
+} from '@tabler/icons-react'
 import { nombreDe, rangoDeBloque, siglasDe } from '@/domain/catalogo'
 import { ambitosDe, declinaPostular, type Ambito } from '@/domain/reglas'
 import type { Bloque, DistritoActivo, DistritoEvaluado, IdPartido } from '../domain/types'
+import { plural } from '../domain/texto'
 import { aparicion, ficha } from '../lib/animacion'
 import { ACENTO_BLOQUE, rotuloRango } from '../lib/bloques'
 import { descripcion } from '../lib/formula'
@@ -18,6 +26,7 @@ import { BotonEditarFormula } from './EditorFormula'
 import { EmblemasDe, EtiquetaPartido } from './EtiquetaPartido'
 import { FormulaArrastrable } from './FichaFormula'
 import { Badge } from './ui/badge'
+import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
@@ -227,6 +236,43 @@ function TarjetaDistrito({
 }
 
 /**
+ * Cambia entre los bloques en columnas y los bloques apilados.
+ *
+ * El área técnica pidió la lista vertical del Anexo; apilar también agranda cada
+ * distrito, que era la otra mitad de esa misma petición —en columnas cada ficha
+ * dispone de un tercio del ancho—. Pero en columnas se arrastra mejor, porque
+ * los tres bloques caben en una pantalla y el destino está a la vista. Ninguna
+ * de las dos gana siempre, así que se elige.
+ *
+ * Es un botón del tablero y no una casilla del diálogo de configuración: se
+ * cambia a menudo y mientras se trabaja, y conviene ver el efecto al pulsarlo.
+ */
+function ConmutadorDeVista() {
+  const apilado = useConfiguracion((c) => c.opciones.tableroApilado)
+  const establecer = useConfiguracion((c) => c.establecer)
+  const Icono = apilado ? IconLayoutColumns : IconLayoutRows
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      // Sin `aria-pressed`: el rótulo nombra lo que el botón hace, no el estado
+      // en que está. Anunciar «En columnas, presionado» cuando el tablero está
+      // apilado diría lo contrario de lo que ocurre.
+      onClick={() => establecer('tableroApilado', !apilado)}
+      title={
+        apilado
+          ? 'Ver los bloques en columnas. En pantallas estrechas se apilan de todos modos.'
+          : 'Apilar los bloques uno debajo de otro, con los distritos más anchos.'
+      }
+    >
+      <Icono data-icon="inline-start" />
+      {apilado ? 'En columnas' : 'Apilar bloques'}
+    </Button>
+  )
+}
+
+/**
  * Un tablero: los distritos de un ámbito repartidos en sus tres bloques.
  *
  * La posición de rentabilidad que muestra es la de *este* ámbito. El mismo
@@ -319,6 +365,7 @@ function Tablero({
       ? distritos.filter((d) => d.postulacion.modo === 'sin-postular')
       : []
   const puedeRetirarse = partido !== null || integrantes.length === 1
+  const apilado = useConfiguracion((c) => c.opciones.tableroApilado)
 
   return (
     <Card className="gap-3">
@@ -331,9 +378,16 @@ function Tablero({
             tamano="sm"
           />
           <span className="min-w-0 truncate">{ambito.etiqueta}</span>
+          {/* Solo cuando hay bloques: sin ellos no existe la otra vista. */}
+          {ambito.conBloques && (
+            <span className="ml-auto shrink-0">
+              <ConmutadorDeVista />
+            </span>
+          )}
         </CardTitle>
         <CardDescription>
-          {ambito.distritos.length} de {ambito.distritos.length + retirados.length} distrito(s)
+          {ambito.distritos.length} de{' '}
+          {plural(ambito.distritos.length + retirados.length, 'distrito', 'distritos')}
           {ambito.fuera
             ? ` · ranking propio de ${siglasDe(ambito.partido!)}, con su porcentaje individual`
             : ' · ranking de la postulación conjunta'}
@@ -365,7 +419,9 @@ function Tablero({
               ))}
           </ul>
         ) : (
-          <div className="grid gap-3 lg:grid-cols-3">
+          // `lg:grid-cols-3` solo cuando no está apilado: por debajo de ese
+          // ancho el tablero se apila igual, elija lo que elija el botón.
+          <div className={cn('grid gap-3', !apilado && 'lg:grid-cols-3')}>
             {BLOQUES.map((bloque) => {
               const delBloque = ambito.distritos
                 .filter((d) => d.bloque === bloque)
@@ -422,7 +478,16 @@ function Tablero({
                       Sin distritos
                     </p>
                   ) : (
-                    <ul className="space-y-2">
+                    // Apilado, el bloque dispone del ancho entero: una sola
+                    // columna de quince fichas obligaría a un recorrido largo
+                    // para ver lo que antes cabía de una vez.
+                    <ul
+                      className={
+                        apilado
+                          ? 'grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                          : 'space-y-2'
+                      }
+                    >
                       {delBloque.map((distrito) => (
                         <TarjetaDistrito
                           key={distrito.id_distrito}
