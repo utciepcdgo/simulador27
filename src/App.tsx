@@ -181,7 +181,7 @@ function App() {
             <h1 className="text-lg font-semibold tracking-tight text-balance sm:text-xl">
               Simulador de Postulaciones Electorales
             </h1>
-            <p className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
+            <p className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
               Proceso Electoral Local 2026-2027
             </p>
           </div>
@@ -250,7 +250,7 @@ function App() {
             className="mx-auto max-w-md pt-8"
           >
             <ConfiguracionPostulante />
-            <p className="text-muted-foreground mt-4 text-center text-xs">
+            <p className="text-muted-foreground mt-4 text-center text-sm">
               El simulador trabaja con fórmulas anónimas. No captura nombres de personas en
               ningún momento.
             </p>

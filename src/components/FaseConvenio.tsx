@@ -37,7 +37,7 @@ export function CajaDistrito({ distrito }: { distrito: DistritoActivo }) {
       title={`Distrito ${distrito.numero_romano} · ${distrito.cabecera} · posición de rentabilidad ${distrito.posicion_rentabilidad} para la alianza`}
     >
       <span className="text-base leading-none font-semibold">{distrito.numero_romano}</span>
-      <span className="text-muted-foreground w-full truncate text-[0.625rem] leading-tight">
+      <span className="text-muted-foreground w-full truncate text-xs leading-tight">
         {distrito.cabecera}
       </span>
       <Badge variant="outline" className="mt-0.5">
@@ -84,7 +84,7 @@ function Columna({
         <span className="flex min-w-0 items-center gap-1 truncate">{titulo}</span>
         <Badge variant="secondary">{distritos.length}</Badge>
       </h3>
-      {descripcion && <p className="text-muted-foreground text-xs">{descripcion}</p>}
+      {descripcion && <p className="text-muted-foreground text-sm">{descripcion}</p>}
       <div
         ref={setNodeRef}
         className={cn(
@@ -95,7 +95,7 @@ function Columna({
         )}
       >
         {distritos.length === 0 ? (
-          <p className="text-muted-foreground col-span-full self-center py-6 text-center text-xs">
+          <p className="text-muted-foreground col-span-full self-center py-6 text-center text-sm">
             Arrastrar distritos aquí
           </p>
         ) : (
@@ -293,7 +293,7 @@ function AvisoAccesoRP({ estado, mostrar }: { estado: EstadoSimulacion; mostrar:
   if (sinDerecho.length === 0) return null
 
   return (
-    <p className="text-muted-foreground mt-4 text-xs leading-snug">
+    <p className="text-muted-foreground mt-4 text-sm leading-snug">
       <span className="inline-flex flex-wrap items-center gap-1.5 align-text-bottom">
         {sinDerecho.map((partido) => (
           <EtiquetaPartido key={partido} partido={partido} tamano="sm" />

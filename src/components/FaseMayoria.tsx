@@ -177,7 +177,7 @@ function TarjetaDistrito({
       </div>
 
       {(blindada || distrito.mayoria_indigena) && (
-        <div className="text-muted-foreground flex flex-wrap gap-2 text-[0.625rem]">
+        <div className="text-muted-foreground flex flex-wrap gap-2 text-xs">
           {blindada && (
             <span
               className="flex items-center gap-0.5"
@@ -214,7 +214,7 @@ function TarjetaDistrito({
               onQuitar={() => devolverABandeja(asignada.id)}
             />
           ) : (
-            <p className="text-muted-foreground py-1 text-center text-[0.625rem]">Suelta una fórmula</p>
+            <p className="text-muted-foreground py-1 text-center text-sm">Suelta una fórmula</p>
           )}
         </div>
       ) : (
@@ -339,7 +339,7 @@ function Tablero({
       </CardHeader>
       <CardContent>
         {ambito.distritos.length === 0 ? (
-          <p className="text-muted-foreground py-6 text-center text-xs">
+          <p className="text-muted-foreground py-6 text-center text-sm">
             Todavía no hay distritos en este ámbito. Se reparten en la Fase 1.
           </p>
         ) : !ambito.conBloques ? (
@@ -416,7 +416,7 @@ function Tablero({
                   {delBloque.length === 0 ? (
                     // Sobre la banda, `muted-foreground` se queda en 4.4:1 y
                     // este texto es de 10 px. Se atenúa desde el color de texto.
-                    <p className="text-foreground/70 py-6 text-center text-[0.625rem]">
+                    <p className="text-foreground/70 py-6 text-center text-sm">
                       Sin distritos
                     </p>
                   ) : (

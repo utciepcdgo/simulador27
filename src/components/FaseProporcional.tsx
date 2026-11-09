@@ -61,7 +61,7 @@ function Casilla({
               onQuitar={() => devolverABandeja(asignada.id)}
             />
           ) : (
-            <p className="text-muted-foreground py-1 text-center text-[0.625rem]">Suelta una fórmula</p>
+            <p className="text-muted-foreground py-1 text-center text-sm">Suelta una fórmula</p>
           )}
         </div>
       ) : (

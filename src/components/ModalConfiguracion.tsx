@@ -196,7 +196,7 @@ export function ModalConfiguracion() {
           <section className="space-y-2">
             <header className="space-y-0.5">
               <h3 className="text-sm font-medium">Escalar el texto de la herramienta</h3>
-              <p className="text-muted-foreground text-xs leading-snug">
+              <p className="text-muted-foreground text-sm leading-snug">
                 «Seguir al sistema» toma el tamaño configurado en el navegador. Las demás opciones
                 lo escalan a partir de ahí.
               </p>
@@ -245,7 +245,7 @@ export function ModalConfiguracion() {
                   Criterios de interpretación
                   <Badge variant="secondary">Solo en desarrollo</Badge>
                 </h3>
-                <p className="text-muted-foreground text-xs leading-snug">
+                <p className="text-muted-foreground text-sm leading-snug">
                   Estas lecturas <strong className="text-foreground">modifican el dictamen</strong>,
                   no la presentación. En producción el simulador corre siempre con la lectura de la
                   ley.
@@ -257,7 +257,7 @@ export function ModalConfiguracion() {
                   <legend className="px-1 text-xs font-medium">
                     {NOMBRE_CRITERIO[criterio.clave]}
                   </legend>
-                  <p className="text-muted-foreground text-[0.6875rem]">{criterio.articulo}</p>
+                  <p className="text-muted-foreground text-sm">{criterio.articulo}</p>
                   {criterio.lecturas.map((lectura) => (
                     <label
                       key={String(lectura.valor)}

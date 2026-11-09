@@ -76,7 +76,7 @@ export function AvisoCierre() {
           reglas que este simulador evalúa» con «ya está registrado», y es
           precisamente donde hay que decir que no.
         */}
-                <p className="text-muted-foreground border-t pt-3 text-xs leading-snug">
+                <p className="text-muted-foreground border-t pt-3 text-sm leading-snug">
                     Esto es un ensayo. El documento no sustituye la revisión del registro de
                     candidaturas.
                 </p>

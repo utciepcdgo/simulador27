@@ -151,7 +151,7 @@ export function ControlesLlenado({ fase }: { fase: string }) {
       </Button>
 
       {enLista && (
-        <p className="text-muted-foreground text-xs leading-snug">
+        <p className="text-muted-foreground text-sm leading-snug">
           Los dos últimos actúan sobre el tablero de la Fase 2. La Lista «A» se ordena a mano.
         </p>
       )}

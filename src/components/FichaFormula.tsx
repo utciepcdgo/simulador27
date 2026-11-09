@@ -24,7 +24,7 @@ function InsigniaGenero({ perfil }: { perfil: PerfilCandidato }) {
   return (
     <span
       className={cn(
-        'inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-[0.6875rem] font-semibold ring-1 ring-inset',
+        'inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-xs font-semibold ring-1 ring-inset',
         ESTILO_GENERO[perfil.genero],
       )}
     >
@@ -70,13 +70,13 @@ export function FichaFormula({
       <IconArrowNarrowRight className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
       <InsigniaGenero perfil={formula.suplente} />
       {cuotas.length > 0 && (
-        <span className="text-muted-foreground truncate text-[0.625rem] leading-none">
+        <span className="text-muted-foreground truncate text-xs leading-none">
           {cuotas.join(' · ')}
         </span>
       )}
       {ordinaria && (
         <span
-          className="text-muted-foreground/70 truncate text-[0.625rem] leading-none italic"
+          className="text-muted-foreground/70 truncate text-xs leading-none italic"
           title="Combina grupos distintos: candidatura válida que no acredita ninguna medida compensatoria."
         >
           sin medida compensatoria

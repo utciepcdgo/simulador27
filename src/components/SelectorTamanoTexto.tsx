@@ -14,6 +14,7 @@ const OPCIONES: readonly { valor: TamanoTexto; etiqueta: string; muestra: string
   { valor: 'pequeno', etiqueta: 'Pequeño', muestra: 'text-xs' },
   { valor: 'mediano', etiqueta: 'Mediano', muestra: 'text-sm' },
   { valor: 'grande', etiqueta: 'Grande', muestra: 'text-lg' },
+  { valor: 'mayor', etiqueta: 'Mayor', muestra: 'text-xl' },
 ]
 
 export function SelectorTamanoTexto() {
@@ -23,7 +24,7 @@ export function SelectorTamanoTexto() {
     <div
       role="radiogroup"
       aria-label="Tamaño del texto"
-      className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+      className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
     >
       {OPCIONES.map(({ valor, etiqueta, muestra }) => {
         const activo = tamano === valor

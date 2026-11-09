@@ -62,7 +62,7 @@ function TiraParidad({ fila }: { fila: ParidadDeAmbito }) {
         </span>
       </div>
       {celdas.length === 0 ? (
-        <div className="text-muted-foreground rounded-sm border border-dashed py-1 text-center text-[0.625rem]">
+        <div className="text-muted-foreground rounded-sm border border-dashed py-1 text-center text-xs">
           Sin distritos registrados
         </div>
       ) : (
@@ -130,7 +130,7 @@ function TablaGrupos({
 }) {
   return (
     <section className="space-y-2">
-      <h4 className="text-muted-foreground flex items-baseline justify-between gap-2 text-[0.6875rem] font-medium tracking-wide uppercase">
+      <h4 className="text-muted-foreground flex items-baseline justify-between gap-2 text-xs font-medium tracking-wide uppercase">
         {rotulo}
         <span className="tabular-nums normal-case">
           {plural(recuento.formulas, 'fórmula', 'fórmulas')} ·{' '}
@@ -161,7 +161,7 @@ function TablaGrupos({
             className="w-full text-sm"
           >
             <thead>
-              <tr className="text-muted-foreground text-[0.6875rem] tracking-wide uppercase">
+              <tr className="text-muted-foreground text-xs tracking-wide uppercase">
                 <th scope="col" className="pb-1 text-left font-medium">
                   Grupo o sector social
                 </th>
@@ -173,7 +173,7 @@ function TablaGrupos({
                 </th>
                 <th scope="col" className="pb-1 text-right font-medium">
                   Sin acreditar
-                  <span className="text-muted-foreground/70 block text-[0.625rem] font-normal normal-case">
+                  <span className="text-muted-foreground/70 block text-xs font-normal normal-case">
                     falta homogeneidad
                   </span>
                 </th>
@@ -255,7 +255,7 @@ export function PanelBalance() {
             <TiraParidad key={fila.ambito} fila={fila} />
           ))}
 
-          <p className="text-muted-foreground space-y-1 text-xs">
+          <p className="text-muted-foreground space-y-1 text-sm">
             <PorGenero recuento={mayoria} principio="mayoría relativa" />
             {/* Artículo 53.4 de los Lineamientos. */}
             <span className="block">
@@ -279,7 +279,7 @@ export function PanelBalance() {
             </span>
           </h3>
 
-          <p className="text-muted-foreground space-y-1 text-xs">
+          <p className="text-muted-foreground space-y-1 text-sm">
             <span className="block">
               Lista &ldquo;A&rdquo;:{' '}
               <span className="text-foreground tabular-nums">

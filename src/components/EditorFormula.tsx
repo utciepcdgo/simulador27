@@ -27,12 +27,12 @@ function Impedimento({ rechazo }: { rechazo: ResultadoRegla }) {
       role="alert"
     >
       <div className="border-destructive/30 bg-destructive/5 mt-3 space-y-1.5 rounded-md border p-2.5">
-        <p className="text-destructive flex gap-1.5 text-xs font-medium">
+        <p className="text-destructive flex gap-1.5 text-sm font-medium">
           <IconAlertTriangle className="mt-px size-3.5 shrink-0" aria-hidden />
           {rechazo.regla}
         </p>
-        <p className="text-xs leading-snug">{rechazo.mensaje}</p>
-        <blockquote className="text-muted-foreground border-l pl-2.5 text-[0.6875rem] leading-relaxed whitespace-pre-line">
+        <p className="text-sm leading-snug">{rechazo.mensaje}</p>
+        <blockquote className="text-muted-foreground border-l pl-2.5 text-sm leading-relaxed whitespace-pre-line">
           {rechazo.fundamento_legal}
         </blockquote>
       </div>
@@ -147,7 +147,7 @@ export function EditorFormula({
         )}
       </AnimatePresence>
 
-      <p className="text-muted-foreground border-t pt-3 text-xs leading-snug">
+      <p className="text-muted-foreground border-t pt-3 text-sm leading-snug">
         {cuotas.length > 0 ? (
           <>
             Acreditará: <span className="text-foreground font-medium">{cuotas.join(' · ')}</span>

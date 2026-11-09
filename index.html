@@ -19,7 +19,7 @@
           document.documentElement.classList.toggle('dark', oscuro)
           document.documentElement.style.colorScheme = oscuro ? 'dark' : 'light'
 
-          var escala = { pequeno: '87.5%', mediano: '100%', grande: '125%' }
+          var escala = { pequeno: '87.5%', mediano: '100%', grande: '125%', mayor: '150%' }
           var texto = localStorage.getItem('simulador27:texto')
           if (escala[texto]) document.documentElement.style.fontSize = escala[texto]
         } catch (e) {

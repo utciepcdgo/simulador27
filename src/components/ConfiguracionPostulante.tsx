@@ -216,14 +216,14 @@ export function ConfiguracionPostulante({
                     !marcado && 'opacity-45 grayscale',
                   )}
                 />
-                <span className="text-[0.625rem] leading-none font-medium">{siglas}</span>
+                <span className="text-xs leading-none font-medium">{siglas}</span>
               </label>
             )
           })}
         </fieldset>
 
         {sinHistorial.length > 0 && (
-          <p className="text-xs text-amber-700 dark:text-amber-500">
+          <p className="text-sm text-amber-700 dark:text-amber-500">
             {sinHistorial.map(nombreDe).join(', ')}{' '}
             {sinHistorial.length === 1 ? 'no compitió' : 'no compitieron'} en el PEL 2023-2024. Su
             porcentaje de votación queda sin dato, no en cero.
@@ -232,9 +232,9 @@ export function ConfiguracionPostulante({
 
         {error && (
           <div className="space-y-1.5">
-            <p className="text-muted-foreground text-xs">{error.mensaje}</p>
+            <p className="text-muted-foreground text-sm">{error.mensaje}</p>
             {error.fundamento && (
-              <blockquote className="text-muted-foreground border-l-2 pl-3 text-xs leading-relaxed whitespace-pre-line">
+              <blockquote className="text-muted-foreground border-l-2 pl-3 text-sm leading-relaxed whitespace-pre-line">
                 {error.fundamento}
               </blockquote>
             )}

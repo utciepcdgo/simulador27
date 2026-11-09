@@ -264,7 +264,7 @@ export function PanelDictamen() {
                         </Badge>
                       )}
                     </p>
-                    <p className="text-muted-foreground text-xs leading-snug">
+                    <p className="text-muted-foreground text-sm leading-snug">
                       {resultado.mensaje}
                     </p>
                   </div>

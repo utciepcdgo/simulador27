@@ -57,7 +57,7 @@ export function CreadorFormulas() {
         Suplencia con los mismos atributos
       </label>
 
-      <p className="text-muted-foreground text-xs">
+      <p className="text-muted-foreground text-sm">
         {cuotas.length > 0 ? (
           <>
             Acreditará: <span className="text-foreground font-medium">{cuotas.join(' · ')}</span>

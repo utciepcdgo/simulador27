@@ -54,6 +54,22 @@ domain/  →  store/  →  components/
 - `src/components/` — presentacional. `ui/` es shadcn (estilo `base-vega`, iconos Tabler); no
   editar a mano salvo para corregir un bug del componente.
 
+### Escala tipográfica
+
+Dos reglas, para que la opción de tamaño de texto no tenga que compensar una base pequeña:
+
+- **Suelo de 12 px (`text-xs`)**. Nada por debajo: `text-[0.625rem]` y `text-[0.6875rem]` se
+  retiraron de la interfaz. La excepción son las maquetas del tutorial, donde el texto es parte
+  del dibujo a escala.
+- **14 px (`text-sm`) para lo que se lee de corrido**: párrafos, avisos, estados vacíos y las
+  citas de fundamento legal. Los 12 px quedan para metadato —insignias, contadores, celdas y
+  encabezados de columna—.
+
+El tamaño se escala en porcentaje sobre la raíz (`lib/tipografia.ts`), nunca en píxeles, para no
+reducirle el texto a quien ya configuró una base mayor en su navegador. Los cinco pasos están
+duplicados en el script en línea de `index.html`, que los aplica antes del primer pintado: si
+cambia uno, cambia el otro.
+
 ## Criterios de interpretación
 
 Donde el texto admite más de una lectura, la elección es un dato con nombre en

@@ -41,7 +41,7 @@ export function DialogoRebote() {
 
         <div className="space-y-3 text-sm">
           <p>{rechazo?.mensaje}</p>
-          <blockquote className="text-muted-foreground border-l-2 pl-3 text-xs leading-relaxed whitespace-pre-line">
+          <blockquote className="text-muted-foreground border-l-2 pl-3 text-sm leading-relaxed whitespace-pre-line">
             {rechazo?.fundamento_legal}
           </blockquote>
         </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type TamanoTexto = 'sistema' | 'pequeno' | 'mediano' | 'grande'
+export type TamanoTexto = 'sistema' | 'pequeno' | 'mediano' | 'grande' | 'mayor'
 
 /**
  * Clave de `localStorage`.
@@ -26,9 +26,14 @@ const ESCALA: Record<Exclude<TamanoTexto, 'sistema'>, string> = {
   pequeno: '87.5%',
   mediano: '100%',
   grande: '125%',
+  // El criterio 1.4.4 toma el 200% como referencia de ampliación. Ahí no llega
+  // —a esa escala el tablero de quince distritos deja de caber—, pero el zoom
+  // del navegador sigue disponible por encima de este paso y no se estorban:
+  // los dos multiplican, así que «Mayor» con zoom al 133% ya son dos veces.
+  mayor: '150%',
 }
 
-const TAMANOS: readonly TamanoTexto[] = ['sistema', 'pequeno', 'mediano', 'grande']
+const TAMANOS: readonly TamanoTexto[] = ['sistema', 'pequeno', 'mediano', 'grande', 'mayor']
 
 function leerGuardado(): TamanoTexto {
   try {
