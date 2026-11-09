@@ -212,7 +212,7 @@ export function ConfiguracionPostulante({
                 <EmblemaPartido
                   partido={id_partido}
                   className={cn(
-                    'h-10 w-full transition-all',
+                    'h-12 w-full transition-all',
                     !marcado && 'opacity-45 grayscale',
                   )}
                 />

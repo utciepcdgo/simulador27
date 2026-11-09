@@ -3,10 +3,24 @@ import type { IdPartido } from '../domain/types'
 import { cn } from '../lib/utils'
 import { EmblemaPartido } from './EmblemaPartido'
 
+/**
+ * La escala del emblema, en `rem`.
+ *
+ * El techo no es el valor que se declara aquí: el selector de tamaño de texto
+ * escala la raíz, y con «Mayor» al 150% todo lo medido en `rem` se multiplica.
+ * Así que el tamaño real de cada paso es este por uno y medio, y es contra esa
+ * cifra contra la que hay que mirar el límite.
+ *
+ * Y el límite es el archivo. Los emblemas de `public/emblemas/` son PNG de
+ * 97×97: por encima de eso no hay más imagen que mostrar, solo interpolación.
+ * El paso mayor de todos —el selector de partidos con el texto en «Mayor»— se
+ * queda en 72 px, tres cuartas partes del original, que es donde todavía se ven
+ * nítidos. Antes de subir cualquiera de estos valores, multiplíquese por 1.5.
+ */
 const TAMANO = {
-  sm: 'size-3.5',
-  md: 'size-4',
-  lg: 'size-5',
+  sm: 'size-5',
+  md: 'size-6',
+  lg: 'size-8',
 } as const
 
 /**

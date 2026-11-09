@@ -119,9 +119,11 @@ function TarjetaDistrito({
         {conSiglado && distrito.siglado !== null && (
           <Badge
             variant="outline"
-            // `pl-1.5` es el mismo valor que la insignia se da a sí misma cuando
-            // lleva un icono al inicio; el emblema va un punto más grande que un
-            // glifo porque es una imagen y a 12 px se vuelve mancha.
+            // `pl-1.5` es el mismo valor que la insignia se da a sí misma
+            // cuando lleva un icono al inicio. El emblema ya no es «un punto más
+            // grande que un glifo»: ahora manda él y las siglas lo acompañan,
+            // que es lo que pedía poder reconocer al partido de un vistazo. La
+            // insignia crece con él a propósito.
             className="border-foreground/25 shrink-0 pl-1.5 font-semibold"
             title={`Siglado a ${nombreDe(distrito.siglado)}`}
           >
@@ -129,7 +131,7 @@ function TarjetaDistrito({
             <EmblemaPartido
               partido={distrito.siglado}
               decorativo
-              className="size-3.5 shrink-0 rounded-[2px]"
+              className="size-5 shrink-0 rounded-[2px]"
             />
             {siglasDe(distrito.siglado)}
           </Badge>

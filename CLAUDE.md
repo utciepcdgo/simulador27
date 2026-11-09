@@ -70,6 +70,12 @@ reducirle el texto a quien ya configuró una base mayor en su navegador. Los cin
 duplicados en el script en línea de `index.html`, que los aplica antes del primer pintado: si
 cambia uno, cambia el otro.
 
+Ese multiplicador alcanza a **todo** lo medido en `rem`, no solo al texto. Los emblemas de partido
+están en `rem`, así que su tamaño real es el declarado por 1.5 en el paso «Mayor». El límite son
+los archivos: `public/emblemas/` son PNG de 97×97, y por encima de eso solo hay interpolación. El
+paso mayor de todos se queda en 72 px. **Antes de subir un tamaño de emblema, multiplíquese por
+1.5 y compárese con 97.**
+
 ## Criterios de interpretación
 
 Donde el texto admite más de una lectura, la elección es un dato con nombre en
