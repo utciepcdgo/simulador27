@@ -365,7 +365,12 @@ Salen del campo `alcance` de cada regla. `src/domain/reglas/base.ts` y `convenio
 | B-13 | `Candidaturas` | Encabezado de columna | — |
 | B-14 | `Sin acreditar` | Término inventado, pero es la cifra central del panel: personas del grupo que ninguna fórmula acreditada respalda | ⚠ Definirlo en un pie, o renombrar |
 | B-15 | `Joven` · `Indígena` · `Discapacidad` · `Diversidad Sexual` · `Adulto Mayor` · `Migrante` | Ver T-04 | ⚠ |
-| B-16 | `Lista "A": {n} fórmulas · {n} candidaturas · {n} encabezadas por mujeres` | Falla con 1 | — |
+| B-16 | ~~`Lista "A": {n} fórmulas · {n} candidaturas · {n} encabezadas por mujeres`~~ | **Retirado.** Era el único rastro de la Lista "A" en el panel, y resumía en una línea lo que de mayoría relativa se detallaba en una tabla: las medidas compensatorias de RP no se contaban en ninguna parte | Sustituido por B-17 a B-21 ✓ |
+| B-17 | `Mayoría relativa` · `Representación proporcional` | Rótulos de las dos columnas del panel, una por principio electivo | — |
+| B-18 | `Candidaturas de {mayoría relativa\|representación proporcional}: {n} {mujer\|mujeres} · {n} {hombre\|hombres} · {n} {persona no binaria\|personas no binarias}` | Concordancia resuelta con `concuerda()` ✓ | — |
+| B-19 | `Lista "A": {n} de 5 {posición encabezada\|posiciones encabezadas} por {mujer\|mujeres}` | — | — |
+| B-20 | `La Lista "A" no se mide por porcentaje: alterna los géneros y la encabeza el subrepresentado en mayoría relativa.` | Evita que la ausencia de una tira de paridad en RP se lea como omisión. Artículos 53.5 a 53.7 | — |
+| B-21 | `Aún no hay fórmulas en la Lista «A». El artículo 55.1 pide cuando menos una acción afirmativa entre los tres primeros lugares.` | Estado vacío de la tabla de RP. Dice qué se espera, no solo que falta | — |
 
 ---
 

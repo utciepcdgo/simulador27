@@ -1478,6 +1478,40 @@ describe('recuento de fórmulas y candidaturas', () => {
     expect(proporcional.candidaturas).toBe(10)
   })
 
+  it('cuenta las medidas compensatorias de la Lista "A" aparte de las de MR', () => {
+    // El balance en pantalla pintaba una sola tabla, la de mayoría relativa, y
+    // la Lista "A" se resumía en una línea sin medidas: una acción afirmativa
+    // colocada en RP no aparecía en ninguna cuenta. El dato ya existía aquí.
+    const enLista = formula(perfil('Mujer', { accionAfirmativa: 'Diversidad Sexual' }))
+    const estado = simulacion(
+      tablero('MMMHH MMMHH MMHHH'),
+      [lista(PARTIDO.PAN, '.MHMH', { 1: enLista })],
+    )
+    const { mayoria, proporcional } = recuentoDe(estado)
+
+    const deRP = proporcional.grupos.find((g) => g.grupo === 'Diversidad Sexual')!
+    expect(deRP.formulas).toBe(1)
+    expect(deRP.candidaturas).toBe(2)
+
+    // Y no se contamina la otra: los universos no se suman.
+    expect(mayoria.grupos.find((g) => g.grupo === 'Diversidad Sexual')!.formulas).toBe(0)
+  })
+
+  it('separa la juventud de las acciones afirmativas en cada principio', () => {
+    // El artículo 54.1 pide la fórmula joven en mayoría relativa y el 55.1 una
+    // acción afirmativa entre los tres primeros de la Lista "A". Una tabla
+    // sumada daría un total que no satisface a ninguno de los dos.
+    const joven = formula(perfil('Mujer', { esJoven: true }))
+    const estado = simulacion(
+      tablero('MMMHH MMMHH MMHHH', { 1: joven }),
+      [lista(PARTIDO.PAN, 'MHMHM')],
+    )
+    const { mayoria, proporcional } = recuentoDe(estado)
+
+    expect(mayoria.grupos.find((g) => g.grupo === 'Joven')!.formulas).toBe(1)
+    expect(proporcional.grupos.find((g) => g.grupo === 'Joven')!.formulas).toBe(0)
+  })
+
   it('cuenta una vez por partido las fórmulas de un distrito fuera del convenio', () => {
     const alianza = coalicion(PARTIDO.PRI, PARTIDO.PAN)
     const base = repartir(tablero('...............', {}, alianza), (p) =>

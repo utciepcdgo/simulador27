@@ -1,7 +1,13 @@
 import { Fragment } from 'react'
 import { AnimatePresence, m } from 'motion/react'
-import { recuentoDe, type ParidadDeAmbito, type RecuentoGrupo } from '../domain/reglas'
-import { plural } from '../domain/texto'
+import {
+  POSICIONES_RP,
+  recuentoDe,
+  type ParidadDeAmbito,
+  type Recuento,
+  type RecuentoGrupo,
+} from '../domain/reglas'
+import { concuerda, plural } from '../domain/texto'
 import { relevo } from '../lib/animacion'
 import { EtiquetaPartido } from './EtiquetaPartido'
 import { ROTULO_GRUPO } from '../lib/rotulos'
@@ -102,6 +108,105 @@ function FilaGrupo({ grupo }: { grupo: RecuentoGrupo }) {
 }
 
 /**
+ * Las medidas compensatorias de un principio electivo.
+ *
+ * Se pinta una por principio y no una sola sumada, porque los universos no se
+ * acumulan: el artículo 54.1 pide la fórmula de personas jóvenes en mayoría
+ * relativa y el 55.1 pide una acción afirmativa entre los tres primeros lugares
+ * de la Lista "A". Sumarlas daría un total que no satisface a ninguno de los
+ * dos, y una lista que cumple podría leerse como incumplida por el arrastre de
+ * la otra.
+ */
+function TablaGrupos({
+  recuento,
+  rotulo,
+  vacio,
+}: {
+  recuento: Recuento
+  /** El principio al que corresponde, que es lo que distingue una tabla de otra. */
+  rotulo: string
+  /** Qué decir cuando todavía no hay nada que contar. */
+  vacio: string
+}) {
+  return (
+    <section className="space-y-2">
+      <h4 className="text-muted-foreground flex items-baseline justify-between gap-2 text-[0.6875rem] font-medium tracking-wide uppercase">
+        {rotulo}
+        <span className="tabular-nums normal-case">
+          {plural(recuento.formulas, 'fórmula', 'fórmulas')} ·{' '}
+          {plural(recuento.candidaturas, 'candidatura', 'candidaturas')}
+        </span>
+      </h4>
+
+      {/* La primera fórmula releva al texto de bienvenida. */}
+      <AnimatePresence mode="wait" initial={false}>
+        {recuento.formulas === 0 ? (
+          <m.p
+            key="vacio"
+            variants={relevo}
+            initial="oculto"
+            animate="visible"
+            exit="saliente"
+            className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-xs"
+          >
+            {vacio}
+          </m.p>
+        ) : (
+          <m.table
+            key="tabla"
+            variants={relevo}
+            initial="oculto"
+            animate="visible"
+            exit="saliente"
+            className="w-full text-sm"
+          >
+            <thead>
+              <tr className="text-muted-foreground text-[0.6875rem] tracking-wide uppercase">
+                <th scope="col" className="pb-1 text-left font-medium">
+                  Grupo o sector social
+                </th>
+                <th scope="col" className="pb-1 text-right font-medium">
+                  Fórmulas
+                </th>
+                <th scope="col" className="pb-1 text-right font-medium">
+                  Candidaturas
+                </th>
+                <th scope="col" className="pb-1 text-right font-medium">
+                  Sin acreditar
+                  <span className="text-muted-foreground/70 block text-[0.625rem] font-normal normal-case">
+                    falta homogeneidad
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {recuento.grupos.map((grupo) => (
+                <FilaGrupo key={grupo.grupo} grupo={grupo} />
+              ))}
+            </tbody>
+          </m.table>
+        )}
+      </AnimatePresence>
+    </section>
+  )
+}
+
+/** Las personas que postula un principio, por su género declarado. */
+function PorGenero({ recuento, principio }: { recuento: Recuento; principio: string }) {
+  return (
+    <span className="block">
+      Candidaturas de {principio}:{' '}
+      <span className="text-foreground tabular-nums">{recuento.personas.Mujer}</span>{' '}
+      {concuerda(recuento.personas.Mujer, 'mujer', 'mujeres')} ·{' '}
+      <span className="text-foreground tabular-nums">{recuento.personas.Hombre}</span>{' '}
+      {concuerda(recuento.personas.Hombre, 'hombre', 'hombres')} ·{' '}
+      <span className="text-foreground tabular-nums">{recuento.personas['No Binario']}</span>{' '}
+      {concuerda(recuento.personas['No Binario'], 'persona no binaria', 'personas no binarias')}
+    </span>
+  )
+}
+
+/**
  *  Balance de la postulación: qué hay en el tablero, no si cumple.
  *
  * El dictamen contesta «¿ya cumplí?» y por eso se queda corto: una fórmula que
@@ -131,13 +236,18 @@ export function PanelBalance() {
         </CardDescription>
       </CardHeader>
 
+      {/*
+        Una columna por principio electivo. Mayoría relativa y Lista "A" no se
+        suman en ninguna de sus cuentas —ni en paridad, ni en medidas
+        compensatorias—, y presentarlas juntas obligaba a adivinar qué parte de
+        cada cifra venía de dónde.
+      */}
       <CardContent className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-3">
-          <h3 className="text-muted-foreground flex items-baseline justify-between text-[0.6875rem] font-medium tracking-wide uppercase">
-            Quién encabeza la fórmula
-            <span className="tabular-nums normal-case">
-              {plural(mayoria.formulas, 'fórmula', 'fórmulas')} ·{' '}
-              {plural(mayoria.candidaturas, 'candidatura', 'candidaturas')}
+          <h3 className="flex items-baseline justify-between gap-2 text-sm font-medium">
+            Mayoría relativa
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {plural(mayoria.formulas, 'fórmula', 'fórmulas')}
             </span>
           </h3>
 
@@ -146,90 +256,54 @@ export function PanelBalance() {
           ))}
 
           <p className="text-muted-foreground space-y-1 text-xs">
-            <span className="block">
-              Candidaturas de mayoría relativa:{' '}
-              <span className="text-foreground tabular-nums">{mayoria.personas.Mujer}</span>{' '}
-              mujeres ·{' '}
-              <span className="text-foreground tabular-nums">{mayoria.personas.Hombre}</span>{' '}
-              hombres ·{' '}
-              <span className="text-foreground tabular-nums">
-                {mayoria.personas['No Binario']}
-              </span>{' '}
-              personas no binarias
-            </span>
+            <PorGenero recuento={mayoria} principio="mayoría relativa" />
             {/* Artículo 53.4 de los Lineamientos. */}
             <span className="block">
               Para la paridad, las personas no binarias ocupan los lugares que corresponden al
               género masculino.
             </span>
           </p>
+
+          <TablaGrupos
+            recuento={mayoria}
+            rotulo="Grupos o sectores sociales en desventaja"
+            vacio="Aún no hay fórmulas asignadas en el tablero. Esta tabla cuenta cuántas acreditan cada medida compensatoria y cuántas personas pertenecen al grupo sin que su fórmula lo acredite."
+          />
         </section>
 
-        <section className="space-y-2">
-          <h3 className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
-            Grupos o sectores sociales en desventaja
+        <section className="space-y-3">
+          <h3 className="flex items-baseline justify-between gap-2 text-sm font-medium">
+            Representación proporcional
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {plural(proporcional.formulas, 'fórmula', 'fórmulas')}
+            </span>
           </h3>
 
-          {/* La primera fórmula del tablero releva al texto de bienvenida. */}
-          <AnimatePresence mode="wait" initial={false}>
-          {mayoria.formulas === 0 ? (
-            <m.p
-              key="vacio"
-              variants={relevo}
-              initial="oculto"
-              animate="visible"
-              exit="saliente"
-              className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-xs"
-            >
-              Aún no hay fórmulas asignadas. Esta tabla cuenta cuántas acreditan cada medida
-              compensatoria y cuántas personas pertenecen al grupo sin que su fórmula lo acredite.
-            </m.p>
-          ) : (
-            <m.table
-              key="tabla"
-              variants={relevo}
-              initial="oculto"
-              animate="visible"
-              exit="saliente"
-              className="w-full text-sm"
-            >
-              <thead>
-                <tr className="text-muted-foreground text-[0.6875rem] tracking-wide uppercase">
-                  <th scope="col" className="pb-1 text-left font-medium">
-                    Grupo o sector social
-                  </th>
-                  <th scope="col" className="pb-1 text-right font-medium">
-                    Fórmulas
-                  </th>
-                  <th scope="col" className="pb-1 text-right font-medium">
-                    Candidaturas
-                  </th>
-                  <th scope="col" className="pb-1 text-right font-medium">
-                    Sin acreditar
-                    <span className="text-muted-foreground/70 block text-[0.625rem] font-normal normal-case">
-                      falta homogeneidad
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {mayoria.grupos.map((grupo) => (
-                  <FilaGrupo key={grupo.grupo} grupo={grupo} />
-                ))}
-              </tbody>
-            </m.table>
-          )}
-          </AnimatePresence>
-
-          <p className="text-muted-foreground border-t pt-2 text-xs tabular-nums">
-            Lista &ldquo;A&rdquo;: {plural(proporcional.formulas, 'fórmula', 'fórmulas')} ·{' '}
-            {plural(proporcional.candidaturas, 'candidatura', 'candidaturas')} ·{' '}
-            {plural(
-              proporcional.encabezan.Mujer,
-              'encabezada por mujer',
-              'encabezadas por mujeres',
-            )}
+          <p className="text-muted-foreground space-y-1 text-xs">
+            <span className="block">
+              Lista &ldquo;A&rdquo;:{' '}
+              <span className="text-foreground tabular-nums">
+                {proporcional.encabezan.Mujer}
+              </span>{' '}
+              de {POSICIONES_RP}{' '}
+              {concuerda(proporcional.encabezan.Mujer, 'posición encabezada', 'posiciones encabezadas')}{' '}
+              por {concuerda(proporcional.encabezan.Mujer, 'mujer', 'mujeres')}
+            </span>
+            <PorGenero recuento={proporcional} principio="representación proporcional" />
+            {/* Artículos 53.5 a 53.7: la lista alterna y su encabezado compensa
+                el género subrepresentado en mayoría relativa. No hay un 50%
+                contable que medir sobre cinco posiciones. */}
+            <span className="block">
+              La Lista &ldquo;A&rdquo; no se mide por porcentaje: alterna los géneros y la encabeza
+              el subrepresentado en mayoría relativa.
+            </span>
           </p>
+
+          <TablaGrupos
+            recuento={proporcional}
+            rotulo="Grupos o sectores sociales en desventaja"
+            vacio="Aún no hay fórmulas en la Lista «A». El artículo 55.1 pide cuando menos una acción afirmativa entre los tres primeros lugares."
+          />
         </section>
       </CardContent>
 
