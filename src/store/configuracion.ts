@@ -78,9 +78,10 @@ export interface Opciones {
    * Solo manda de `lg` hacia arriba. Por debajo el tablero se apila de todos
    * modos, porque tres columnas en un teléfono no son una vista.
    *
-   * Va en `opciones` para que sobreviva a la recarga, pero no tiene casilla en
-   * el diálogo: se cambia con el botón del propio tablero, que es donde se nota
-   * el efecto. Una preferencia de trabajo se ajusta mirando lo que ajusta.
+   * No tiene casilla en el diálogo ni sobrevive a la recarga: se cambia con el
+   * botón del propio tablero, que es donde se nota el efecto, y cada sesión
+   * vuelve a empezar en columnas. Es una vista de trabajo —se cambia para mirar
+   * algo concreto y se vuelve—, no una preferencia que alguien quiera fijar.
    */
   tableroApilado: boolean
 }
@@ -146,7 +147,15 @@ export const useConfiguracion = create<Configuracion>()(
           | undefined
         return {
           ...actual,
-          opciones: { ...actual.opciones, ...guardado?.opciones },
+          opciones: {
+            ...actual.opciones,
+            ...guardado?.opciones,
+            // La disposición del tablero no se hereda de la sesión anterior.
+            // Es una vista de trabajo, no una preferencia: se cambia para mirar
+            // algo concreto y se vuelve. Cada sesión empieza en columnas, que es
+            // la disposición donde los tres bloques se ven a la vez.
+            tableroApilado: actual.opciones.tableroApilado,
+          },
           tutorialVisto: guardado?.tutorialVisto ?? actual.tutorialVisto,
           // En producción se descarta lo guardado: los criterios de la ley no se
           // heredan de una sesión de desarrollo ni de un navegador ajeno.
