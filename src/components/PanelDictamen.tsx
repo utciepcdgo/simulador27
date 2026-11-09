@@ -7,9 +7,11 @@ import {
   IconProgressCheck,
 } from '@tabler/icons-react'
 import { criteriosFueraDeLey, NOMBRE_CRITERIO } from '../domain/reglas'
+import { plural } from '../domain/texto'
 import { DescargarDictamen } from './DescargarDictamen'
 import { EmblemasDe } from './EtiquetaPartido'
-import type { ResultadoRegla } from '../domain/types'
+import { Button } from './ui/button'
+import type { AmbitoRegla, ResultadoRegla } from '../domain/types'
 import { relevo } from '../lib/animacion'
 import { useDictamen } from '../store/dictamen'
 import { Badge } from './ui/badge'
@@ -134,17 +136,55 @@ function Cabecera({
 }
 
 /**
+ * El principio electivo que se está trabajando en cada fase.
+ *
+ * La Fase 1 reparte el convenio y la 2 llena el tablero: las dos son mayoría
+ * relativa. La integración del convenio también se emite con ese ámbito, así que
+ * no se pierde al filtrar.
+ */
+const PRINCIPIO_DE_FASE: Record<string, AmbitoRegla> = {
+  convenio: 'MR',
+  mayoria: 'MR',
+  proporcional: 'RP',
+}
+
+const NOMBRE_PRINCIPIO: Record<AmbitoRegla, string> = {
+  MR: 'mayoría relativa',
+  RP: 'representación proporcional',
+  Token: 'las fórmulas',
+}
+
+/**
  * Dictamen en vivo. Distingue lo irreparable de lo que todavía falta, porque un
  * tablero a medio llenar incumple casi todos los mínimos sin haber infringido
  * nada.
+ *
+ * Muestra las reglas del principio que se está trabajando, no las diecisiete a
+ * la vez. Pero el resumen de la cabecera **sigue contando todas**, y eso no es
+ * un descuido: con el resumen filtrado, quien terminara la mayoría relativa
+ * vería el panel entero en verde y creería haber acabado con la Lista "A" vacía.
+ * Se esconde el detalle, nunca la cuenta.
+ *
+ * Las reglas de construcción de fórmula no se filtran: una fórmula mal armada lo
+ * está en cualquier principio.
  */
-export function PanelDictamen() {
+export function PanelDictamen({ fase }: { fase: string }) {
   const dictamen = useDictamen()
   const [pliegues, setPliegues] = useState<Record<string, Pliegue>>({})
+  const [verTodo, setVerTodo] = useState(false)
   if (!dictamen) return null
   const { resultados, sustituciones, porCompletar, cerrable, criterios } = dictamen
   const alterados = criteriosFueraDeLey(criterios)
-  const grupos = agrupar(resultados)
+
+  const principio = PRINCIPIO_DE_FASE[fase] ?? 'MR'
+  const visibles = verTodo
+    ? resultados
+    : resultados.filter((r) => r.ambito === principio || r.ambito === 'Token')
+  const ocultas = resultados.length - visibles.length
+  const sinCumplirOcultas = resultados.filter(
+    (r) => !r.cumple && r.ambito !== principio && r.ambito !== 'Token',
+  ).length
+  const grupos = agrupar(visibles)
 
   /*
     El pliegue sigue al cumplimiento, y solo en sus cambios.
@@ -198,6 +238,27 @@ export function PanelDictamen() {
             ? 'La postulación satisface todas las reglas evaluadas.'
             : resumen(sustituciones.length, porCompletar.length)}
         </CardDescription>
+        {/*
+          El recuento de arriba es de la postulación entera; abajo solo se
+          detalla el principio que se está trabajando. Este renglón es el que
+          evita que esa diferencia se lea como una contradicción.
+        */}
+        {(ocultas > 0 || verTodo) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            // El botón de serie no parte la línea y este rótulo nombra un
+            // principio entero: en una columna lateral se saldría de la caja.
+            className="-ml-2 h-auto justify-start py-1 text-left text-xs font-normal whitespace-normal"
+            onClick={() => setVerTodo(!verTodo)}
+          >
+            {verTodo
+              ? `Ver solo ${NOMBRE_PRINCIPIO[principio]}`
+              : sinCumplirOcultas > 0
+                ? `Ver también ${NOMBRE_PRINCIPIO[principio === 'MR' ? 'RP' : 'MR']}: ${plural(sinCumplirOcultas, 'regla sin cumplir', 'reglas sin cumplir')}`
+                : `Ver también ${NOMBRE_PRINCIPIO[principio === 'MR' ? 'RP' : 'MR']}, que cumple`}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/*

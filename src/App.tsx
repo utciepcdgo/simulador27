@@ -366,7 +366,7 @@ function App() {
           </m.aside>
 
           <m.aside variants={aparicion} className="xl:col-start-1 xl:row-start-1">
-            <PanelDictamen />
+            <PanelDictamen fase={fase} />
           </m.aside>
         </m.div>
         )}

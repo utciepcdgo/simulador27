@@ -366,6 +366,9 @@ Salen del campo `alcance` de cada regla. `src/domain/reglas/base.ts` y `convenio
 | B-14 | `Sin acreditar` | Término inventado, pero es la cifra central del panel: personas del grupo que ninguna fórmula acreditada respalda | ⚠ Definirlo en un pie, o renombrar |
 | B-15 | `Joven` · `Indígena` · `Discapacidad` · `Diversidad Sexual` · `Adulto Mayor` · `Migrante` | Ver T-04 | ⚠ |
 | B-16 | ~~`Lista "A": {n} fórmulas · {n} candidaturas · {n} encabezadas por mujeres`~~ | **Retirado.** Era el único rastro de la Lista "A" en el panel, y resumía en una línea lo que de mayoría relativa se detallaba en una tabla: las medidas compensatorias de RP no se contaban en ninguna parte | Sustituido por B-17 a B-21 ✓ |
+| D-00a | `Ver también {representación proporcional\|mayoría relativa}: {1 regla sin cumplir\|n reglas sin cumplir}` | Aparece cuando el filtro por principio deja algo fuera **y** ese algo tiene pendientes. Concordancia con `plural()` | — |
+| D-00b | `Ver también {principio}, que cumple` | La misma rama cuando lo oculto está en verde: se dice igual, para que nadie tenga que abrirlo para saberlo | — |
+| D-00c | `Ver solo {principio}` | Vuelve al filtro de la fase | — |
 | M-01 | `Apilar bloques` / `En columnas` | Botón del tablero. Nombra la acción, no el estado, así que no lleva `aria-pressed` | — |
 | M-02 | `Apilar los bloques uno debajo de otro, con los distritos más anchos.` / `Ver los bloques en columnas. En pantallas estrechas se apilan de todos modos.` | Título emergente del botón. La segunda rama advierte de que la elección no manda por debajo de `lg` | — |
 | B-17 | `Mayoría relativa` · `Representación proporcional` | Rótulos de las dos columnas del panel, una por principio electivo | — |
