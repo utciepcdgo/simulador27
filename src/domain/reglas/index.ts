@@ -36,7 +36,13 @@ export {
   NOMBRE_CRITERIO,
   type Criterios,
 } from './criterios'
-export { aplicanBloques, puedeCoaligarse, sinDerechoACoalicion } from './elegibilidad'
+export {
+  aplicanBloques,
+  impedimentoDeConvenio,
+  puedeCoaligarse,
+  puedeSuscribirCandidaturaComun,
+  type ImpedimentoDeConvenio,
+} from './elegibilidad'
 export { FUNDAMENTOS } from './fundamentos'
 export { declinaPostular, formulaIndividualDe, formulasEnDistrito } from './base'
 export { repartoNecesario, type Reparto } from './reparto'

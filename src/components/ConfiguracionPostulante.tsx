@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { IconArrowsJoin, IconUser, IconUsersGroup, type Icon } from '@tabler/icons-react'
 import { nombreDe, ordenarPorRegistro, PARTIDOS, siglasDe, tieneHistorial } from '../domain/catalogo'
-import { FUNDAMENTOS, sinDerechoACoalicion } from '../domain/reglas'
+import { impedimentoDeConvenio } from '../domain/reglas'
 import type { IdPartido, Postulante } from '../domain/types'
 import { cn } from '../lib/utils'
 import { useSimulador } from '../store/simulador'
@@ -55,15 +55,20 @@ function invalidez(
   if (modalidad !== 'Individual' && integrantes.length < 2) {
     return { mensaje: `La modalidad ${modalidad} requiere cuando menos dos partidos.` }
   }
-  // Solo la coalición. El artículo 9.5 no menciona la candidatura común, y
-  // cerrarla aquí impediría una postulación que la norma no prohíbe.
-  if (modalidad === 'Coalición') {
-    const vetados = sinDerechoACoalicion(integrantes)
-    if (vetados.length > 0) {
-      return {
-        mensaje: `${vetados.map(siglasDe).join(' y ')} no puede suscribir convenio de coalición. La candidatura común y la postulación individual siguen disponibles.`,
-        fundamento: FUNDAMENTOS.coalicionNuevoRegistro,
-      }
+  // Las dos figuras de postulación conjunta, cada una con su artículo: el 9.5
+  // para la coalición y el 11.3 para la candidatura común. Durante un tiempo
+  // aquí solo se cerró la coalición, por dar por supuesto que el 11.3 no
+  // existía; a un nacional de nuevo registro le quedaba abierta una figura que
+  // la norma también le cierra.
+  const impedimento = impedimentoDeConvenio(integrantes, modalidad)
+  if (impedimento) {
+    const quienes = impedimento.vetados.map(siglasDe).join(' y ')
+    const plural = impedimento.vetados.length > 1
+    return {
+      mensaje: `${quienes} ${plural ? 'no pueden' : 'no puede'} suscribir convenio de ${
+        modalidad === 'Coalición' ? 'coalición' : 'candidatura común'
+      }. Al ser ${plural ? 'partidos nacionales' : 'un partido nacional'} de nuevo registro, solo ${plural ? 'pueden' : 'puede'} postular en lo individual.`,
+      fundamento: impedimento.fundamento,
     }
   }
   return null

@@ -18,6 +18,17 @@ Cada punto tiene un hueco de respuesta al final. Lo que se conteste aquí se tra
 donde la respuesta sea «admite las dos lecturas», el destino es
 [`criterios.ts`](../src/domain/reglas/criterios.ts), no una decisión enterrada en una función.
 
+**Sobre el método de esa revisión, por lo que no encontró.** Verificó que las catorce citas de
+`fundamentos.ts` dijeran lo que el documento dice, y corrigió tres. Lo que un cotejo así no puede
+encontrar es un artículo que el motor **nunca citó**: no hay nada que verificar donde no hay cita.
+Así se mantuvo durante meses la afirmación de que la candidatura común estaba permitida a los
+partidos de nuevo registro, cuando el artículo 11.3 la prohíbe (punto 5).
+
+La revisión que falta es la inversa —recorrer el articulado y preguntar qué no está implementado—
+y no se puede hacer desde el repositorio: **el texto de los Lineamientos no está aquí**. Mientras
+siga fuera, cualquier afirmación de este documento sobre lo que la norma *no* dice es una
+suposición, no una verificación.
+
 ---
 
 ## 1 · Los bloques de competitividad no aplican a todos los partidos
@@ -203,41 +214,44 @@ de tres».
 
 ---
 
-## 5 · Los partidos nacionales de nuevo registro no pueden coaligarse
+## 5 · Los partidos nacionales de nuevo registro no pueden postular en conjunto
 
 **Riesgo: bajo.** El simulador permite armar un convenio que la norma prohíbe.
 
 **Lo que dice el documento**
+
+Son **dos** artículos, uno por figura, con el mismo supuesto:
 
 > **Artículo 9.5.** Los partidos políticos nacionales de nuevo registro con acreditación ante el
 > Instituto, no podrán suscribir convenio de coalición con otro partido político durante el
 > Proceso Electoral Local 2026 – 2027, en términos de lo dispuesto por el artículo 85, numeral 4,
 > de la Ley General de Partidos Políticos.
 
-**Lo que hace el motor hoy**
+> **Artículo 11.3.** Los partidos políticos nacionales de nuevo registro con acreditación ante el
+> Instituto, no podrán suscribir convenio de Candidatura Común durante el Proceso Electoral Local
+> 2026 – 2027, en términos de la legislación aplicable.
 
-Deja formar coalición con cualquier combinación de los once.
+**La pregunta.** ¿Se reflejan estas prohibiciones en el simulador, o se dejan fuera por ser
+restricciones del convenio y no de la postulación?
 
-**Qué cambiaría**
+**Respuesta: RESUELTO.** Se reflejan las dos. La Fase 1 impide constituir el convenio y cita el
+artículo de la figura que se intentó —el 9.5 para la coalición, el 11.3 para la candidatura
+común—, con el mismo tratamiento que el rebote. A PAZ y SOMOS solo les queda la postulación
+individual.
 
-La Fase 1 impediría incluir a esos partidos en una coalición, o lo advertiría. Ojo: la prohibición
-es de **coalición**, no de candidatura común, y conviene no confundirlas al implementarlo.
+**Esta respuesta estuvo mal durante un tiempo, y conviene saber por qué.** Decía que la
+prohibición alcanzaba «solo a la coalición», porque el 9.5 no menciona la candidatura común, y de
+ahí concluía que cerrarla habría impedido una postulación que la norma no prohíbe. La conclusión
+no se seguía de la premisa: que un artículo no diga algo no significa que ningún otro lo diga. El
+11.3 lo decía, en el mismo documento, dos artículos más adelante.
 
-Depende de la misma respuesta que el punto 1: saber qué partidos son de nuevo registro.
-
-**La pregunta.** ¿Se refleja esta prohibición en el simulador, o se deja fuera por ser una
-restricción del convenio y no de la postulación?
-
-**Respuesta: RESUELTO.** Se refleja. La Fase 1 impide crear la coalición y cita el artículo, con el
-mismo tratamiento que el rebote.
-
-Alcanza **solo a la coalición**: el 9.5 no menciona la candidatura común, y cerrarla habría
-impedido una postulación que la norma no prohíbe. PAZ y SOMOS pueden postular en candidatura común
-y en lo individual.
+Con esa redacción el simulador dejó abierta a PAZ y SOMOS una figura que la norma les cierra, y
+el error se sostuvo a la vista de todos porque estaba escrito aquí con aplomo.
 
 **Queda un fleco.** El 9.5 remite al artículo 85, numeral 4, de la Ley General de Partidos
-Políticos, que no he verificado contra su texto. Si ese artículo fuera más amplio que el 9.5 —si
-alcanzara a otras formas de alianza—, la implementación se quedaría corta. Conviene contrastarlo.
+Políticos, y el 11.3 a «la legislación aplicable», sin precisarla. Ninguno de los dos reenvíos se
+ha contrastado contra su texto. Si alguno fuera más amplio que el artículo que lo invoca, la
+implementación volvería a quedarse corta.
 
 ---
 

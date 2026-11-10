@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { PARTIDO, siglasDe } from '../catalogo'
 import type { IdPartido } from '../types'
-import { aplicanBloques, puedeCoaligarse, sinDerechoACoalicion } from './elegibilidad'
+import {
+  aplicanBloques,
+  impedimentoDeConvenio,
+  puedeCoaligarse,
+  puedeSuscribirCandidaturaComun,
+} from './elegibilidad'
+import { FUNDAMENTOS } from './fundamentos'
 
 const TODOS = Object.values(PARTIDO) as IdPartido[]
 
@@ -28,21 +34,58 @@ describe('elegibilidad por ámbito y registro', () => {
     ])
   })
 
-  it('los locales sí pueden coaligarse', () => {
+  it('cierra también la candidatura común a los mismos (artículo 11.3)', () => {
+    // El 9.5 y el 11.3 son dos prohibiciones distintas con el mismo supuesto.
+    // Durante un tiempo el simulador aplicó solo la primera, por dar por hecho
+    // que la segunda no existía: a PAZ y SOMOS les quedaba abierta una figura
+    // de postulación conjunta que la norma también les cierra.
+    expect(TODOS.filter((p) => !puedeSuscribirCandidaturaComun(p)).map(siglasDe)).toEqual([
+      'PAZ',
+      'SOMOS',
+    ])
+  })
+
+  it('a un nacional de nuevo registro solo le queda la postulación individual', () => {
+    for (const modalidad of ['Coalición', 'Candidatura Común'] as const) {
+      const impedimento = impedimentoDeConvenio([PARTIDO.PAN, PARTIDO.PAZ], modalidad)
+      expect(impedimento?.vetados.map(siglasDe), modalidad).toEqual(['PAZ'])
+    }
+    expect(impedimentoDeConvenio([PARTIDO.PAZ], 'Individual')).toBeNull()
+  })
+
+  it('cita el artículo de la figura que se intentó, no el de la otra', () => {
+    // Citar el 9.5 ante una candidatura común sería un error de fondo: manda a
+    // leer un artículo que no habla de lo que se acaba de intentar.
+    expect(impedimentoDeConvenio([PARTIDO.PAZ], 'Coalición')?.fundamento).toBe(
+      FUNDAMENTOS.coalicionNuevoRegistro,
+    )
+    expect(impedimentoDeConvenio([PARTIDO.PAZ], 'Candidatura Común')?.fundamento).toBe(
+      FUNDAMENTOS.candidaturaComunNuevoRegistro,
+    )
+  })
+
+  it('no impide nada a quien sí puede', () => {
+    for (const modalidad of ['Coalición', 'Candidatura Común'] as const) {
+      expect(impedimentoDeConvenio([PARTIDO.PAN, PARTIDO.PRI], modalidad), modalidad).toBeNull()
+    }
+  })
+
+  it('los locales sí pueden las dos figuras', () => {
     // El 9.5 alcanza solo a los nacionales de nuevo registro. Confundirlo con
     // «todo el que no tiene historial» dejaría fuera a tres partidos que la
     // norma no excluye.
     for (const partido of [PARTIDO.PESD, PARTIDO.PV, PARTIDO.PER]) {
       expect(puedeCoaligarse(partido), siglasDe(partido)).toBe(true)
+      expect(puedeSuscribirCandidaturaComun(partido), siglasDe(partido)).toBe(true)
       expect(aplicanBloques(partido), siglasDe(partido)).toBe(false)
     }
   })
 
   it('nombra a los integrantes vetados en orden de registro', () => {
-    expect(sinDerechoACoalicion([PARTIDO.SOMOS, PARTIDO.PAN, PARTIDO.PAZ]).map(siglasDe)).toEqual([
-      'SOMOS',
-      'PAZ',
-    ])
-    expect(sinDerechoACoalicion([PARTIDO.PAN, PARTIDO.PRI])).toEqual([])
+    const impedimento = impedimentoDeConvenio(
+      [PARTIDO.SOMOS, PARTIDO.PAN, PARTIDO.PAZ],
+      'Coalición',
+    )
+    expect(impedimento?.vetados.map(siglasDe)).toEqual(['SOMOS', 'PAZ'])
   })
 })
