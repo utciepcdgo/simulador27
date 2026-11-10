@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { IconArrowsJoin, IconUser, IconUsersGroup, type Icon } from '@tabler/icons-react'
 import { nombreDe, ordenarPorRegistro, PARTIDOS, siglasDe, tieneHistorial } from '../domain/catalogo'
-import { impedimentoDeConvenio, puedeParticiparEn } from '../domain/reglas'
+import { admiteEnConvenio, impedimentoDeConvenio } from '../domain/reglas'
 import type { IdPartido, Postulante } from '../domain/types'
 import { cn } from '../lib/utils'
 import { useSimulador } from '../store/simulador'
@@ -95,20 +95,12 @@ export function ConfiguracionPostulante({
 } = {}) {
   const postulante = useSimulador((s) => s.postulante)
   const configurar = useSimulador((s) => s.configurar)
+  const rechazarMovimiento = useSimulador((s) => s.rechazar)
   const [modalidad, setModalidad] = useState<Modalidad | null>(postulante?.modalidad ?? null)
   const [integrantes, setIntegrantes] = useState<IdPartido[]>([...(postulante?.integrantes ?? [])])
 
   const error = invalidez(modalidad, integrantes)
-  // Quiénes quedan fuera de la figura elegida, mirando el padrón entero y no
-  // solo lo ya seleccionado: el aviso tiene que aparecer antes de que alguien
-  // intente marcarlos, no después.
-  const vetados = modalidad
-    ? impedimentoDeConvenio(
-        PARTIDOS.map((p) => p.id_partido),
-        modalidad,
-      )
-    : null
-  const vetada = modalidad === 'Coalición' ? 'coalición' : 'candidatura común'
+
   const sinHistorial = integrantes.filter((p) => !tieneHistorial(p))
   const sinCambios =
     postulante !== null &&
@@ -117,6 +109,15 @@ export function ConfiguracionPostulante({
     integrantes.every((p) => postulante.integrantes.includes(p))
 
   function alternar(partido: IdPartido, marcado: boolean) {
+    // Se rechaza al intentarlo, no se impide de antemano: es el efecto rebote,
+    // y aquí enseña el artículo de la figura que se acaba de intentar.
+    if (marcado && modalidad) {
+      const rechazo = admiteEnConvenio(partido, modalidad)
+      if (rechazo) {
+        rechazarMovimiento(rechazo)
+        return
+      }
+    }
     setIntegrantes((previos) => {
       if (marcado) {
         // En Individual el partido nuevo sustituye al anterior: nunca hay dos.
@@ -163,13 +164,12 @@ export function ConfiguracionPostulante({
           onValueChange={(valor) => {
             const nueva = valor as Modalidad
             setModalidad(nueva)
-            // Quien no puede suscribir la figura elegida sale de la selección en
-            // el acto. Dejarlo marcado y apagado a la vez sería un estado que no
-            // significa nada, y obligaría a adivinar que hay que desmarcarlo.
-            setIntegrantes((previos) => {
-              const admitidos = previos.filter((p) => puedeParticiparEn(p, nueva))
-              return nueva === 'Individual' ? admitidos.slice(0, 1) : admitidos
-            })
+            // No se depura la selección al cambiar de figura. Si alguien tenía
+            // elegido un partido que la nueva no admite, el aviso bajo el botón
+            // se lo dice con su artículo y el botón no deja aplicar: se aprende
+            // más viendo el conflicto que encontrándose la casilla desmarcada
+            // sin explicación.
+            if (nueva === 'Individual') setIntegrantes((p) => p.slice(0, 1))
           }}
         >
           {MODALIDADES.map(({ valor, Icono }) => {
@@ -213,7 +213,6 @@ export function ConfiguracionPostulante({
         <fieldset className="grid grid-cols-3 gap-1.5" disabled={modalidad === null}>
           {PARTIDOS.map(({ id_partido, siglas }) => {
             const marcado = integrantes.includes(id_partido)
-            const admitido = modalidad === null || puedeParticiparEn(id_partido, modalidad)
             return (
               <label
                 key={id_partido}
@@ -226,28 +225,16 @@ export function ConfiguracionPostulante({
               >
                 <input
                   type="checkbox"
-                  // El motivo va en la etiqueta accesible y no solo en el gris:
-                  // quien navega con lector de pantalla oye «no disponible» sin
-                  // saber por qué, y el texto de abajo puede quedarle lejos.
-                  aria-label={
-                    admitido
-                      ? `Incluir a ${siglas} en la postulación`
-                      : `${siglas} no puede suscribir convenio de ${vetada}`
-                  }
+                  aria-label={`Incluir a ${siglas} en la postulación`}
                   className="sr-only"
                   checked={marcado}
-                  disabled={!admitido}
                   onChange={(e) => alternar(id_partido, e.target.checked)}
                 />
                 <EmblemaPartido
                   partido={id_partido}
                   className={cn(
                     'h-12 w-full transition-all',
-                    // Sin atenuar de más al inadmisible: su etiqueta ya va al
-                    // 40%, y encadenar las dos opacidades lo dejaría en un 18%
-                    // donde no se distingue de qué partido se trata. Apagado no
-                    // es invisible: hay que poder reconocer a quién se excluye.
-                    !marcado && (admitido ? 'opacity-45 grayscale' : 'grayscale'),
+                    !marcado && 'opacity-45 grayscale',
                   )}
                 />
                 <span className="text-xs leading-none font-medium">{siglas}</span>
@@ -255,25 +242,6 @@ export function ConfiguracionPostulante({
             )
           })}
         </fieldset>
-
-        {/*
-          El gris dice que no se puede; esto dice por qué. Sin el fundamento a la
-          vista, una casilla apagada parece un fallo de la herramienta y no una
-          prohibición de la norma.
-        */}
-        {vetados && (
-          <div className="space-y-1.5">
-            <p className="text-sm">
-              <span className="font-medium">{vetados.vetados.map(siglasDe).join(' y ')}</span>{' '}
-              {vetados.vetados.length > 1 ? 'no pueden' : 'no puede'} suscribir convenio de{' '}
-              {vetada}. {vetados.vetados.length > 1 ? 'Solo pueden' : 'Solo puede'} postular en lo
-              individual.
-            </p>
-            <blockquote className="text-muted-foreground border-l-2 pl-3 text-sm leading-relaxed whitespace-pre-line">
-              {vetados.fundamento}
-            </blockquote>
-          </div>
-        )}
 
         {sinHistorial.length > 0 && (
           <p className="text-sm text-amber-700 dark:text-amber-500">

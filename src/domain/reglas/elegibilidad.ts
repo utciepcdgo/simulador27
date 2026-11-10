@@ -1,5 +1,5 @@
-import { partidoDe } from '../catalogo/partidos'
-import type { IdPartido, Postulante } from '../types'
+import { nombreDe, partidoDe, siglasDe } from '../catalogo/partidos'
+import type { IdPartido, Postulante, ResultadoRegla } from '../types'
 import { FUNDAMENTOS } from './fundamentos'
 
 /**
@@ -62,6 +62,41 @@ export function puedeParticiparEn(
   if (modalidad === 'Coalición') return puedeCoaligarse(partido)
   if (modalidad === 'Candidatura Común') return puedeSuscribirCandidaturaComun(partido)
   return true
+}
+
+/**
+ * El rechazo de incluir a un partido en una postulación de esa modalidad, o
+ * `null` si cabe.
+ *
+ * Misma forma que `admiteEnDistrito` y `admiteEnListaRP`, y por el mismo motivo:
+ * aquí el simulador no se limita a reflejar, impide el movimiento, y entonces
+ * tiene que decir en el acto cuál es la norma que lo impide. Es el efecto
+ * rebote aplicado a la mesa de partidos.
+ *
+ * Se avisa al intentarlo y no antes, apagando la casilla, porque esto es una
+ * herramienta didáctica: quien intenta coaligar a un partido de nuevo registro
+ * y recibe el artículo en la cara aprende algo que una casilla en gris no
+ * enseña. Y una advertencia fija solo cabe citar un artículo —el de la figura
+ * elegida—, mientras que el rebote cita siempre el de la figura que se intentó.
+ */
+export function admiteEnConvenio(
+  partido: IdPartido,
+  modalidad: Postulante['modalidad'],
+): ResultadoRegla | null {
+  if (puedeParticiparEn(partido, modalidad)) return null
+  const figura = modalidad === 'Coalición' ? 'coalición' : 'candidatura común'
+  return {
+    regla: `Suscripción del convenio de ${figura}`,
+    ambito: 'MR',
+    alcance: `${modalidad} · ${siglasDe(partido)}`,
+    cumple: false,
+    gravedad: 'sustitucion',
+    mensaje: `${nombreDe(partido)} es un partido político nacional de nuevo registro, así que no puede suscribir convenio de ${figura}. Puede postular en lo individual.`,
+    fundamento_legal:
+      modalidad === 'Coalición'
+        ? FUNDAMENTOS.coalicionNuevoRegistro
+        : FUNDAMENTOS.candidaturaComunNuevoRegistro,
+  }
 }
 
 /** Lo que impide a una alianza constituirse, con el artículo que lo impide. */

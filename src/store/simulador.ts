@@ -93,6 +93,13 @@ interface Simulador {
   asignarMR: (id: string, id_distrito: number, partido: IdPartido | null) => void
   asignarRP: (id: string, partido: IdPartido, posicion: number) => void
   devolverABandeja: (id: string) => void
+  /**
+   * Dispara el efecto rebote desde fuera del tablero.
+   *
+   * La mesa de partidos lo necesita porque rechaza movimientos igual que el
+   * tablero, y el diálogo que cita la ley es uno solo para toda la aplicación.
+   */
+  rechazar: (resultado: ResultadoRegla) => void
   descartarRechazo: () => void
 
   // ── Llenado rápido ───────────────────────────────────────────────────────
@@ -461,6 +468,8 @@ modificarFormula: (id, propietario, suplente) => {
     const sin = extraer(s, id)
     set({ ...sin, bandeja: [...sin.bandeja, formula] })
   },
+
+  rechazar: (resultado) => set({ rechazo: resultado }),
 
   descartarRechazo: () => set({ rechazo: null }),
 

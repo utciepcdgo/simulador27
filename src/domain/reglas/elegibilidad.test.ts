@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { PARTIDO, siglasDe } from '../catalogo'
 import type { IdPartido } from '../types'
 import {
+  admiteEnConvenio,
   aplicanBloques,
   impedimentoDeConvenio,
   puedeCoaligarse,
@@ -88,6 +89,29 @@ describe('elegibilidad por ámbito y registro', () => {
       const delConjunto = impedimentoDeConvenio(TODOS, modalidad)?.vetados ?? []
       expect(porPartido, modalidad).toEqual(delConjunto)
     }
+  })
+
+  it('el rebote cita el artículo de la figura que se intentó', () => {
+    // Es la ventaja sobre una advertencia fija, que solo puede nombrar un
+    // artículo: aquí cada intento enseña el suyo.
+    expect(admiteEnConvenio(PARTIDO.PAZ, 'Coalición')?.fundamento_legal).toBe(
+      FUNDAMENTOS.coalicionNuevoRegistro,
+    )
+    expect(admiteEnConvenio(PARTIDO.PAZ, 'Candidatura Común')?.fundamento_legal).toBe(
+      FUNDAMENTOS.candidaturaComunNuevoRegistro,
+    )
+  })
+
+  it('el rebote nombra al partido y deja abierta la vía que sí tiene', () => {
+    const rechazo = admiteEnConvenio(PARTIDO.SOMOS, 'Coalición')!
+    expect(rechazo.mensaje).toContain('nuevo registro')
+    expect(rechazo.mensaje).toContain('postular en lo individual')
+    expect(rechazo.gravedad).toBe('sustitucion')
+  })
+
+  it('no rebota a quien sí puede, ni en la postulación individual', () => {
+    expect(admiteEnConvenio(PARTIDO.PAN, 'Coalición')).toBeNull()
+    expect(admiteEnConvenio(PARTIDO.PAZ, 'Individual')).toBeNull()
   })
 
   it('los locales sí pueden las dos figuras', () => {

@@ -37,6 +37,7 @@ export {
   type Criterios,
 } from './criterios'
 export {
+  admiteEnConvenio,
   aplicanBloques,
   impedimentoDeConvenio,
   puedeCoaligarse,
