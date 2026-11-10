@@ -5,6 +5,7 @@ import {
   aplicanBloques,
   impedimentoDeConvenio,
   puedeCoaligarse,
+  puedeParticiparEn,
   puedeSuscribirCandidaturaComun,
 } from './elegibilidad'
 import { FUNDAMENTOS } from './fundamentos'
@@ -67,6 +68,25 @@ describe('elegibilidad por ámbito y registro', () => {
   it('no impide nada a quien sí puede', () => {
     for (const modalidad of ['Coalición', 'Candidatura Común'] as const) {
       expect(impedimentoDeConvenio([PARTIDO.PAN, PARTIDO.PRI], modalidad), modalidad).toBeNull()
+    }
+  })
+
+  it('la postulación individual no excluye a nadie', () => {
+    // Es la figura que le queda a quien no puede suscribir convenio: si aquí
+    // también se le cerrara, no podría competir.
+    for (const partido of TODOS) {
+      expect(puedeParticiparEn(partido, 'Individual'), siglasDe(partido)).toBe(true)
+    }
+  })
+
+  it('el predicado por partido concuerda con el impedimento del conjunto', () => {
+    // La interfaz apaga casillas con el primero y explica el motivo con el
+    // segundo. Si discreparan, habría un partido apagado sin explicación o
+    // explicado sin apagar.
+    for (const modalidad of ['Coalición', 'Candidatura Común', 'Individual'] as const) {
+      const porPartido = TODOS.filter((p) => !puedeParticiparEn(p, modalidad))
+      const delConjunto = impedimentoDeConvenio(TODOS, modalidad)?.vetados ?? []
+      expect(porPartido, modalidad).toEqual(delConjunto)
     }
   })
 

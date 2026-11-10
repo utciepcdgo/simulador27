@@ -40,6 +40,7 @@ export {
   aplicanBloques,
   impedimentoDeConvenio,
   puedeCoaligarse,
+  puedeParticiparEn,
   puedeSuscribirCandidaturaComun,
   type ImpedimentoDeConvenio,
 } from './elegibilidad'

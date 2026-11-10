@@ -47,6 +47,23 @@ export function puedeSuscribirCandidaturaComun(partido: IdPartido): boolean {
   return !esNacionalDeNuevoRegistro(partido)
 }
 
+/**
+ * Si el partido puede entrar en una postulación de esa modalidad.
+ *
+ * Reúne las dos prohibiciones en el único punto donde la modalidad decide cuál
+ * aplica. La interfaz la usa para apagar la casilla antes de que nadie la
+ * marque; `impedimentoDeConvenio` la usa para explicar por qué. Las dos leen de
+ * aquí para que no puedan discrepar.
+ */
+export function puedeParticiparEn(
+  partido: IdPartido,
+  modalidad: Postulante['modalidad'],
+): boolean {
+  if (modalidad === 'Coalición') return puedeCoaligarse(partido)
+  if (modalidad === 'Candidatura Común') return puedeSuscribirCandidaturaComun(partido)
+  return true
+}
+
 /** Lo que impide a una alianza constituirse, con el artículo que lo impide. */
 export interface ImpedimentoDeConvenio {
   /** Los integrantes vetados, en orden de registro. */
@@ -67,9 +84,7 @@ export function impedimentoDeConvenio(
   modalidad: Postulante['modalidad'],
 ): ImpedimentoDeConvenio | null {
   if (modalidad === 'Individual') return null
-  const permite =
-    modalidad === 'Coalición' ? puedeCoaligarse : puedeSuscribirCandidaturaComun
-  const vetados = integrantes.filter((partido) => !permite(partido))
+  const vetados = integrantes.filter((partido) => !puedeParticiparEn(partido, modalidad))
   if (vetados.length === 0) return null
   return {
     vetados,
