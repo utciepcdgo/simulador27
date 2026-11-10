@@ -14,7 +14,8 @@ import { ambitosDe, declinaPostular, type Ambito } from '@/domain/reglas'
 import type { Bloque, DistritoActivo, DistritoEvaluado, IdPartido } from '../domain/types'
 import { plural } from '../domain/texto'
 import { aparicion, ficha } from '../lib/animacion'
-import { ACENTO_BLOQUE, rotuloRango } from '../lib/bloques'
+import { acentoDeBloque, rotuloRango } from '../lib/bloques'
+import { COLOR_EMBLEMA } from '../lib/emblemas'
 import { descripcion } from '../lib/formula'
 import { cn } from '../lib/utils'
 import { useConfiguracion, useCriterios } from '../store/configuracion'
@@ -366,6 +367,10 @@ function Tablero({
       : []
   const puedeRetirarse = partido !== null || integrantes.length === 1
   const apilado = useConfiguracion((c) => c.opciones.tableroApilado)
+  // El tablero del convenio no es de ningún partido: `partido` es `null` ahí, y
+  // el acento se queda acromático. Ver `acentoDeBloque`.
+  const acento = (bloque: Bloque) =>
+    acentoDeBloque(bloque, ambito.partido !== null ? COLOR_EMBLEMA[ambito.partido] : null)
 
   return (
     <Card className="gap-3">
@@ -378,12 +383,16 @@ function Tablero({
             tamano="sm"
           />
           <span className="min-w-0 truncate">{ambito.etiqueta}</span>
-          {/* Solo cuando hay bloques: sin ellos no existe la otra vista. */}
-          {ambito.conBloques && (
-            <span className="ml-auto shrink-0">
-              <ConmutadorDeVista />
-            </span>
-          )}
+          {/*
+            También sin bloques. Un tablero sin ellos es una sola lista de
+            distritos, y la elección entre repartirla en columnas o apilarla a
+            ancho completo se plantea igual: condicionar el botón a que haya
+            bloques dejaba sin él a los cinco partidos locales y de nuevo
+            registro, que son justo los que el artículo 23.2 exime.
+          */}
+          <span className="ml-auto shrink-0">
+            <ConmutadorDeVista />
+          </span>
         </CardTitle>
         <CardDescription>
           {ambito.distritos.length} de{' '}
@@ -404,7 +413,7 @@ function Tablero({
             quince distritos van en una sola lista, en orden ascendente de
             número. Partirlos en columnas sugeriría un ranking que no existe.
           */
-          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className={apilado ? 'space-y-2' : 'grid gap-2 sm:grid-cols-2 lg:grid-cols-3'}>
             {[...ambito.distritos]
               .sort((a, b) => a.id_distrito - b.id_distrito)
               .map((distrito) => (
@@ -440,7 +449,8 @@ function Tablero({
                 */
                 <section
                   key={bloque}
-                  className={cn('min-w-0 overflow-hidden rounded-md', ACENTO_BLOQUE[bloque].fondo)}
+                  className="min-w-0 overflow-hidden rounded-md"
+                  style={{ backgroundColor: acento(bloque).backgroundColor }}
                 >
                   {/*
                     La regla superior corona la columna y la agrupa de un vistazo;
@@ -451,10 +461,8 @@ function Tablero({
                     forma de saberlo.
                   */}
                   <h3
-                    className={cn(
-                      'flex items-baseline gap-2 border-t-2 px-2 py-1.5 text-sm font-medium',
-                      ACENTO_BLOQUE[bloque].regla,
-                    )}
+                    className="flex items-baseline gap-2 border-t-2 px-2 py-1.5 text-sm font-medium"
+                    style={{ borderTopColor: acento(bloque).borderTopColor }}
                   >
                     Bloque {bloque}
                     {rango && (

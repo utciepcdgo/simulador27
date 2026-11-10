@@ -105,6 +105,11 @@
 
       Al ir por luminosidad el acento sobrevive a cualquier daltonismo, que es lo
       que un semáforo verde-rojo nunca consigue.
+
+      Estos tokens rigen donde el tablero no es de nadie: el del convenio. En el
+      de un partido manda el color de su emblema, recorriendo la misma escala de
+      intensidad desde `acentoDeBloque`. Lo que cambia es el tono, nunca el
+      orden.
     */
     --bloque-alta: oklch(0.3 0 0);
     --bloque-alta-suave: oklch(0.925 0 0);

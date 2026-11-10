@@ -63,7 +63,7 @@ function InsigniaPostulante({ postulante }: { postulante: Postulante }) {
         ·
       </span>
       {postulante.integrantes.map((partido) => (
-        <EtiquetaPartido key={partido} partido={partido} tamano="sm" />
+        <EtiquetaPartido key={partido} partido={partido} tamano="lg" />
       ))}
     </Badge>
   )
