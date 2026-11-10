@@ -81,7 +81,9 @@ describe('holgura de un ámbito', () => {
       { n: 8, ley: 2, proporcional: 1 },
       { n: 9, ley: 2, proporcional: 2 },
       { n: 10, ley: 2, proporcional: 2 },
-      { n: 11, ley: 2, proporcional: 1 },
+      // Once cierra una sola por acuerdo del Consejo General, así que las dos
+      // lecturas coinciden: la literal ya abre lo que la proporcional abriría.
+      { n: 11, ley: 1, proporcional: 1 },
       { n: 12, ley: 2, proporcional: 2 },
       { n: 13, ley: 2, proporcional: 2 },
       { n: 14, ley: 2, proporcional: 2 },
@@ -114,13 +116,15 @@ describe('holgura de un ámbito', () => {
     expect(apartados).toEqual(sinSalida)
   })
 
-  it('los tamaños sin solución bajo la lectura literal son 5, 7, 8 y 11', () => {
+  it('los tamaños sin solución bajo la lectura literal son 5, 7 y 8', () => {
     // Ocho está en la lista por el tope del 26.3 en su dirección menos evidente:
     // su bloque Bajo tiene dos distritos y la lectura literal los cierra los dos,
     // de modo que lleva forzosamente dos hombres cuando el máximo por género en
     // un bloque de dos es uno. No falla por falta de mujeres, sino por exceso de
     // hombres, y por eso una cuenta que solo mire el techo femenino no lo ve.
-    expect(TAMANOS.filter(sinSolucionLiteral)).toEqual([5, 7, 8, 11])
+    // Once salió de la lista: su prohibición cierra una sola posición, de modo
+    // que quien postule el mínimo para acceder a RP tiene un acomodo posible.
+    expect(TAMANOS.filter(sinSolucionLiteral)).toEqual([5, 7, 8])
     expect(repartoMinimo(8, 2)).toBeNull()
     expect(repartoMinimo(8, 1)).toEqual({ Alta: 1, Media: 2, Baja: 1 })
   })

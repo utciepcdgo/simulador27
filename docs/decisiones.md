@@ -270,6 +270,31 @@ solo por el convenio, y quince si además postula en los tres huérfanos.
 
 La regla se agrupa en el dictamen bajo la Lista "A" del partido, que es lo que habilita.
 
+### La prohibición del 28.2 cierra una sola posición en los tableros de once
+
+Acuerdo del Consejo General, y el único tamaño donde el simulador se aparta de la lectura literal
+del artículo 28.2.
+
+Once distritos se reparten 4-4-3. Con las dos últimas posiciones cerradas, el ámbito admite como
+máximo cinco fórmulas encabezadas por mujeres y el piso del artículo 23.1 pide seis: **ningún
+acomodo de los 2 048 posibles cumple a la vez el 23.1, el 28.5 y la paridad de cada bloque**. Y
+once no es un tamaño cualquiera: es el mínimo que el artículo 75, numeral 1, fracción I exige para
+tener derecho a la asignación de representación proporcional, de modo que quien postulara
+exactamente ese mínimo quedaba sin salida.
+
+Cerrando solo la última posición se abre el reparto 2-2-2, que satisface las tres exigencias.
+
+**Alcanza solo a once.** Los tableros de 5, 7 y 8 siguen sin composición válida y el motor los
+sigue reportando como tales, en `docs/pendientes-juridicos.md`. Existe implementada una lectura
+general que resolvería los tres —`blindajeProporcional`, que gradúa la prohibición en cualquier
+tamaño apoyándose en el «en proporción al número de distritos que integre cada bloque» del
+artículo 27, numeral 1, punto V—, pero **no corre en producción**: adoptarla es una decisión
+distinta y más amplia que la que se tomó.
+
+**No se anuncia en pantalla.** No hay leyenda, aviso ni nota que explique la particularidad: el
+tablero de once sencillamente cierra una posición en vez de dos. Quien mire el dictamen verá la
+regla del 28.2 cumplida con una sola posición vedada, sin más.
+
 ### Once no es un mínimo de registro
 
 El artículo 75, numeral 1, fracción I no obliga a postular en once distritos: fija la condición

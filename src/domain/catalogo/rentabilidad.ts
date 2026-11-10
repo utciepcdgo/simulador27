@@ -5,6 +5,15 @@ import { VOTACION } from './votacion'
 
 export const TOTAL_DISTRITOS = 15
 
+/**
+ * Los once distritos que el artículo 75.1.I exige para acceder a RP.
+ *
+ * Se escribe aquí como número y no se importa de `reglas/mr.ts`, donde vive la
+ * regla que lo exige: el catálogo no depende del motor, y al revés sí. Si uno
+ * de los dos cambiara, `rentabilidad.test.ts` lo pone en evidencia.
+ */
+const MINIMO_PARA_RP = 11
+
 export const BLOQUES: readonly Bloque[] = ['Alta', 'Media', 'Baja']
 
 /**
@@ -81,6 +90,20 @@ export function posicionesBlindadas(total: number): number[] {
   // el ámbito admitía como máximo dos fórmulas encabezadas por mujeres cuando el
   // piso del cincuenta por ciento pide tres, y por tanto no tenía solución.
   if (Alta === 2 && Media === 2 && Baja === 2) return [total]
+  // Con once distritos la prohibición alcanza solo al último, por acuerdo del
+  // Consejo General. Once es el mínimo del artículo 75, numeral 1, fracción I
+  // para tener derecho a la asignación de representación proporcional, y con
+  // las dos posiciones cerradas ese tamaño no tenía salida: el reparto es 4-4-3,
+  // el bloque bajo admite como máximo cinco fórmulas encabezadas por mujeres y
+  // el piso del artículo 23.1 pide seis. Quien postulara el mínimo para acceder
+  // a RP no podía cumplir. Cerrar solo la última abre el reparto 2-2-2, que es
+  // el único que satisface las tres exigencias a la vez.
+  //
+  // Alcanza **solo a once**. Los tableros de 5, 7 y 8 siguen sin composición
+  // válida y se siguen reportando como tales: el acuerdo se tomó para el tamaño
+  // del umbral de RP, no como regla general sobre el 28.2. Ver
+  // `docs/pendientes-juridicos.md`.
+  if (total === MINIMO_PARA_RP) return [total]
   const primeraDeBaja = Alta + Media + 1
   const desde = Math.max(primeraDeBaja, total - 1)
   return Array.from({ length: total - desde + 1 }, (_, i) => desde + i)

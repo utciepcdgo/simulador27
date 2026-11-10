@@ -255,7 +255,7 @@ implementación volvería a quedarse corta.
 
 ---
 
-## 6 · Cuatro tamaños de tablero no admiten ninguna composición válida
+## 6 · Tres tamaños de tablero no admiten ninguna composición válida
 
 **Riesgo: alto por consecuencia, no por error.** El motor no se equivoca: reporta que las reglas
 no se pueden cumplir todas, y es verdad. Lo que no puede hacer es decirle al partido qué mover,
@@ -263,10 +263,15 @@ porque no hay jugada que lo repare.
 
 **Dónde ocurre**
 
-Cuando un ámbito tiene 5, 7, 8 u 11 distritos. **Once es el tamaño más probable de todos**: es lo
-que registra quien quiere derecho a representación proporcional sin postular de más, y es el
-tablero individual de cada socio de una coalición flexible en el mínimo. Siete y ocho son lo que
-le queda a cada socio de una coalición parcial en el mínimo.
+Cuando un ámbito tiene 5, 7 u 8 distritos. Siete y ocho son lo que le queda a cada socio de una
+coalición parcial en el mínimo.
+
+**Once ya no está en la lista.** Era el tamaño más probable de todos —lo que registra quien quiere
+derecho a representación proporcional sin postular de más, y el tablero individual de cada socio
+de una coalición flexible en el mínimo—, y por eso el Consejo General acordó que ahí la
+prohibición del 28.2 alcance solo al último distrito. Con eso el reparto 2-2-2 cumple las tres
+exigencias a la vez. El acuerdo es para ese tamaño, no una regla general sobre el 28.2: ver
+`posicionesBlindadas` en `src/domain/catalogo/rentabilidad.ts`.
 
 El recorrido completo de los quince tamaños está en
 [tableros-parciales.md](tableros-parciales.md).

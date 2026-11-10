@@ -1614,8 +1614,10 @@ describe('criterios de interpretación', () => {
 
   describe('requisito imposible por geometría (artículos 27.1.V, 28.2 y 28.5)', () => {
     // Cinco distritos: bloques 2-2-1. El único impar es el bajo, y su único
-    // distrito está prohibido a las mujeres. Once da 4-4-3 con el mismo choque.
-    const IMPOSIBLES = [5, 11]
+    // distrito está prohibido a las mujeres. Once tenía el mismo choque hasta
+    // que su prohibición pasó a cerrar una sola posición; ver
+    // `posicionesBlindadas`.
+    const IMPOSIBLES = [5]
 
     it('la lectura de la ley lo reporta y explica que no hay acomodo', () => {
       for (const cuantos of IMPOSIBLES) {
@@ -1655,13 +1657,14 @@ describe('criterios de interpretación', () => {
     }
 
     it('abre la posición que hacía falta en los ámbitos sin solución', () => {
-      // Los cuatro tamaños donde la lectura literal no admite ninguna
+      // Los tres tamaños donde la lectura literal no admite ninguna
       // composición. Bajo la proporcional cada uno recupera una posición.
+      // Once no está: su prohibición ya cierra una sola, así que las dos
+      // lecturas coinciden y se comprueba en el caso de abajo.
       for (const [cuantos, cerradas] of [
         [5, 0],
         [7, 1],
         [8, 1],
-        [11, 1],
       ]) {
         const literal = tableroDe(cuantos).distritos.filter((d) => d.esBlindada)
         const graduado = tableroDe(cuantos, {}, PROPORCIONAL).distritos.filter(
@@ -1673,7 +1676,7 @@ describe('criterios de interpretación', () => {
     })
 
     it('no toca los ámbitos que ya tenían solución', () => {
-      for (const cuantos of [3, 4, 6, 9, 10, 12, 15]) {
+      for (const cuantos of [3, 4, 6, 9, 10, 11, 12, 15]) {
         const literal = tableroDe(cuantos).distritos.filter((d) => d.esBlindada)
         const graduado = tableroDe(cuantos, {}, PROPORCIONAL).distritos.filter(
           (d) => d.esBlindada,
@@ -1690,7 +1693,7 @@ describe('criterios de interpretación', () => {
       // perdona la regla del 28.5, y ésta evita que llegue a colisionar. En los
       // dos casos el ámbito deja de estar condenado, pero solo aquí la mayoría
       // femenina del bloque bajo sigue siendo exigible.
-      for (const cuantos of [5, 11]) {
+      for (const cuantos of [5]) {
         const r = mayoriaBloqueImpar(tableroDe(cuantos, {}, PROPORCIONAL), PROPORCIONAL)
         expect(r.cumple, `${cuantos} distritos`).toBe(false)
         expect(r.mensaje, `${cuantos} distritos`).not.toContain('No aplicable')
@@ -1699,12 +1702,9 @@ describe('criterios de interpretación', () => {
     })
 
     it('el reparto sugerido deja de declarar requisitos irresolubles', () => {
-      // Bajo la ley, 5 y 11 declaran lo que no pueden satisfacer. Los de 7 y 8
-      // no llegan aquí porque `repartoNecesario` los da por resueltos aunque se
-      // quede una mujer corto: el rango de su bloque bajo se ensancha en vez de
-      // declararse vacío. Es un defecto propio de `reparto.ts`, anterior a este
-      // criterio y sin relación con él.
-      for (const cuantos of [5, 11]) {
+      // Bajo la ley, los tres tamaños sin salida declaran lo que no pueden
+      // satisfacer. Once ya no está entre ellos.
+      for (const cuantos of [5, 7, 8]) {
         expect(
           repartoNecesario(tableroDe(cuantos)).irresolubles,
           `${cuantos} distritos bajo la ley`,
@@ -1878,8 +1878,10 @@ describe('postulación parcial', () => {
   })
 
   it('mueve la prohibición del 28.2 a las nuevas posiciones de menor votación', () => {
+    // Once cierra solo la última, por el acuerdo del Consejo General que hace
+    // postulable el mínimo para acceder a RP. Ver `posicionesBlindadas`.
     expect(parcial().distritos.filter((d) => d.esBlindada).map((d) => d.posicion_rentabilidad))
-      .toEqual([10, 11])
+      .toEqual([11])
   })
 
   it('mide las demás reglas sobre el ámbito reducido', () => {
@@ -2023,21 +2025,36 @@ describe('repartoNecesario', () => {
     expect(repartoNecesario(ambitoDe(conJoven)).faltaJoven).toBe(false)
   })
 
-  it('en un tablero de once dice qué no pudo resolver, y aun así propone', () => {
-    // El 28.5 exige mayoría femenina en el bloque bajo mientras el 28.2 le
-    // cierra la posición que haría falta: ningún acomodo cumple los dos.
+  it('en un tablero de siete dice qué no pudo resolver, y aun así propone', () => {
+    // El bloque bajo son dos distritos y el 28.2 cierra los dos, de modo que no
+    // cabe la mujer que su propio tope exige. Ningún acomodo lo resuelve.
+    const siete = retirar(tablero('...............'), [2, 4, 6, 8, 10, 12, 14, 15])
+    const reparto = repartoNecesario(ambitoDe(siete))
+
+    expect(reparto.porDistrito.size).toBe(7)
+    expect(reparto.irresolubles.length).toBeGreaterThan(0)
+    // Se coloca el reparto más cercano: reporta, no se planta.
+    expect(reparto.faltan.Mujer + reparto.faltan.Hombre).toBe(7)
+  })
+
+  it('un tablero de once sí tiene acomodo, y el reparto lo encuentra', () => {
+    // Es el tamaño del umbral de representación proporcional, y su prohibición
+    // cierra una sola posición por acuerdo del Consejo General. Con eso el
+    // reparto 2-2-2 satisface a la vez el piso del 23.1, la mayoría del 28.5 y
+    // la paridad de los tres bloques.
     const once = retirar(tablero('...............'), [3, 8, 13, 15])
     const reparto = repartoNecesario(ambitoDe(once))
 
-    expect(reparto.porDistrito.size).toBe(11)
-    expect(reparto.irresolubles.length).toBeGreaterThan(0)
-    // Se coloca el reparto más cercano: reporta, no se planta.
-    expect(reparto.faltan.Mujer + reparto.faltan.Hombre).toBe(11)
+    expect(reparto.irresolubles).toEqual([])
+    expect(reparto.faltan.Mujer).toBe(minimoMujeres(11))
+    expect(incumplidas(aplicar(once, reparto))).toEqual([])
   })
 
-  // Los cuatro tamaños en que la prohibición del 28.2 aprieta de verdad. En 5 y
-  // 11 deja sin mayoría al bloque bajo; en 7 y 8 lo cierra entero, y el bloque
-  // se queda sin sitio para la mujer que su propio tope le exige.
+  // Los cuatro tamaños en que la prohibición del 28.2 aprieta. En 5 deja sin
+  // mayoría al bloque bajo; en 7 y 8 lo cierra entero, y el bloque se queda sin
+  // sitio para la mujer que su propio tope le exige. Once se incluye porque
+  // apretaba igual hasta que su prohibición pasó a cerrar una sola posición:
+  // las mismas comprobaciones deben seguir valiendo ahora que sí tiene salida.
   const APRETADOS = [5, 7, 8, 11]
 
   /** Las reglas de género que el reparto debería saber anticipar. */
@@ -2099,12 +2116,12 @@ describe('repartoNecesario', () => {
   })
 
   it('no sacrifica la paridad de un bloque que sí tenía acomodo para llegar al piso', () => {
-    // En once el techo del ámbito son cinco mujeres y el piso pide seis. Llegar
-    // a seis obligaría a meter tres en un bloque de cuatro, cuyo tope es dos:
-    // sería cambiar un incumplimiento por otro, y en el bloque más rentable.
-    const reparto = repartoNecesario(ambitoDe(tableroParcial(11)))
+    // En cinco el techo del ámbito son dos mujeres y el piso pide tres. Llegar
+    // a tres obligaría a meter dos en un bloque de dos, cuyo tope es una: sería
+    // cambiar un incumplimiento por otro, y en el bloque más rentable.
+    const reparto = repartoNecesario(ambitoDe(tableroParcial(5)))
 
-    expect(reparto.faltan.Mujer).toBe(5)
+    expect(reparto.faltan.Mujer).toBe(2)
     expect(reparto.irresolubles).toContain('Paridad general de MR')
     expect(reparto.irresolubles).not.toContain('Paridad del bloque Alta')
   })
