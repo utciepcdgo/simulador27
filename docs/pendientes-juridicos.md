@@ -24,10 +24,10 @@ encontrar es un artículo que el motor **nunca citó**: no hay nada que verifica
 Así se mantuvo durante meses la afirmación de que la candidatura común estaba permitida a los
 partidos de nuevo registro, cuando el artículo 11.3 la prohíbe (punto 5).
 
-La revisión que falta es la inversa —recorrer el articulado y preguntar qué no está implementado—
-y no se puede hacer desde el repositorio: **el texto de los Lineamientos no está aquí**. Mientras
-siga fuera, cualquier afirmación de este documento sobre lo que la norma *no* dice es una
-suposición, no una verificación.
+La revisión que falta es la inversa: recorrer el articulado y preguntar qué no está implementado.
+**Ya está hecha**, con el documento incorporado al repositorio el 10 de noviembre de 2026, y su
+resultado está en [cotejo-articulado.md](cotejo-articulado.md): veintiocho artículos verificados
+contra el motor, dos huecos y tres cosas que siguen sin poder verificarse.
 
 ---
 

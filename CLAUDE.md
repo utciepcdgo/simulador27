@@ -9,6 +9,12 @@ no editarlo a mano. Las decisiones de interpretación están en
 [docs/decisiones.md](docs/decisiones.md), y las que siguen abiertas en
 [docs/pendientes-juridicos.md](docs/pendientes-juridicos.md).
 
+**El articulado está en el repositorio:** [docs/Lineamientos PEL 2026-2027.md](docs/Lineamientos%20PEL%202026-2027.md).
+Antes de afirmar que la norma no exige algo, búsquese ahí: el recorrido inverso —artículo por
+artículo, preguntando qué no está implementado— está en
+[docs/cotejo-articulado.md](docs/cotejo-articulado.md). Verificar las citas que el motor ya tiene
+no basta, porque no encuentra lo que nunca se citó; así se coló el artículo 11.3.
+
 [docs/technical-brief-v2.md](docs/technical-brief-v2.md) es el brief de origen y se conserva como
 **documento histórico**: su matriz de reglas ya no describe al motor y en un punto afirma lo
 contrario de la norma. No usarlo como especificación.
