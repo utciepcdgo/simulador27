@@ -28,9 +28,19 @@ export const ACENTO_BLOQUE: Record<Bloque, { punto: string }> = {
   Baja: { punto: 'bg-bloque-baja' },
 }
 
-/** Dónde cae cada bloque dentro de la escala, en porcentaje del acento. */
+/**
+ * Dónde cae cada bloque dentro de la escala, en porcentaje del acento.
+ *
+ * El salto de Alta a Media es mayor que el de Media a Baja, y es a propósito:
+ * el bloque Alto es el de los distritos más rentables, el que primero se mira,
+ * y una progresión lineal lo dejaba demasiado cerca del siguiente. La línea de
+ * Alta ya va al color puro, así que el énfasis solo puede crecer por la banda.
+ *
+ * El techo lo marca el contraste del encabezado, que se lee sobre ella: a 25%
+ * el peor de los once emblemas todavía da 9.7:1, de modo que 20 deja margen.
+ */
 const ESCALA: Record<Bloque, { linea: number; fondo: number }> = {
-  Alta: { linea: 100, fondo: 12 },
+  Alta: { linea: 100, fondo: 20 },
   Media: { linea: 65, fondo: 8 },
   Baja: { linea: 35, fondo: 4 },
 }
