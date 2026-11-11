@@ -91,7 +91,7 @@ export function admiteEnConvenio(
     alcance: `${modalidad} · ${siglasDe(partido)}`,
     cumple: false,
     gravedad: 'sustitucion',
-    mensaje: `${nombreDe(partido)} es un partido político nacional de nuevo registro, así que no puede suscribir convenio de ${figura}. Puede postular en lo individual.`,
+    mensaje: `${nombreDe(partido)} es un partido político nacional de nuevo registro, así que no puede suscribir convenio de ${figura}.`,
     fundamento_legal:
       modalidad === 'Coalición'
         ? FUNDAMENTOS.coalicionNuevoRegistro
